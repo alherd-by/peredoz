@@ -12,6 +12,30 @@ import {Circle, Fill, Style, Text} from 'ol/style';
 import 'ol/ol.css'
 import {ref, onMounted} from 'vue'
 
+
+let featuresSource = new VectorSource({
+    loader: function (extent, resolution, projection) {
+        loadFeatures(this, projection)
+    },
+    format: new GeoJSON()
+})
+const loadFeatures = async function (source, projection) {
+    const response = await fetch(
+        'https://peredoz.hasura.app/api/rest/track',
+        {
+            method: 'GET',
+        }
+    )
+    const payload  = await response.json()
+    if (payload.features_by_pk) {
+        source.addFeatures((new GeoJSON()).readFeatures(payload.features_by_pk.data, {featureProjection: projection}))
+    }
+}
+
+let featureLayer = new VectorLayer({
+    source: featuresSource
+})
+
 onMounted(
     () => {
         document.getElementById('map').innerHTML = '';
@@ -27,6 +51,7 @@ onMounted(
                 center: fromLonLat([27.7834, 53.7098]),
             })
         });
+        map.addLayer(featureLayer)
     }
 );
 
