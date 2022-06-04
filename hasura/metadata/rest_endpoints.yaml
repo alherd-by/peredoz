@@ -1,1 +1,9 @@
-[]
+- definition:
+    query:
+      collection_name: allowed-queries
+      query_name: track
+  url: track
+  methods:
+    - GET
+  name: track
+  comment: null
