@@ -202,7 +202,7 @@ let featureLayer = new VectorLayer({
         let size;
 
         const props  = feature.getProperties();
-        size         = props['d'] + ''
+        size         = props['d'] + '_' + colorScheme.value
         const colors = calcColor(props['d'], colorScheme.value)
 
         let style = styleCache[size];
@@ -229,7 +229,7 @@ watch(colorScheme, () => {
     setInterval(() => {
         styleCache = {};
         featureLayer.getSource().dispatchEvent('change');
-    }, 3000);
+    }, 1000);
 })
 
 const colorLegend = () => {
