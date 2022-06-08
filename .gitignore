@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 var
 .env
+.netlify
+auto-imports.d.ts
+src/components.d.ts
+.graphqlconfig
+schema.graphql
