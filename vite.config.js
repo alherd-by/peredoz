@@ -24,13 +24,13 @@ export default defineConfig({
         },
     },
 
-    css: {
-        preprocessorOptions: {
-            scss: {
-                additionalData: `@use "~/styles/element/index.scss" as *;`,
-            },
-        },
-    },
+    // css: {
+    //     preprocessorOptions: {
+    //         scss: {
+    //             additionalData: `@use "~/styles/element/index.scss" as *;`,
+    //         },
+    //     },
+    // },
     plugins: [
         vue(),
         Components({
