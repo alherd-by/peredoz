@@ -19,5 +19,7 @@ select_permissions:
         - geometry
         - track_id
         - properties
+      computed_fields:
+        - placeholder_feature
       filter: {}
       allow_aggregations: true

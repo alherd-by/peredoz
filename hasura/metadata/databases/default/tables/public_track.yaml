@@ -24,5 +24,7 @@ select_permissions:
         - created_at
         - extra
         - atomfast_id
+      computed_fields:
+        - placeholder_feature_collection
       filter: {}
       allow_aggregations: true

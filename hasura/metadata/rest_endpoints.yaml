@@ -2,7 +2,7 @@
     query:
       collection_name: allowed-queries
       query_name: track_points
-  url: points/track
+  url: points/track/:id
   methods:
     - GET
   name: track_points
