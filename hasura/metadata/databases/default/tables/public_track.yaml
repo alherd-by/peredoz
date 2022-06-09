@@ -1,0 +1,28 @@
+table:
+  schema: public
+  name: track
+array_relationships:
+  - name: track_points
+    using:
+      foreign_key_constraint_on:
+        column: track_id
+        table:
+          schema: public
+          name: track_point
+computed_fields:
+  - name: placeholder_feature_collection
+    definition:
+      function:
+        schema: public
+        name: placeholder_feature_collection_type
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - name
+        - created_at
+        - extra
+        - atomfast_id
+      filter: {}
+      allow_aggregations: true

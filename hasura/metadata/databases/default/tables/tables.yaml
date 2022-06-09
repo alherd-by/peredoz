@@ -1,1 +1,2 @@
-- "!include public_features.yaml"
+- "!include public_track.yaml"
+- "!include public_track_point.yaml"

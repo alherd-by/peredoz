@@ -1,11 +1,16 @@
 - name: allowed-queries
   definition:
     queries:
-      - name: track
+      - name: track_points
         query: |
           query track ($id: Int = 1) {
-          	features_by_pk(id: $id) {
-          		id
-          		data
+          	track: track_by_pk(id: $id) {
+          		type: placeholder_feature_collection
+          		features: track_points {
+          			id
+          			type: placeholder_feature
+          			properties
+          			geometry
+          		}
           	}
           }

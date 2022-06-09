@@ -1,9 +1,9 @@
 - definition:
     query:
       collection_name: allowed-queries
-      query_name: track
-  url: track
+      query_name: track_points
+  url: points/track
   methods:
     - GET
-  name: track
+  name: track_points
   comment: null

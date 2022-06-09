@@ -1,0 +1,23 @@
+table:
+  schema: public
+  name: track_point
+object_relationships:
+  - name: track
+    using:
+      foreign_key_constraint_on: track_id
+computed_fields:
+  - name: placeholder_feature
+    definition:
+      function:
+        schema: public
+        name: placeholder_feature_type
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - id
+        - geometry
+        - track_id
+        - properties
+      filter: {}
+      allow_aggregations: true
