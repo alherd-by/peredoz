@@ -18,7 +18,7 @@
                 content="this is content, this is content, this is content"
             >
                 <template #reference>
-                    <el-button :icon="Filter"
+                    <el-button :icon="Setting"
                                @click="toolbarDialog = true"
                                size="large"
                                type="warning"
@@ -31,7 +31,8 @@
                             <el-radio :label="key"
                                       v-for="(track, key) in schemes"
                                       style="width: 600px; float: left">
-                                {{ track }} {{ key }}
+                                {{ track.name }}
+                                <div class="bgr_gradient" :style="{'background': track.color}"></div>
                             </el-radio>
                         </el-radio-group>
                     </template>
@@ -65,7 +66,7 @@ import GeoJSON from "ol/format/GeoJSON"
 import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
 import {ref, onMounted, watch} from 'vue'
-import {Filter, User, List} from '@element-plus/icons-vue'
+import {List, User, Setting} from '@element-plus/icons-vue'
 
 import {
     ElMessageBox,
@@ -80,13 +81,22 @@ import {
 let SCHEME_RED_GREEN = 0, SCHEME_RED_BLUE_16 = 1, SCHEME_RED_BLUE_32 = 2;
 
 const schemes = {
-    [SCHEME_RED_GREEN]: 0,
-    [SCHEME_RED_BLUE_16]: 16,
-    [SCHEME_RED_BLUE_32]: 32
+    [SCHEME_RED_GREEN]: {
+        name: '',
+        color: 'linear-gradient(to right, #2df700 0%,#fff200 50%,#ff0000 100%)'
+    },
+    [SCHEME_RED_BLUE_16]: {
+        name: 16,
+        color: 'linear-gradient(to right, #0015ff 0%,#00fceb 29%,#00fceb 43%,#2df700 53%,#fff200 70%,#ff0000 100%)'
+    },
+    [SCHEME_RED_BLUE_32]: {
+        name: 32,
+        color: 'linear-gradient(to right, #0015ff 0%,#00fceb 29%,#00fceb 43%,#2df700 53%,#fff200 70%,#ff0000 100%)'
+    }
 }
 
 const currentTrack     = ref(0);
-const colorScheme      = ref();
+const colorScheme      = ref(SCHEME_RED_BLUE_16 + '');
 const listTracksDialog = ref(false);
 const toolbarDialog    = ref(false);
 
@@ -350,5 +360,13 @@ const {data: list} = useQuery({
     display: flex;
     justify-content: space-between;
     padding: 10px;
+}
+
+.bgr_gradient {
+    width: 32px;
+    height: 16px;
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 </style>
