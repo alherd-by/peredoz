@@ -3,7 +3,7 @@
         <div class="header flex-row flex-algn-itms-c">
             <div class="header-links flex-grow-all pdng-l-20px pdng-r-20px mil-notdisplay">
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
-                <a href="#"  @click="open">Импорт трека</a>
+                <a href="#" @click="open">Импорт трека</a>
                 <el-popover
                     placement="left-end"
                     :width="200"
@@ -70,9 +70,6 @@
                     </el-popover>
                 </div>
             </div>
-<!--            <div class="flex-grow-all pdng-l-20px pdng-r-30px notdisplay mil-show">-->
-<!--                -->
-<!--            </div>-->
         </div>
     </div>
     <div id="map" style="height: 100%;width: 100%"></div>
@@ -91,14 +88,14 @@
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content">
             <template v-if="feature">
-                <p>id: {{feature.getId()}}</p>
-                <span>Doserate: {{feature.getProperties().d.toFixed(2)}}uSv/h</span>
+                <p>id: {{ feature.getId() }}</p>
+                <span>Doserate: {{ feature.getProperties().d.toFixed(2) }}uSv/h</span>
                 <br>
-                <span>GPS accuracy: <b>±{{feature.getProperties().r}} m</b></span>
+                <span>GPS accuracy: <b>±{{ feature.getProperties().r }} m</b></span>
                 <br>
                 <span>Device: <b>  <span v-html="devices[feature.getProperties().dv]"></span> </b></span>
                 <br>
-                <span>Search mode: <b> {{search_modes[feature.getProperties().sm]}} </b></span>
+                <span>Search mode: <b> {{ search_modes[feature.getProperties().sm] }} </b></span>
                 <br>
             </template>
         </div>
@@ -118,7 +115,7 @@ import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
 import {ref, onMounted, watch} from 'vue'
 import {List, User, Setting} from '@element-plus/icons-vue'
-import Overlay                           from 'ol/Overlay';
+import Overlay from 'ol/Overlay';
 
 import {
     ElMessageBox,
@@ -129,7 +126,7 @@ import {
     ElRadio
 } from "element-plus";
 
-const devices = [
+const devices      = [
     "",
     "<a href=\"https://kbradar.org/p50432064-dozimetr-radiatsii-atom.html\" target=\"_blank\">AtomTag</a>",
     "<a href=\"https://kbradar.org/p167558602-brelok-dozimetr-radiatsii.html\" target=\"_blank\">AtomSwift</a>",
@@ -343,29 +340,29 @@ const feature = ref();
 onMounted(
     () => {
         document.getElementById('map').innerHTML = '';
-        let container = document.getElementById('popup');
-        let closer    = document.getElementById('popup-closer');
-        closer.onclick = function () {
+        let container                            = document.getElementById('popup');
+        let closer                               = document.getElementById('popup-closer');
+        closer.onclick                           = function () {
             overlay.setPosition(undefined);
             closer.blur();
             return false;
         };
-        const overlay = new Overlay({
-            element         : container,
-            autoPan         : true,
+        const overlay                            = new Overlay({
+            element: container,
+            autoPan: true,
             autoPanAnimation: {
                 duration: 250,
             },
         });
 
-        let map                                  = new Map({
+        let map = new Map({
             layers: [
                 new TileLayer({
                     source: new OSM(),
                 }),
             ],
             target: 'map',
-            overlays    : [overlay],
+            overlays: [overlay],
             view: new View({
                 zoom: 7.3,
                 center: fromLonLat([27.7834, 53.7098]),
@@ -374,7 +371,13 @@ onMounted(
         map.addLayer(featureLayer)
         map.on('singleclick', (evt) => {
             let coordinate = evt.coordinate;
+            if (map.getFeaturesAtPixel(evt.pixel).length === 0) {
+                overlay.setPosition(undefined);
+                closer.blur();
+                return
+            }
             map.forEachFeatureAtPixel(evt.pixel, baseFeature => {
+
                 feature.value = baseFeature;
                 overlay.setPosition(coordinate);
             })
@@ -434,11 +437,13 @@ const {data: list} = useQuery({
     bottom: 0;
     right: 0;
 }
+
 @media (min-width: 820px) {
     #map {
         padding-top: 40px;
     }
 }
+
 @media (max-width: 820px) {
     .toolbar {
         margin-left: 100px;
