@@ -5,7 +5,7 @@
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
                 <a href="#"  @click="open">Импорт трека</a>
                 <el-popover
-                    placement="bottom"
+                    placement="left-end"
                     :width="200"
                     trigger="click"
                     content="this is content, this is content, this is content"
@@ -29,49 +29,50 @@
                 </el-popover>
             </div>
             <!-- mobile nav -->
-            <div class="section flex-grow-all pdng-l-20px pdng-r-30px notdisplay mil-show">
-                <div class="toolbar">
-                    <span>&nbsp;</span>
-                    <div>
-                        <el-button :icon="List"
-                                   @click="listTracksDialog = true"
-                                   size="large"
-                                   circle/>
-                        <el-button @click="open"
-                                   :icon="User"
-                                   size="large"
-                                   type="warning"
-                                   circle/>
-                        <el-popover
-                            placement="bottom"
-                            :width="200"
-                            trigger="click"
-                            content="this is content, this is content, this is content"
-                        >
-                            <template #reference>
-                                <el-button :icon="Setting"
-                                           @click="toolbarDialog = true"
-                                           size="large"
-                                           type="warning"
-                                           circle/>
+            <div class="section toolbar notdisplay mil-show">
+                <span>&nbsp;</span>
+                <div>
+                    <el-button :icon="List"
+                               @click="listTracksDialog = true"
+                               size="large"
+                               circle/>
+                    <el-button @click="open"
+                               :icon="User"
+                               size="large"
+                               type="warning"
+                               circle/>
+                    <el-popover
+                        placement="bottom"
+                        :width="200"
+                        trigger="click"
+                        content="this is content, this is content, this is content"
+                    >
+                        <template #reference>
+                            <el-button :icon="Setting"
+                                       @click="toolbarDialog = true"
+                                       size="large"
+                                       type="warning"
+                                       circle/>
+                        </template>
+                        <template #default>
+                            <h3>Схемы</h3>
+                            <template v-if="list">
+                                <el-radio-group v-model="colorScheme">
+                                    <el-radio :label="key"
+                                              v-for="(track, key) in schemes"
+                                              style="width: 600px; float: left">
+                                        {{ track.name }}
+                                        <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                    </el-radio>
+                                </el-radio-group>
                             </template>
-                            <template #default>
-                                <h3>Схемы</h3>
-                                <template v-if="list">
-                                    <el-radio-group v-model="colorScheme">
-                                        <el-radio :label="key"
-                                                  v-for="(track, key) in schemes"
-                                                  style="width: 600px; float: left">
-                                            {{ track.name }}
-                                            <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                        </el-radio>
-                                    </el-radio-group>
-                                </template>
-                            </template>
-                        </el-popover>
-                    </div>
+                        </template>
+                    </el-popover>
                 </div>
             </div>
+<!--            <div class="flex-grow-all pdng-l-20px pdng-r-30px notdisplay mil-show">-->
+<!--                -->
+<!--            </div>-->
         </div>
     </div>
     <div id="map" style="height: 100%;width: 100%"></div>
@@ -388,10 +389,11 @@ const {data: list} = useQuery({
     #map {
         padding-top: 40px;
     }
-
-    /*.header-wrp {*/
-    /*    z-index: 2;*/
-    /*}*/
+}
+@media (max-width: 820px) {
+    .toolbar {
+        margin-left: 100px;
+    }
 }
 
 .toolbar {
