@@ -87,6 +87,22 @@
             </el-radio-group>
         </template>
     </el-dialog>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content">
+            <template v-if="feature">
+                <p>id: {{feature.getId()}}</p>
+                <span>Doserate: {{feature.getProperties().d.toFixed(2)}}uSv/h</span>
+                <br>
+                <span>GPS accuracy: <b>±{{feature.getProperties().r}} m</b></span>
+                <br>
+                <span>Device: <b>  <span v-html="devices[feature.getProperties().dv]"></span> </b></span>
+                <br>
+                <span>Search mode: <b> {{search_modes[feature.getProperties().sm]}} </b></span>
+                <br>
+            </template>
+        </div>
+    </div>
 </template>
 <script setup>
 import Map from "ol/Map";
@@ -102,6 +118,7 @@ import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
 import {ref, onMounted, watch} from 'vue'
 import {List, User, Setting} from '@element-plus/icons-vue'
+import Overlay                           from 'ol/Overlay';
 
 import {
     ElMessageBox,
@@ -112,6 +129,15 @@ import {
     ElRadio
 } from "element-plus";
 
+const devices = [
+    "",
+    "<a href=\"https://kbradar.org/p50432064-dozimetr-radiatsii-atom.html\" target=\"_blank\">AtomTag</a>",
+    "<a href=\"https://kbradar.org/p167558602-brelok-dozimetr-radiatsii.html\" target=\"_blank\">AtomSwift</a>",
+    "<a href=\"https://kbradar.org/p223290497-dozimetr-radiatsii-atom.html\" target=\"_blank\">AtomFast</a>",
+    "<a href=\"http://youratom.com/\" target=\"_blank\">AtomStart</a>",
+    "<a href=\"http://youratom.com/\" target=\"_blank\">AtomGamma</a>"
+];
+const search_modes = ["Fast", "Medium", "Slow", "-"];
 
 let SCHEME_RED_GREEN = 0, SCHEME_RED_BLUE_16 = 1, SCHEME_RED_BLUE_32 = 2;
 
@@ -130,7 +156,7 @@ const schemes = {
     }
 }
 
-const currentTrack     = ref(0);
+const currentTrack     = ref(2);
 const colorScheme      = ref(SCHEME_RED_BLUE_16 + '');
 const listTracksDialog = ref(false);
 const toolbarDialog    = ref(false);
@@ -257,7 +283,7 @@ let featureLayer = new VectorLayer({
 
         style = new Style({
             image: new Circle({
-                radius: 5,
+                radius: 10,
                 fill: new Fill({
                     color: `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`,
                 }),
@@ -313,10 +339,25 @@ watch(currentTrack, () => {
     refreshMap()
     listTracksDialog.value = false;
 })
-
+const feature = ref();
 onMounted(
     () => {
         document.getElementById('map').innerHTML = '';
+        let container = document.getElementById('popup');
+        let closer    = document.getElementById('popup-closer');
+        closer.onclick = function () {
+            overlay.setPosition(undefined);
+            closer.blur();
+            return false;
+        };
+        const overlay = new Overlay({
+            element         : container,
+            autoPan         : true,
+            autoPanAnimation: {
+                duration: 250,
+            },
+        });
+
         let map                                  = new Map({
             layers: [
                 new TileLayer({
@@ -324,12 +365,20 @@ onMounted(
                 }),
             ],
             target: 'map',
+            overlays    : [overlay],
             view: new View({
                 zoom: 7.3,
                 center: fromLonLat([27.7834, 53.7098]),
             })
         });
         map.addLayer(featureLayer)
+        map.on('singleclick', (evt) => {
+            let coordinate = evt.coordinate;
+            map.forEachFeatureAtPixel(evt.pixel, baseFeature => {
+                feature.value = baseFeature;
+                overlay.setPosition(coordinate);
+            })
+        });
     }
 );
 const open         = () => {
@@ -413,5 +462,52 @@ const {data: list} = useQuery({
     display: inline-block;
     margin-left: 10px;
     margin-right: 10px;
+}
+
+.ol-popup {
+    position: absolute;
+    background-color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 12px;
+    left: -50px;
+    min-width: 280px;
+}
+
+.ol-popup:after, .ol-popup:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.ol-popup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 48px;
+    margin-left: -10px;
+}
+
+.ol-popup:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    left: 48px;
+    margin-left: -11px;
+}
+
+.ol-popup-closer {
+    text-decoration: none;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.ol-popup-closer:after {
+    content: "✖";
 }
 </style>
