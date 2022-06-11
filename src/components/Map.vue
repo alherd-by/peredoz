@@ -73,6 +73,13 @@
         </div>
     </div>
     <div id="map" style="height: 100%;width: 100%"></div>
+    <el-dialog v-model="uploadSpectreDialog">
+        <h3>Добавить спектр</h3>
+        <form @submit.prevent="uploadSpectrum">
+            <input type="file" name="spectrum" ref="file" v-on:change="handleFileUpload()">
+            <button type="submit">Load</button>
+        </form>
+    </el-dialog>
     <el-dialog v-model="listTracksDialog">
         <h3>Список треков</h3>
         <template v-if="list">
@@ -97,6 +104,7 @@
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.getProperties().sm] }} </b></span>
                 <br>
+                <p><a href="#" @click="uploadSpectreDialog = true">Прикрепить спектр к точке</a></p>
             </template>
         </div>
     </div>
@@ -153,11 +161,11 @@ const schemes = {
     }
 }
 
-const currentTrack     = ref(2);
-const colorScheme      = ref(SCHEME_RED_BLUE_16 + '');
-const listTracksDialog = ref(false);
-const toolbarDialog    = ref(false);
-
+const currentTrack        = ref(2);
+const colorScheme         = ref(SCHEME_RED_BLUE_16 + '');
+const listTracksDialog    = ref(false);
+const toolbarDialog       = ref(false);
+const uploadSpectreDialog = ref(false)
 
 const loadFeatures = async function (source, projection) {
     // const response = await fetch(
@@ -427,6 +435,39 @@ const {data: list} = useQuery({
     }
 )
 
+
+const readFile         = (raw) => {
+    return new Promise((resolve, reject) => {
+        const reader   = new FileReader();
+        reader.onload  = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(raw);
+    });
+}
+const file             = ref(null);
+const attachment       = ref();
+const handleFileUpload = async () => {
+    attachment.value = await readFile(file.value.files[0])
+}
+
+const uploadSpectrum = () => {
+    fetch('/spectrum', {
+        method: 'POST',
+        body: JSON.stringify({file: attachment.value})
+    }).then(r => r.json())
+        .then(
+            result => {
+                ElMessage.success({'message': 'Добавлено'})
+            }
+        )
+        .catch(e => {
+            ElMessage.error({'message': 'Произошла ошибка'})
+            throw e;
+        })
+    return false
+}
 </script>
 
 <style scoped>

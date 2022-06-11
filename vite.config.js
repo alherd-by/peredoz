@@ -15,6 +15,9 @@ export default defineConfig({
         proxy: {
             '^/atomfast': {
                 target: 'http://localhost:9999/.netlify/functions'
+            },
+            '^/spectrum': {
+                target: 'http://localhost:9999/.netlify/functions'
             }
         },
     },
@@ -23,7 +26,6 @@ export default defineConfig({
             '~/': `${pathSrc}/`,
         },
     },
-
     // css: {
     //     preprocessorOptions: {
     //         scss: {
