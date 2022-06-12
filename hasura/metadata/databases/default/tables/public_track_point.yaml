@@ -5,6 +5,14 @@ object_relationships:
   - name: track
     using:
       foreign_key_constraint_on: track_id
+array_relationships:
+  - name: spectrums
+    using:
+      foreign_key_constraint_on:
+        column: track_point_id
+        table:
+          schema: public
+          name: spectrum
 computed_fields:
   - name: placeholder_feature
     definition:

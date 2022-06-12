@@ -104,7 +104,15 @@
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.getProperties().sm] }} </b></span>
                 <br>
-                <p><a href="#" @click="uploadSpectreDialog = true">Прикрепить спектр к точке</a></p>
+                <p>
+                    <a href="#" @click="attachSpectrum(feature.getId())">
+                        Прикрепить спектр к точке
+                    </a>
+                </p>
+            </template>
+            <template v-if="feature && trackPointHash[feature.getId()]">
+                <br>
+                <span v-for="(spectrum, key) in trackPointHash[feature.getId()]">{{ spectrum.name }}</span>
             </template>
         </div>
     </div>
@@ -121,7 +129,7 @@ import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON"
 import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
-import {ref, onMounted, watch} from 'vue'
+import {ref, onMounted, watch, reactive} from 'vue'
 import {List, User, Setting} from '@element-plus/icons-vue'
 import Overlay from 'ol/Overlay';
 
@@ -133,6 +141,7 @@ import {
     ElRadioGroup,
     ElRadio
 } from "element-plus";
+import {xml2js} from "../xml2js";
 
 const devices      = [
     "",
@@ -166,6 +175,9 @@ const colorScheme         = ref(SCHEME_RED_BLUE_16 + '');
 const listTracksDialog    = ref(false);
 const toolbarDialog       = ref(false);
 const uploadSpectreDialog = ref(false)
+const currentTrackPoint   = ref(null)
+let trackPointHash        = ref({})
+
 
 const loadFeatures = async function (source, projection) {
     // const response = await fetch(
@@ -193,6 +205,12 @@ const loadFeatures = async function (source, projection) {
     }
 
     if (payload.track) {
+        trackPointHash.value = {}
+        const tmp            = payload.track.features.filter(i => i.spectrums.length > 0)
+        for (let item of tmp) {
+            trackPointHash.value[item.id] = item.spectrums
+        }
+        console.log(trackPointHash)
         const temp = (new GeoJSON()).readFeatures(
             payload.track,
             {featureProjection: projection}
@@ -271,7 +289,6 @@ const calcColor = (value, color_scheme) => {
     };
 }
 
-
 let featureLayer = new VectorLayer({
     source: featuresSource,
     style(feature) {
@@ -344,6 +361,7 @@ watch(currentTrack, () => {
     refreshMap()
     listTracksDialog.value = false;
 })
+
 const feature = ref();
 onMounted(
     () => {
@@ -436,29 +454,46 @@ const {data: list} = useQuery({
 )
 
 
-const readFile         = (raw) => {
+const readFile   = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
             resolve(reader.result);
         };
         reader.onerror = reject;
-        reader.readAsDataURL(raw);
+        reader.readAsText(raw);
     });
 }
-const file             = ref(null);
-const attachment       = ref();
+const file       = ref(null);
+const attachment = ref();
+
+
+const attachSpectrum = (trackPointId) => {
+    uploadSpectreDialog.value = true
+    currentTrackPoint.value   = trackPointId
+}
+
 const handleFileUpload = async () => {
-    attachment.value = await readFile(file.value.files[0])
+    attachment.value = xml2js(await readFile(file.value.files[0]))
+    console.log(attachment.value)
 }
 
 const uploadSpectrum = () => {
     fetch('/spectrum', {
         method: 'POST',
-        body: JSON.stringify({file: attachment.value})
+        body: JSON.stringify({
+            track_point_id: currentTrackPoint.value,
+            spectrum: attachment.value
+        })
     }).then(r => r.json())
         .then(
             result => {
+                uploadSpectreDialog.value                                 = false;
+                trackPointHash.value[result.data.spectrum.track_point_id] = [{
+                    id: result.data.spectrum.id,
+                    name: result.data.spectrum.name,
+                    data: result.data.spectrum.data
+                }]
                 ElMessage.success({'message': 'Добавлено'})
             }
         )

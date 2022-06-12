@@ -11,6 +11,13 @@
           			type: placeholder_feature
           			properties
           			geometry
+          			spectrums {
+          				id
+          				name
+          				data
+          				created_at
+          				geometry
+          			}
           		}
           	}
           }
