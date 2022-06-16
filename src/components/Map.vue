@@ -1,96 +1,5 @@
 <template>
-    <div class="header-wrp fixedhrd">
-        <div class="header flex-row flex-algn-itms-c">
-            <div class="header-links flex-grow-all pdng-l-20px pdng-r-20px mil-notdisplay">
-                <a href="#" @click="listTracksDialog = true">Список треков</a>
-                <a href="#" @click="open">Импорт трека</a>
-                <el-popover
-                    placement="left-end"
-                    :width="200"
-                    trigger="click"
-                    content="this is content, this is content, this is content"
-                >
-                    <template #reference>
-                        <a href="#" @click="toolbarDialog = true">Цвета</a>
-                    </template>
-                    <template #default>
-                        <h3>Схемы</h3>
-                        <template v-if="list">
-                            <el-radio-group v-model="colorScheme">
-                                <el-radio :label="key"
-                                          v-for="(track, key) in schemes"
-                                          style="width: 600px; float: left">
-                                    {{ track.name }}
-                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                </el-radio>
-                            </el-radio-group>
-                        </template>
-                    </template>
-                </el-popover>
-            </div>
-            <!-- mobile nav -->
-            <div class="section toolbar notdisplay mil-show">
-                <span>&nbsp;</span>
-                <div>
-                    <el-button :icon="List"
-                               @click="listTracksDialog = true"
-                               size="large"
-                               circle/>
-                    <el-button @click="open"
-                               :icon="User"
-                               size="large"
-                               type="warning"
-                               circle/>
-                    <el-popover
-                        placement="bottom"
-                        :width="200"
-                        trigger="click"
-                        content="this is content, this is content, this is content"
-                    >
-                        <template #reference>
-                            <el-button :icon="Setting"
-                                       @click="toolbarDialog = true"
-                                       size="large"
-                                       type="warning"
-                                       circle/>
-                        </template>
-                        <template #default>
-                            <h3>Схемы</h3>
-                            <template v-if="list">
-                                <el-radio-group v-model="colorScheme">
-                                    <el-radio :label="key"
-                                              v-for="(track, key) in schemes"
-                                              style="width: 600px; float: left">
-                                        {{ track.name }}
-                                        <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                    </el-radio>
-                                </el-radio-group>
-                            </template>
-                        </template>
-                    </el-popover>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="map" style="height: 100%;width: 100%"></div>
-    <el-dialog v-model="uploadSpectreDialog">
-        <h3>Добавить спектр</h3>
-        <form @submit.prevent="uploadSpectrum">
-            <input type="file" name="spectrum" ref="file" v-on:change="handleFileUpload()">
-            <button type="submit">Load</button>
-        </form>
-    </el-dialog>
-    <el-dialog v-model="listTracksDialog">
-        <h3>Список треков</h3>
-        <template v-if="list">
-            <el-radio-group v-model="currentTrack">
-                <el-radio :label="track.id" v-for="track of list.tracks" style="width: 600px; float: left">
-                    {{ track.id }} - {{ track.name }}
-                    <template v-if="track.atomfast_id"> (Atomfast)</template>
-                </el-radio>
-            </el-radio-group>
-        </template>
-    </el-dialog>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content">
@@ -112,7 +21,7 @@
             </template>
             <template v-if="feature && trackPointHash[feature.getId()]">
                 <br>
-                <span v-for="(spectrum, key) in trackPointHash[feature.getId()]">{{ spectrum.name }}</span>
+                <span v-for="(spectrum) in trackPointHash[feature.getId()]">{{ spectrum.name }}</span>
             </template>
         </div>
     </div>
@@ -123,27 +32,18 @@ import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source";
 import View from "ol/View";
 import {fromLonLat} from "ol/proj";
-import {useQuery} from "@urql/vue";
+
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import GeoJSON from "ol/format/GeoJSON"
 import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
-import {ref, onMounted, watch, reactive} from 'vue'
-import {List, User, Setting} from '@element-plus/icons-vue'
 import Overlay from 'ol/Overlay';
 
-import {
-    ElMessageBox,
-    ElButton,
-    ElDialog,
-    ElMessage,
-    ElRadioGroup,
-    ElRadio
-} from "element-plus";
-import {xml2js} from "../xml2js";
+import {ref, onMounted, watch, toRefs} from 'vue'
+import {calcColor} from "../colors";
 
-const devices      = [
+const devices = [
     "",
     "<a href=\"https://kbradar.org/p50432064-dozimetr-radiatsii-atom.html\" target=\"_blank\">AtomTag</a>",
     "<a href=\"https://kbradar.org/p167558602-brelok-dozimetr-radiatsii.html\" target=\"_blank\">AtomSwift</a>",
@@ -151,33 +51,21 @@ const devices      = [
     "<a href=\"http://youratom.com/\" target=\"_blank\">AtomStart</a>",
     "<a href=\"http://youratom.com/\" target=\"_blank\">AtomGamma</a>"
 ];
+
 const search_modes = ["Fast", "Medium", "Slow", "-"];
 
-let SCHEME_RED_GREEN = 0, SCHEME_RED_BLUE_16 = 1, SCHEME_RED_BLUE_32 = 2;
+const emit = defineEmits(['attachspectrum'])
 
-const schemes = {
-    [SCHEME_RED_GREEN]: {
-        name: '',
-        color: 'linear-gradient(to right, #2df700 0%,#fff200 50%,#ff0000 100%)'
-    },
-    [SCHEME_RED_BLUE_16]: {
-        name: 16,
-        color: 'linear-gradient(to right, #0015ff 0%,#00fceb 29%,#00fceb 43%,#2df700 53%,#fff200 70%,#ff0000 100%)'
-    },
-    [SCHEME_RED_BLUE_32]: {
-        name: 32,
-        color: 'linear-gradient(to right, #0015ff 0%,#00fceb 29%,#00fceb 43%,#2df700 53%,#fff200 70%,#ff0000 100%)'
-    }
+const attachSpectrum         = (id) => {
+    emit('attachspectrum', id)
 }
+const props                  = defineProps({
+    trackId: Number,
+    colorScheme: String
+})
+const {trackId, colorScheme} = toRefs(props)
 
-const currentTrack        = ref(2);
-const colorScheme         = ref(SCHEME_RED_BLUE_16 + '');
-const listTracksDialog    = ref(false);
-const toolbarDialog       = ref(false);
-const uploadSpectreDialog = ref(false)
-const currentTrackPoint   = ref(null)
-let trackPointHash        = ref({})
-
+let trackPointHash = ref({})
 
 const loadFeatures = async function (source, projection) {
     // const response = await fetch(
@@ -187,7 +75,7 @@ const loadFeatures = async function (source, projection) {
     //     }
     // )
     const response = await fetch(
-        import.meta.env.VITE_API_BASE_URL + '/api/rest/points/track/' + currentTrack.value,
+        import.meta.env.VITE_API_BASE_URL + '/api/rest/points/track/' + trackId.value,
         {
             method: 'GET',
         }
@@ -210,7 +98,6 @@ const loadFeatures = async function (source, projection) {
         for (let item of tmp) {
             trackPointHash.value[item.id] = item.spectrums
         }
-        console.log(trackPointHash)
         const temp = (new GeoJSON()).readFeatures(
             payload.track,
             {featureProjection: projection}
@@ -221,7 +108,7 @@ const loadFeatures = async function (source, projection) {
 
 let featuresSource = new VectorSource({
     loader: function (extent, resolution, projection) {
-        if (currentTrack.value > 0) {
+        if (trackId.value > 0) {
             loadFeatures(this, projection, extent)
         }
     },
@@ -229,65 +116,6 @@ let featuresSource = new VectorSource({
 })
 
 let styleCache = {};
-
-function interpolate(val, y0, x0, y1, x1) {
-    return (val - x0) * (y1 - y0) / (x1 - x0) + y0;
-}
-
-function blue(grayscale) {
-    if (grayscale < -0.33) return 1.0;
-    else if (grayscale < 0.33) return interpolate(grayscale, 1.0, -0.33, 0.0, 0.33);
-    else return 0.0;
-}
-
-function green(grayscale) {
-    if (grayscale < -1.0) return 0.0; // unexpected grayscale value
-    if (grayscale < -0.33) return interpolate(grayscale, 0.0, -1.0, 1.0, -0.33);
-    else if (grayscale < 0.33) return 1.0;
-    else if (grayscale <= 1.0) return interpolate(grayscale, 1.0, 0.33, 0.0, 1.0);
-    else return 1.0; // unexpected grayscale value
-}
-
-function red(grayscale) {
-    if (grayscale < -0.33) return 0.0;
-    else if (grayscale < 0.33) return interpolate(grayscale, 0.0, -0.33, 1.0, 0.33);
-    else return 1.0;
-}
-
-const calcColor = (value, color_scheme) => {
-    if (value > 1.0) value = 1.0;
-    if (value < 0) value = 0;
-
-    var r, g;
-    var q = 1;
-    if (color_scheme == SCHEME_RED_GREEN) {
-        if (value < 0.5) {
-            g = 255;
-            value /= 0.5;
-            r = (value * 255) | 0;
-        } else {
-            value -= 0.5;
-            value /= 0.5;
-            g = ((1 - value) * 255) | 0;
-            r = 255;
-        }
-        return {
-            r: r | 0,
-            g: g | 0,
-            b: 0
-        };
-    } else if (color_scheme == SCHEME_RED_BLUE_16) {
-        q = 16;
-    } else if (color_scheme == SCHEME_RED_BLUE_32) {
-        q = 32;
-    }
-    let gray = (((value * q) | 0) / q) * 2 - 1;
-    return {
-        r: (255 * red(gray)) | 0,
-        g: (255 * green(gray)) | 0,
-        b: (255 * blue(gray)) | 0
-    };
-}
 
 let featureLayer = new VectorLayer({
     source: featuresSource,
@@ -318,34 +146,15 @@ let featureLayer = new VectorLayer({
     }
 })
 
-watch(colorScheme, () => {
-    setInterval(() => {
-        styleCache = {};
-        featureLayer.getSource().dispatchEvent('change');
-    }, 1000);
-})
-
-const colorLegend = () => {
-
-    var maxIntensity = 0.1141;
-    var minIntensity = 0.041;
-    var colors_count = color_scheme == SCHEME_RED_BLUE_16 ? 16 : 32;
-    var diff         = maxIntensity - minIntensity;
-    for (var i = 0; i < colors_count; i++) {
-        var v               = 1 - i / (colors_count - 1);
-        var li              = document.createElement("li");
-        var color           = calcColor(v, color_scheme);
-        li.style.background = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-        if (i == 0 || i == colors_count - 1 || i == colors_count / 2 || i == colors_count / 4 || i == 3 * colors_count / 4) {
-            var d        = minIntensity + diff * v;
-            li.innerText = d.toFixed(2);
-        }
-        if (i == 1) {
-            li.innerText = "uSv/h";
-        }
-        this.ul.appendChild(li);
+watch(
+    colorScheme,
+    () => {
+        setInterval(() => {
+            styleCache = {};
+            featureLayer.getSource().dispatchEvent('change');
+        }, 1000);
     }
-}
+)
 
 const refreshMap = () => {
     const newLayer = new VectorSource({
@@ -357,10 +166,12 @@ const refreshMap = () => {
     featureLayer.setSource(newLayer)
     featuresSource = newLayer
 }
-watch(currentTrack, () => {
-    refreshMap()
-    listTracksDialog.value = false;
-})
+watch(
+    trackId,
+    () => {
+        refreshMap()
+    }
+)
 
 const feature = ref();
 onMounted(
@@ -410,99 +221,7 @@ onMounted(
         });
     }
 );
-const open         = () => {
-    ElMessageBox.prompt(
-        'Введите ссылку на atomfast',
-        'Новый трек',
-        {
-            confirmButtonText: 'OK',
-            inputValue: 'http://www.atomfast.net/maps/show/2849/?lat=54.7274&lng=26.014&z=14',
-            cancelButtonText: 'Cancel',
-        }
-    )
-        .then(async ({value}) => {
-            const response = await fetch('/atomfast', {
-                method: 'POST',
-                body: JSON.stringify({url: value})
-            })
-            const payload  = await response.json()
-            if (payload.error) {
-                ElMessage.error(payload.error)
-            }
-        })
-        .catch((e) => {
-            if (e === 'cancel') {
-                return
-            }
-            ElMessage.error('Произошла ошибка')
-            throw e;
-        })
-}
-const {data: list} = useQuery({
-        // language=GraphQL
-        query: `
-         query {
-            tracks: track {
-                id
-                name
-                atomfast_id
-                extra
-            }
-        }
-      `,
-    }
-)
 
-
-const readFile   = (raw) => {
-    return new Promise((resolve, reject) => {
-        const reader   = new FileReader();
-        reader.onload  = () => {
-            resolve(reader.result);
-        };
-        reader.onerror = reject;
-        reader.readAsText(raw);
-    });
-}
-const file       = ref(null);
-const attachment = ref();
-
-
-const attachSpectrum = (trackPointId) => {
-    uploadSpectreDialog.value = true
-    currentTrackPoint.value   = trackPointId
-}
-
-const handleFileUpload = async () => {
-    attachment.value = xml2js(await readFile(file.value.files[0]))
-    console.log(attachment.value)
-}
-
-const uploadSpectrum = () => {
-    fetch('/spectrum', {
-        method: 'POST',
-        body: JSON.stringify({
-            track_point_id: currentTrackPoint.value,
-            spectrum: attachment.value
-        })
-    }).then(r => r.json())
-        .then(
-            result => {
-                uploadSpectreDialog.value                                 = false;
-                trackPointHash.value[result.data.spectrum.track_point_id] = [{
-                    id: result.data.spectrum.id,
-                    name: result.data.spectrum.name,
-                    data: result.data.spectrum.data
-                }]
-                ElMessage.success({'message': 'Добавлено'})
-            }
-        )
-        .catch(e => {
-            ElMessage.error({'message': 'Произошла ошибка'})
-            throw e;
-        })
-    return false
-}
 </script>
 
 <style scoped>
@@ -518,31 +237,6 @@ const uploadSpectrum = () => {
     #map {
         padding-top: 40px;
     }
-}
-
-@media (max-width: 820px) {
-    .toolbar {
-        margin-left: 100px;
-    }
-}
-
-.toolbar {
-    position: absolute;
-    left: 0;
-    z-index: 1;
-    top: 0;
-    width: 99%;
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-}
-
-.bgr_gradient {
-    width: 32px;
-    height: 16px;
-    display: inline-block;
-    margin-left: 10px;
-    margin-right: 10px;
 }
 
 .ol-popup {
