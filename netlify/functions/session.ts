@@ -24,10 +24,11 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
     }
     try {
         const sessionCookie = await auth.createSessionCookie(input.token, {expiresIn})
+
         let d = new Date((new Date()).getTime() + expiresIn);
         return {
             statusCode: 200,
-            body: JSON.stringify({}),
+            body: JSON.stringify(await auth.verifySessionCookie(sessionCookie)),
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
             },
