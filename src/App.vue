@@ -6,11 +6,13 @@ import {
     ElRadioGroup,
     ElRadio, ElMessageBox, ElMessage
 } from "element-plus";
-import {ref, watch} from "vue";
+import {reactive, ref, watch} from "vue";
 import {useQuery} from "@urql/vue";
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
+import {initializeApp} from "firebase/app";
+import {getAuth, signInWithEmailAndPassword, setPersistence, inMemoryPersistence,} from "firebase/auth";
 
 const toolbarDialog      = ref(false);
 const currentTrack       = ref(2);
@@ -24,7 +26,7 @@ watch(
     }
 )
 
-const open                = () => {
+const open                       = () => {
     ElMessageBox.prompt(
         'Введите ссылку на atomfast',
         'Новый трек',
@@ -52,7 +54,7 @@ const open                = () => {
             throw e;
         })
 }
-const {data: list}        = useQuery({
+const {data: list, executeQuery} = useQuery({
         // language=GraphQL
         query: `
          query {
@@ -66,7 +68,7 @@ const {data: list}        = useQuery({
       `,
     }
 )
-const readFile            = (raw) => {
+const readFile                   = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -76,10 +78,11 @@ const readFile            = (raw) => {
         reader.readAsText(raw);
     });
 }
-const file                = ref(null);
-const attachment          = ref();
-const uploadSpectreDialog = ref(false)
-const currentTrackPoint   = ref(null)
+const file                       = ref(null);
+const attachment                 = ref();
+const uploadSpectreDialog        = ref(false)
+const currentTrackPoint          = ref(null)
+const ruleFormRef                = ref()
 
 const attachSpectrum = (trackPointId) => {
     uploadSpectreDialog.value = true
@@ -115,6 +118,73 @@ const uploadSpectrum = () => {
         })
     return false
 }
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
+    authDomain: "peredoz-by.firebaseapp.com",
+    projectId: "peredoz-by",
+    storageBucket: "peredoz-by.appspot.com",
+    messagingSenderId: "408847871523",
+    appId: "1:408847871523:web:d62f4308993d449b54cb96"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+const authModal  = ref(false)
+const form       = reactive({
+    username: '',
+    password: '',
+})
+const submitForm = async (formEl) => {
+    if (!formEl) {
+        return
+    }
+    await formEl.validate(async (valid, fields) => {
+        if (!valid) {
+            console.log('error submit!', fields)
+            return;
+        }
+        try {
+            await setPersistence(auth, inMemoryPersistence)
+            const credentials = await signInWithEmailAndPassword(auth, form.username, form.password)
+            const idToken     = await credentials.user.getIdToken()
+            await fetch(
+                '/session',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: idToken
+                    })
+                }
+            )
+            await executeQuery({requestPolicy: 'network-only'})
+        } catch (error) {
+            ElMessage.error('Произошла ошибка')
+            throw error;
+        }
+        ElMessage.success('Успешная авторизация')
+        authModal.value = false;
+
+        form.password = '';
+        form.username = '';
+    })
+}
+
+const rules = reactive({
+    username: [
+        {
+            required: true,
+            message: 'Введите логин',
+            trigger: 'change',
+        },
+    ]
+})
+
+
 </script>
 
 <template>
@@ -123,6 +193,7 @@ const uploadSpectrum = () => {
             <div class="header-links flex-grow-all pdng-l-20px pdng-r-20px mil-notdisplay">
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
                 <a href="#" @click="open">Импорт трека</a>
+                <a href="#" @click="authModal = true">Авторизация</a>
                 <el-popover
                     placement="left-end"
                     :width="200"
@@ -181,7 +252,7 @@ const uploadSpectrum = () => {
                                               v-for="(schema, key) in colorSchemes"
                                               style="width: 600px; float: left">
                                         {{ schema.name }}
-                                        <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                        <div class="bgr_gradient" :style="{'background': schema.color}"></div>
                                     </el-radio>
                                 </el-radio-group>
                             </template>
@@ -211,6 +282,26 @@ const uploadSpectrum = () => {
                 </el-radio>
             </el-radio-group>
         </template>
+    </el-dialog>
+    <el-dialog v-model="authModal" width="300px" center>
+        <el-form :model="form"
+                 ref="ruleFormRef"
+                 :rules="rules"
+                 label-width="150px"
+                 label-position="top">
+            <el-form-item label="Имя пользователя" prop="username">
+                <el-input v-model="form.username"/>
+            </el-form-item>
+            <el-form-item label="Пароль">
+                <el-input v-model="form.password" type="password"/>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="success"
+                           @click="submitForm(ruleFormRef)" :autofocus="true">
+                    Авторизация
+                </el-button>
+            </el-form-item>
+        </el-form>
     </el-dialog>
 </template>
 

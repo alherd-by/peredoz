@@ -78,6 +78,7 @@ const loadFeatures = async function (source, projection) {
         import.meta.env.VITE_API_BASE_URL + '/api/rest/points/track/' + trackId.value,
         {
             method: 'GET',
+            credentials: 'include',
         }
     )
     const payload  = await response.json()

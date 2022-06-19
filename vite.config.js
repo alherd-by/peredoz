@@ -18,6 +18,9 @@ export default defineConfig({
             },
             '^/spectrum': {
                 target: 'http://localhost:9999/.netlify/functions'
+            },
+            '^/session': {
+                target: 'http://localhost:9999/.netlify/functions'
             }
         },
     },
