@@ -1,2 +1,3 @@
 /atomfast https://peredoz.netlify.app/.netlify/functions/atomfast 200
 /spectrum https://peredoz.netlify.app/.netlify/functions/spectrum 200
+/session https://peredoz.netlify.app/.netlify/functions/session 200
