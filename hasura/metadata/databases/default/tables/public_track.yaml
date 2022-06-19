@@ -16,14 +16,14 @@ computed_fields:
         schema: public
         name: placeholder_feature_collection_type
 select_permissions:
-  - role: anonymous
+  - role: authorized
     permission:
       columns:
-        - id
         - name
-        - created_at
-        - extra
         - atomfast_id
+        - id
+        - extra
+        - created_at
       computed_fields:
         - placeholder_feature_collection
       filter: {}

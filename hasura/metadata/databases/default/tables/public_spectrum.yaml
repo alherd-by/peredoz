@@ -24,3 +24,15 @@ select_permissions:
         - created_at
         - geometry
       filter: {}
+      allow_aggregations: true
+  - role: authorized
+    permission:
+      columns:
+        - name
+        - id
+        - track_point_id
+        - data
+        - created_at
+        - geometry
+      filter: {}
+      allow_aggregations: true

@@ -8,8 +8,8 @@ initializeApp();
 exports.processSignUp = functions.auth.user().onCreate(async (user) => {
     const customClaims = {
         'https://hasura.io/jwt/claims': {
-            'x-hasura-default-role': 'superuser',
-            'x-hasura-allowed-roles': ['superuser'],
+            'x-hasura-default-role': 'authorized',
+            'x-hasura-allowed-roles': ['authorized'],
             'x-hasura-user-id': user.uid
         }
     };
