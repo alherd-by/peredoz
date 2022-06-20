@@ -29,5 +29,9 @@
           		name
           		atomfast_id
           		extra
+          		user {
+          			email
+          			id
+          		}
           	}
           }

@@ -27,7 +27,8 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
 
         let d = new Date((new Date()).getTime() + expiresIn);
         const decoded = await auth.verifySessionCookie(sessionCookie);
-        const user = {email: decoded['email']};
+        const u = await auth.getUser(decoded.uid);
+        const user = {email: decoded['email'], displayName: u.displayName};
         return {
             statusCode: 200,
             body: JSON.stringify({'success': true, user}),

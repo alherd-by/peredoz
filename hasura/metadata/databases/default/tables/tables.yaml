@@ -1,3 +1,4 @@
 - "!include public_spectrum.yaml"
 - "!include public_track.yaml"
 - "!include public_track_point.yaml"
+- "!include public_user.yaml"

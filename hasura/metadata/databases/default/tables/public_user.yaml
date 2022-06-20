@@ -1,0 +1,33 @@
+table:
+  schema: public
+  name: user
+array_relationships:
+  - name: points
+    using:
+      foreign_key_constraint_on:
+        column: user_id
+        table:
+          schema: public
+          name: track_point
+  - name: tracks
+    using:
+      foreign_key_constraint_on:
+        column: user_id
+        table:
+          schema: public
+          name: track
+select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - email
+        - id
+      filter: {}
+      limit: 1
+  - role: authorized
+    permission:
+      columns:
+        - email
+        - id
+      filter: {}
+      limit: 1
