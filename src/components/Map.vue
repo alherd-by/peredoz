@@ -75,12 +75,15 @@ const loadFeatures = async function (source, projection) {
     //     }
     // )
     const response = await fetch(
-        import.meta.env.VITE_API_BASE_URL + '/api/rest/points/track/' + trackId.value,
+        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points/track/' + trackId.value,
         {
             method: 'GET',
             credentials: 'include',
         }
     )
+    if (! response.ok) {
+        throw 'Invalid http response for fetching track'
+    }
     const payload  = await response.json()
 
     if (payload.features_by_pk) {

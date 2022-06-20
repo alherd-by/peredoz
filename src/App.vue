@@ -4,10 +4,11 @@ import {
     ElButton,
     ElDialog,
     ElRadioGroup,
-    ElRadio, ElMessageBox, ElMessage
+    ElRadio,
+    ElMessageBox,
+    ElMessage
 } from "element-plus";
-import {reactive, ref, watch} from "vue";
-import {useQuery} from "@urql/vue";
+import {onMounted, reactive, ref, watch} from "vue";
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
@@ -26,7 +27,7 @@ watch(
     }
 )
 
-const open                       = () => {
+const open = () => {
     ElMessageBox.prompt(
         'Введите ссылку на atomfast',
         'Новый трек',
@@ -54,21 +55,25 @@ const open                       = () => {
             throw e;
         })
 }
-const {data: list, executeQuery} = useQuery({
-        // language=GraphQL
-        query: `
-         query {
-            tracks: track {
-                id
-                name
-                atomfast_id
-                extra
-            }
+
+const list = ref();
+
+const fetchTracks         = async () => {
+    const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
+        {
+            credentials: 'include'
         }
-      `,
+    )
+    if (!response.ok) {
+        throw 'Invalid track list http response';
     }
-)
-const readFile                   = (raw) => {
+    const data = await response.json();
+    if (!data.tracks) {
+        throw 'Invalid track list format response';
+    }
+    list.value = data.tracks;
+}
+const readFile            = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -78,11 +83,11 @@ const readFile                   = (raw) => {
         reader.readAsText(raw);
     });
 }
-const file                       = ref(null);
-const attachment                 = ref();
-const uploadSpectreDialog        = ref(false)
-const currentTrackPoint          = ref(null)
-const ruleFormRef                = ref()
+const file                = ref(null);
+const attachment          = ref();
+const uploadSpectreDialog = ref(false)
+const currentTrackPoint   = ref(null)
+const ruleFormRef         = ref()
 
 const attachSpectrum = (trackPointId) => {
     uploadSpectreDialog.value = true
@@ -161,14 +166,13 @@ const submitForm = async (formEl) => {
                     })
                 }
             )
-            await executeQuery({requestPolicy: 'network-only'})
         } catch (error) {
             ElMessage.error('Произошла ошибка')
             throw error;
         }
         ElMessage.success('Успешная авторизация')
         authModal.value = false;
-
+        await fetchTracks()
         form.password = '';
         form.username = '';
     })
@@ -184,6 +188,9 @@ const rules = reactive({
     ]
 })
 
+onMounted(() => {
+    fetchTracks()
+})
 
 </script>
 
