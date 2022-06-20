@@ -7,3 +7,12 @@
     - GET
   name: track_points
   comment: null
+- definition:
+    query:
+      collection_name: allowed-queries
+      query_name: tracks
+  url: tracks
+  methods:
+    - GET
+  name: tracks
+  comment: null

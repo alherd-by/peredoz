@@ -21,3 +21,13 @@
           		}
           	}
           }
+      - name: tracks
+        query: |
+          query tracks {
+          	tracks: track {
+          		id
+          		name
+          		atomfast_id
+          		extra
+          	}
+          }
