@@ -26,15 +26,18 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         const sessionCookie = await auth.createSessionCookie(input.token, {expiresIn})
 
         let d = new Date((new Date()).getTime() + expiresIn);
+        const decoded = await auth.verifySessionCookie(sessionCookie);
+        const user = {email: decoded['email']};
         return {
             statusCode: 200,
-            body: JSON.stringify(await auth.verifySessionCookie(sessionCookie)),
+            body: JSON.stringify({'success': true, user}),
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
             },
             multiValueHeaders: {
                 'Set-Cookie': [
                     `AUTH=${sessionCookie}; Expires=${d.toUTCString()};Domain=${process.env.DOMAIN};Path=/; Secure; HttpOnly; SameSite=Strict`,
+                    `USER=${JSON.stringify(user)}; Expires=${d.toUTCString()};Domain=${process.env.DOMAIN};Path=/; Secure; SameSite=Strict`,
                 ]
             }
         }

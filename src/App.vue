@@ -14,6 +14,7 @@ import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
 import {initializeApp} from "firebase/app";
 import {getAuth, signInWithEmailAndPassword, setPersistence, inMemoryPersistence,} from "firebase/auth";
+import Cookies from 'js-cookie'
 
 const toolbarDialog      = ref(false);
 const currentTrack       = ref(2);
@@ -136,6 +137,16 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+function getUser() {
+    try {
+        return JSON.parse(Cookies.get('USER'))
+    } catch {
+        return {email: ''}
+    }
+
+}
+
+const user       = ref(getUser())
 const authModal  = ref(false)
 const form       = reactive({
     username: '',
@@ -153,8 +164,9 @@ const submitForm = async (formEl) => {
         try {
             await setPersistence(auth, inMemoryPersistence)
             const credentials = await signInWithEmailAndPassword(auth, form.username, form.password)
+            //todo перехват ошибок
             const idToken     = await credentials.user.getIdToken()
-            await fetch(
+            const response    = await fetch(
                 '/session',
                 {
                     method: 'POST',
@@ -166,6 +178,8 @@ const submitForm = async (formEl) => {
                     })
                 }
             )
+            const result      = await response.json();
+            user.value        = result.user;
         } catch (error) {
             ElMessage.error('Произошла ошибка')
             throw error;
@@ -200,7 +214,6 @@ onMounted(() => {
             <div class="header-links flex-grow-all pdng-l-20px pdng-r-20px mil-notdisplay">
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
                 <a href="#" @click="open">Импорт трека</a>
-                <a href="#" @click="authModal = true">Авторизация</a>
                 <el-popover
                     placement="left-end"
                     :width="200"
@@ -224,6 +237,11 @@ onMounted(() => {
                         </template>
                     </template>
                 </el-popover>
+                <a href="#" @click="authModal = true" v-if="! user.email">Авторизация</a>
+                <template v-else>
+                    <span style="padding-left: 10px">{{ user.email }}</span>
+                    <a href="#"> Выход</a>
+                </template>
             </div>
             <!-- mobile nav -->
             <div class="section toolbar notdisplay mil-show">
