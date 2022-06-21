@@ -21,6 +21,9 @@ export default defineConfig({
             },
             '^/session': {
                 target: 'http://localhost:9999/.netlify/functions'
+            },
+            '^/logout': {
+                target: 'http://localhost:9999/.netlify/functions'
             }
         },
     },

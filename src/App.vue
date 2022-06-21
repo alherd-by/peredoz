@@ -13,13 +13,39 @@ import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
 import {initializeApp} from "firebase/app";
-import {getAuth, signInWithEmailAndPassword, setPersistence, inMemoryPersistence,} from "firebase/auth";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    setPersistence,
+    inMemoryPersistence,
+    createUserWithEmailAndPassword
+} from "firebase/auth";
 import Cookies from 'js-cookie'
 
 const toolbarDialog      = ref(false);
 const currentTrack       = ref(2);
 const listTracksDialog   = ref(false);
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
+    authDomain: "peredoz-by.firebaseapp.com",
+    projectId: "peredoz-by",
+    storageBucket: "peredoz-by.appspot.com",
+    messagingSenderId: "408847871523",
+    appId: "1:408847871523:web:d62f4308993d449b54cb96"
+};
+
+const app    = initializeApp(firebaseConfig);
+const auth   = getAuth(app);
+const logout = async () => {
+    const response = await fetch('/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    const payload  = await response.json()
+    user.value     = payload.user;
+}
 
 watch(
     currentTrack,
@@ -89,8 +115,15 @@ const attachment          = ref();
 const uploadSpectreDialog = ref(false)
 const currentTrackPoint   = ref(null)
 const ruleFormRef         = ref()
-
-const attachSpectrum = (trackPointId) => {
+const registerFormRef     = ref()
+const user                = ref(getUser())
+const authModal           = ref(false)
+const registerModal       = ref(false)
+const form                = reactive({
+    username: '',
+    password: '',
+})
+const attachSpectrum      = (trackPointId) => {
     uploadSpectreDialog.value = true
     currentTrackPoint.value   = trackPointId
 }
@@ -125,17 +158,6 @@ const uploadSpectrum = () => {
     return false
 }
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
-    authDomain: "peredoz-by.firebaseapp.com",
-    projectId: "peredoz-by",
-    storageBucket: "peredoz-by.appspot.com",
-    messagingSenderId: "408847871523",
-    appId: "1:408847871523:web:d62f4308993d449b54cb96"
-};
-
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 
 function getUser() {
     try {
@@ -146,13 +168,47 @@ function getUser() {
 
 }
 
-const user       = ref(getUser())
-const authModal  = ref(false)
-const form       = reactive({
-    username: '',
-    password: '',
-})
-const submitForm = async (formEl) => {
+
+const submitRegisterForm = async (formEl) => {
+    if (!formEl) {
+        return
+    }
+    await formEl.validate(async (valid, fields) => {
+        if (!valid) {
+            console.log('error submit!', fields)
+            return;
+        }
+        try {
+            await setPersistence(auth, inMemoryPersistence)
+            const credentials = await createUserWithEmailAndPassword(auth, form.username, form.password)
+            //todo не сразу добавляется custom claim нужно думать над флоу
+            const idToken     = await credentials.user.getIdToken()
+            const response    = await fetch(
+                '/session',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: idToken
+                    })
+                }
+            )
+            const result      = await response.json();
+            user.value        = result.user;
+        } catch (error) {
+            ElMessage.error('Произошла ошибка')
+            throw error;
+        }
+        ElMessage.success('Успешная регистрация')
+        authModal.value = false;
+        await fetchTracks()
+        form.password = '';
+        form.username = '';
+    })
+}
+const submitForm         = async (formEl) => {
     if (!formEl) {
         return
     }
@@ -237,10 +293,13 @@ onMounted(() => {
                         </template>
                     </template>
                 </el-popover>
-                <a href="#" @click="authModal = true" v-if="! user.email">Авторизация</a>
+                <template v-if="! user.email">
+                    <a href="#" @click="authModal = true">Авторизация</a>
+                    <a href="#" @click="registerModal = true">Регистрация</a>
+                </template>
                 <template v-else>
                     <span style="padding-left: 10px">{{ user.email }}</span>
-                    <a href="#"> Выход</a>
+                    <a href="#" @click="logout"> Выход</a>
                 </template>
             </div>
             <!-- mobile nav -->
@@ -324,6 +383,26 @@ onMounted(() => {
                 <el-button type="success"
                            @click="submitForm(ruleFormRef)" :autofocus="true">
                     Авторизация
+                </el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+    <el-dialog v-model="registerModal" width="300px" center>
+        <el-form :model="form"
+                 ref="registerFormRef"
+                 :rules="rules"
+                 label-width="150px"
+                 label-position="top">
+            <el-form-item label="Имя пользователя" prop="username">
+                <el-input v-model="form.username"/>
+            </el-form-item>
+            <el-form-item label="Пароль">
+                <el-input v-model="form.password" type="password"/>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="success"
+                           @click="submitRegisterForm(registerFormRef)" :autofocus="true">
+                    Зарегистрироваться
                 </el-button>
             </el-form-item>
         </el-form>

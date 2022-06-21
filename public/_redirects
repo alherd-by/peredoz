@@ -1,4 +1,5 @@
 /atomfast https://peredoz.netlify.app/.netlify/functions/atomfast 200
 /spectrum https://peredoz.netlify.app/.netlify/functions/spectrum 200
 /session https://peredoz.netlify.app/.netlify/functions/session 200
+/logout https://peredoz.netlify.app/.netlify/functions/logout 200
 /api/*  https://peredoz.hasura.app/api/:splat  200
