@@ -1,13 +1,5 @@
 <script setup>
 import Map from './components/Map.vue'
-import {
-    ElButton,
-    ElDialog,
-    ElRadioGroup,
-    ElRadio,
-    ElMessageBox,
-    ElMessage
-} from "element-plus";
 import {onMounted, reactive, ref, watch} from "vue";
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
