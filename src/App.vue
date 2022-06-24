@@ -1,7 +1,7 @@
 <script setup>
 import Map from './components/Map.vue'
 import {onMounted, reactive, ref, watch} from "vue";
-import {ElLoading as vElLoading, ElMessage} from 'element-plus';
+import {ElLoading as vElLoading, ElMessage, ElDialog} from 'element-plus';
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
@@ -19,6 +19,15 @@ const toolbarDialog      = ref(false);
 const currentTrack       = ref(2);
 const listTracksDialog   = ref(false);
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
+
+const initialAdding = {
+    category: '',
+    track_type: '',
+    point_type: '',
+    location_type: ''
+}
+
+let adding = reactive({...initialAdding});
 
 const firebaseConfig = {
     apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
@@ -79,7 +88,7 @@ const open  = () => {
 
 const list = ref();
 
-const fetchTracks         = async () => {
+const fetchTracks       = async () => {
     const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
         {
             credentials: 'include'
@@ -94,7 +103,7 @@ const fetchTracks         = async () => {
     }
     list.value = data.tracks;
 }
-const readFile            = (raw) => {
+const readFile          = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -104,23 +113,24 @@ const readFile            = (raw) => {
         reader.readAsText(raw);
     });
 }
-const loading             = ref(false)
-const file                = ref(null);
-const attachment          = ref();
-const uploadSpectreDialog = ref(false)
-const currentTrackPoint   = ref(null)
-const ruleFormRef         = ref()
-const registerFormRef     = ref()
-const user                = ref(getUser())
-const authModal           = ref(false)
-const registerModal       = ref(false)
-const form                = reactive({
+const loading           = ref(false)
+const file              = ref(null);
+const attachment        = ref();
+const addingDialog      = ref(false)
+const currentTrackPoint = ref(null)
+const ruleFormRef       = ref()
+const registerFormRef   = ref()
+const user              = ref(getUser())
+const authModal         = ref(false)
+const registerModal     = ref(false)
+
+const form           = reactive({
     username: '',
     password: '',
 })
-const attachSpectrum      = (trackPointId) => {
-    uploadSpectreDialog.value = true
-    currentTrackPoint.value   = trackPointId
+const attachSpectrum = (trackPointId) => {
+    addingDialog.value      = true
+    currentTrackPoint.value = trackPointId
 }
 
 const handleFileUpload = async () => {
@@ -137,7 +147,7 @@ const uploadSpectrum = () => {
     }).then(r => r.json())
         .then(
             () => {
-                uploadSpectreDialog.value = false;
+                addingDialog.value = false;
                 // trackPointHash.value[result.data.spectrum.track_point_id] = [{
                 //     id: result.data.spectrum.id,
                 //     name: result.data.spectrum.name,
@@ -153,7 +163,6 @@ const uploadSpectrum = () => {
     return false
 }
 
-
 function getUser() {
     try {
         return JSON.parse(Cookies.get('USER'))
@@ -162,7 +171,6 @@ function getUser() {
     }
 
 }
-
 
 const submitRegisterForm = async (formEl) => {
     if (!formEl) {
@@ -265,6 +273,14 @@ onMounted(() => {
 const focusElement = (id) => {
     document.getElementById(id).focus()
 }
+
+watch(() => adding.category,
+    (category) => {
+        Object.assign(adding, {
+            ...initialAdding,
+            category
+        });
+    })
 </script>
 
 <template>
@@ -278,7 +294,7 @@ const focusElement = (id) => {
             </a>
             <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
-                <a href="#" @click="open">Импорт трека</a>
+                <a href="#" @click="addingDialog = true">Добавить</a>
                 <el-popover
                     placement="left-end"
                     :width="200"
@@ -313,44 +329,60 @@ const focusElement = (id) => {
             </div>
             <!-- mobile nav -->
             <div class="section toolbar notdisplay mil-show">
-                <span>&nbsp;</span>
-                <div>
-                    <el-button :icon="List"
-                               @click="listTracksDialog = true"
-                               size="large"
-                               circle/>
-                    <el-button @click="open"
-                               :icon="User"
-                               size="large"
-                               type="warning"
-                               circle/>
-                    <el-popover
-                        placement="bottom"
-                        :width="200"
-                        trigger="click"
-                        content="this is content, this is content, this is content"
-                    >
-                        <template #reference>
-                            <el-button :icon="Setting"
-                                       @click="toolbarDialog = true"
-                                       size="large"
-                                       type="warning"
-                                       circle/>
+                <input id="brgrbtn" class="notdisplay mil-show" type="checkbox">
+                <label for="brgrbtn" class="notdisplay burger-button mil-show">
+                    <div class="burger-button-line"></div>
+                    <div class="burger-button-line"></div>
+                    <div class="burger-button-line"></div>
+                </label>
+                <div class="brgr-nav notdisplay mil-show">
+                    <div class="header-links pdng-l-20px pdng-r-20px">
+                        <div class="pdng-t-5px">
+                            <a href="#" @click="listTracksDialog = true">Список треков</a>
+                        </div>
+                        <div class="pdng-t-5px">
+                            <a href="#" @click="addingDialog = true">Добавить</a>
+                        </div>
+                        <div class="pdng-t-5px">
+                            <el-popover
+                                placement="left-end"
+                                :width="200"
+                                trigger="click"
+                                content="this is content, this is content, this is content"
+                            >
+                                <template #reference>
+                                    <a href="#" @click="toolbarDialog = true">Цвета</a>
+                                </template>
+                                <template #default>
+                                    <h3>Схемы</h3>
+                                    <template v-if="list">
+                                        <el-radio-group v-model="currentColorScheme">
+                                            <el-radio :label="key"
+                                                      v-for="(track, key) in colorSchemes"
+                                                      style="width: 600px; float: left">
+                                                {{ track.name }}
+                                                <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                            </el-radio>
+                                        </el-radio-group>
+                                    </template>
+                                </template>
+                            </el-popover>
+                        </div>
+                        <template v-if="! user.email">
+                            <div class="pdng-t-5px">
+                                <a href="#" @click="authModal = true">Авторизация</a>
+                            </div>
+                            <div class="pdng-t-5px">
+                                <a href="#" @click="registerModal = true">Регистрация</a>
+                            </div>
                         </template>
-                        <template #default>
-                            <h3>Схемы</h3>
-                            <template v-if="list">
-                                <el-radio-group v-model="currentColorScheme">
-                                    <el-radio :label="key"
-                                              v-for="(schema, key) in colorSchemes"
-                                              style="width: 600px; float: left">
-                                        {{ schema.name }}
-                                        <div class="bgr_gradient" :style="{'background': schema.color}"></div>
-                                    </el-radio>
-                                </el-radio-group>
-                            </template>
+                        <template v-else>
+                            <div class="pdng-t-5px">
+                                <span style="color:black">{{ user.email }}</span>
+                                <a href="#" @click="logout"> Выход</a>
+                            </div>
                         </template>
-                    </el-popover>
+                    </div>
                 </div>
             </div>
         </div>
@@ -358,12 +390,61 @@ const focusElement = (id) => {
     <Map :track-id="currentTrack"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
-    <el-dialog v-model="uploadSpectreDialog">
-        <h3>Добавить спектр</h3>
-        <form @submit.prevent="uploadSpectrum">
-            <input type="file" name="spectrum" ref="file" v-on:change="handleFileUpload()">
-            <button type="submit">Load</button>
-        </form>
+    <el-dialog v-model="addingDialog">
+        <h3>Добавить...</h3>
+        <el-form class="pdng-t-10px" label-width="180px">
+            <el-form-item label="Категория">
+                <el-radio-group v-model="adding.category" size="large">
+                    <el-radio-button :label="'track'">Трек</el-radio-button>
+                    <el-radio-button :label="'point'">Точка</el-radio-button>
+                </el-radio-group>
+            </el-form-item>
+            <template v-if="adding.category === 'track'">
+                <el-form-item label="Тип">
+                    <el-radio-group v-model="adding.track_type" size="large">
+                        <el-radio-button :label="'atomfast'">Atomfast</el-radio-button>
+                        <el-radio-button :label="'radiocode'">RadioCode</el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="Atomfast" v-if="adding.track_type === 'atomfast'">
+                    <el-input placeholder="Ссылка"></el-input>
+                </el-form-item>
+                <el-form-item label="RadioCode" v-if="adding.track_type === 'radiocode'">
+                    <el-input type="textarea" placeholder="Комментарий"></el-input>
+                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
+                           v-on:change="handleFileUpload()">
+                </el-form-item>
+            </template>
+            <template v-if="adding.category === 'point'">
+                <el-form-item label="Тип">
+                    <el-radio-group v-model="adding.point_type" size="large">
+                        <el-radio-button :label="'spectrum'">Спектр</el-radio-button>
+                        <el-radio-button :label="'generic'">Комментарий/файл</el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+                <el-form-item label="Спектр" v-if="adding.point_type === 'spectrum'">
+                    <el-input placeholder="Название"></el-input>
+                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
+                           v-on:change="handleFileUpload()">
+                </el-form-item>
+                <el-form-item label="Комментарий/файл" v-if="adding.point_type === 'generic'">
+                    <el-input type="textarea" placeholder="Комментарий"></el-input>
+                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
+                           v-on:change="handleFileUpload()">
+                </el-form-item>
+                <el-form-item label="Локация" v-if="adding.point_type">
+                    <el-radio-group v-model="adding.location_type" size="large">
+                        <el-radio-button :label="'current'">Текущее местоположение</el-radio-button>
+                        <el-radio-button :label="'specifying'">Указать на карте</el-radio-button>
+                    </el-radio-group>
+                </el-form-item>
+            </template>
+            <template v-if="adding.track_type || adding.point_type">
+                <el-form-item>
+                    <el-button native-type="submit">Сохранить</el-button>
+                </el-form-item>
+            </template>
+        </el-form>
     </el-dialog>
     <el-dialog v-model="listTracksDialog">
         <h3>Список треков</h3>
@@ -434,7 +515,6 @@ const focusElement = (id) => {
 }
 
 .toolbar {
-    position: absolute;
     left: 0;
     z-index: 1;
     top: 0;
