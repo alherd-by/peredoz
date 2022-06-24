@@ -2,6 +2,7 @@ import {Handler, HandlerResponse} from "@netlify/functions";
 import {JSONResponse} from "../src/json_response";
 import {initializeApp, cert} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
+import {mutation} from "../src/client";
 
 const app = initializeApp({
     credential: cert(JSON.parse(process.env.FIREBASE_CREDENTIALS))
@@ -29,9 +30,33 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         const decoded = await auth.verifySessionCookie(sessionCookie);
         const u = await auth.getUser(decoded.uid);
         const user = {email: decoded['email'], displayName: u.displayName};
+        let result;
+        if (event.queryStringParameters['signup']) {
+            // language=GraphQL
+            try {
+                result = await mutation(`mutation add_user($id: String!, $email: String!, $name: String!) {
+                    insert_user_one(
+                        object: {id: $id, email: $email, display_name: $name},
+                        on_conflict: {constraint: user_pk, update_columns: [email]}
+                    ) {
+                        id
+                    }
+                }`,
+                    {
+                        name: u.displayName,
+                        email: decoded.email,
+                        id: decoded.uid,
+                    },
+                    sessionCookie
+                )
+            } catch (e) {
+                result = e;
+                console.log(e);
+            }
+        }
         return {
             statusCode: 200,
-            body: JSON.stringify({'success': true, user}),
+            body: JSON.stringify({'success': true, user, signup: result}),
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8',
             },

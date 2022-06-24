@@ -180,7 +180,7 @@ const submitRegisterForm = async (formEl) => {
             //todo не сразу добавляется custom claim нужно думать над флоу
             const idToken     = await credentials.user.getIdToken()
             const response    = await fetch(
-                '/session',
+                '/session?signup=true',
                 {
                     method: 'POST',
                     headers: {

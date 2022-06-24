@@ -8,8 +8,18 @@ const client = createClient({
     exchanges: defaultExchanges,
 });
 
-const mutation = async (query: string, variables: any) : Promise<OperationResult> => {
-    return client.mutation(gql(query), variables).toPromise();
+const mutation = async (query: string, variables: any, token?: any): Promise<OperationResult> => {
+    return client.mutation(
+        gql(query),
+        variables,
+        {
+            fetchOptions: {
+                headers: {
+                    'Cookie': 'AUTH=' + token
+                }
+            }
+        }
+    ).toPromise();
 }
 
 export {mutation}
