@@ -390,7 +390,7 @@ watch(() => adding.category,
     <Map :track-id="currentTrack"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
-    <el-dialog v-model="addingDialog">
+    <el-dialog v-model="addingDialog" @close="adding.category = ''">
         <h3>Добавить...</h3>
         <el-form class="pdng-t-10px" label-width="180px">
             <el-form-item label="Категория">
