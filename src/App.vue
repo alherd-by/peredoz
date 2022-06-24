@@ -270,7 +270,13 @@ const focusElement = (id) => {
 <template>
     <div class="header-wrp fixedhrd">
         <div class="header flex-row flex-algn-itms-c">
-            <div class="header-links flex-grow-all pdng-l-20px pdng-r-20px mil-notdisplay">
+            <a href="#" class="section pdng-l-20px">
+                <img src="/imgs/logo.png"
+                     alt="logo"
+                     style="height: 20px"
+                     class="zoom-0_75 mil-zoom-0_5">
+            </a>
+            <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
                 <a href="#" @click="listTracksDialog = true">Список треков</a>
                 <a href="#" @click="open">Импорт трека</a>
                 <el-popover
