@@ -174,6 +174,7 @@ const submitRegisterForm = async (formEl) => {
             return;
         }
         try {
+            loading.value = true;
             await setPersistence(auth, inMemoryPersistence)
             const credentials = await createUserWithEmailAndPassword(auth, form.username, form.password)
             //todo не сразу добавляется custom claim нужно думать над флоу
@@ -193,9 +194,11 @@ const submitRegisterForm = async (formEl) => {
             const result      = await response.json();
             user.value        = result.user;
         } catch (error) {
+            loading.value = false;
             ElMessage.error('Произошла ошибка')
             throw error;
         }
+        loading.value = false;
         ElMessage.success('Успешная регистрация')
         authModal.value = false;
         await fetchTracks()
@@ -259,8 +262,8 @@ const rules = reactive({
 onMounted(() => {
     fetchTracks()
 })
-const opened = () => {
-    document.getElementById('signin-login').focus()
+const focusElement = (id) => {
+    document.getElementById(id).focus()
 }
 </script>
 
@@ -367,7 +370,7 @@ const opened = () => {
             </el-radio-group>
         </template>
     </el-dialog>
-    <el-dialog v-model="authModal" width="300px" @opened="opened" center>
+    <el-dialog v-model="authModal" width="300px" @opened="focusElement('signin-login')" center>
         <el-form :model="form"
                  ref="ruleFormRef"
                  :rules="rules"
@@ -393,14 +396,16 @@ const opened = () => {
             </el-form-item>
         </el-form>
     </el-dialog>
-    <el-dialog v-model="registerModal" width="300px" center>
+    <el-dialog v-model="registerModal" width="300px" @opened="focusElement('signup-login')" center>
         <el-form :model="form"
                  ref="registerFormRef"
                  :rules="rules"
+                 v-loading="loading"
+                 @submit.prevent="submitRegisterForm(registerFormRef)"
                  label-width="150px"
                  label-position="top">
             <el-form-item label="Имя пользователя" prop="username">
-                <el-input v-model="form.username"/>
+                <el-input v-model="form.username" id="signup-login"/>
             </el-form-item>
             <el-form-item label="Пароль">
                 <el-input v-model="form.password" type="password"/>
