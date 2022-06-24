@@ -1,6 +1,7 @@
 <script setup>
 import Map from './components/Map.vue'
 import {onMounted, reactive, ref, watch} from "vue";
+import {ElLoading as vElLoading, ElMessage} from 'element-plus';
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {List, User, Setting} from '@element-plus/icons-vue'
@@ -46,7 +47,8 @@ watch(
     }
 )
 
-const open = () => {
+const login = ref()
+const open  = () => {
     ElMessageBox.prompt(
         'Введите ссылку на atomfast',
         'Новый трек',
@@ -102,6 +104,7 @@ const readFile            = (raw) => {
         reader.readAsText(raw);
     });
 }
+const loading             = ref(false)
 const file                = ref(null);
 const attachment          = ref();
 const uploadSpectreDialog = ref(false)
@@ -210,6 +213,7 @@ const submitForm         = async (formEl) => {
             return;
         }
         try {
+            loading.value = true
             await setPersistence(auth, inMemoryPersistence)
             const credentials = await signInWithEmailAndPassword(auth, form.username, form.password)
             //todo перехват ошибок
@@ -229,9 +233,11 @@ const submitForm         = async (formEl) => {
             const result      = await response.json();
             user.value        = result.user;
         } catch (error) {
+            loading.value = false
             ElMessage.error('Произошла ошибка')
             throw error;
         }
+        loading.value = false
         ElMessage.success('Успешная авторизация')
         authModal.value = false;
         await fetchTracks()
@@ -253,7 +259,9 @@ const rules = reactive({
 onMounted(() => {
     fetchTracks()
 })
-
+const opened = () => {
+    document.getElementById('signin-login').focus()
+}
 </script>
 
 <template>
@@ -359,21 +367,27 @@ onMounted(() => {
             </el-radio-group>
         </template>
     </el-dialog>
-    <el-dialog v-model="authModal" width="300px" center>
+    <el-dialog v-model="authModal" width="300px" @opened="opened" center>
         <el-form :model="form"
                  ref="ruleFormRef"
                  :rules="rules"
+                 @submit.prevent="submitForm(ruleFormRef)"
+                 v-loading="loading"
                  label-width="150px"
                  label-position="top">
             <el-form-item label="Имя пользователя" prop="username">
-                <el-input v-model="form.username"/>
+                <el-input :tabindex="0" v-model="form.username"
+                          id="signin-login"
+                          ref="login"
+                          autofocus="autofocus"/>
             </el-form-item>
             <el-form-item label="Пароль">
                 <el-input v-model="form.password" type="password"/>
             </el-form-item>
             <el-form-item>
                 <el-button type="success"
-                           @click="submitForm(ruleFormRef)" :autofocus="true">
+                           native-type="submit"
+                           @click="submitForm(ruleFormRef)">
                     Авторизация
                 </el-button>
             </el-form-item>

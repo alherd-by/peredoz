@@ -13,6 +13,7 @@ declare module '@vue/runtime-core' {
     ElPopover: typeof import('element-plus/es')['ElPopover']
     ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
+    Loading: typeof import('element-plus/es')['ElLoadingDirective']
     Map: typeof import('./src/components/Map.vue')['default']
   }
 }
