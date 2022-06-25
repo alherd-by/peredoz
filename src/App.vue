@@ -17,7 +17,9 @@ const initialAdding = {
     category: '',
     track_type: '',
     point_type: '',
-    location_type: ''
+    location_type: '',
+    name: '',
+    atomfast_url: ''
 }
 
 let adding = reactive({...initialAdding});
@@ -29,33 +31,13 @@ watch(
     }
 )
 
-const open = () => {
-    ElMessageBox.prompt(
-        'Введите ссылку на atomfast',
-        'Новый трек',
-        {
-            confirmButtonText: 'OK',
-            inputValue: 'http://www.atomfast.net/maps/show/2849/?lat=54.7274&lng=26.014&z=14',
-            cancelButtonText: 'Cancel',
-        }
-    )
-        .then(async ({value}) => {
-            const response = await fetch('/atomfast', {
-                method: 'POST',
-                body: JSON.stringify({url: value})
-            })
-            const payload  = await response.json()
-            if (payload.error) {
-                ElMessage.error(payload.error)
-            }
-        })
-        .catch((e) => {
-            if (e === 'cancel') {
-                return
-            }
-            ElMessage.error('Произошла ошибка')
-            throw e;
-        })
+const addAtomfastTrack = async () => {
+    const response = await fetch('/atomfast', {
+        method: 'POST',
+        body: JSON.stringify({url: adding.atomfast_url, name: adding.name})
+    })
+
+    return await response.json()
 }
 
 const list = ref();
@@ -91,6 +73,7 @@ const attachment        = ref();
 const addingDialog      = ref(false)
 const currentTrackPoint = ref(null)
 const auth              = ref();
+const loading           = ref(false)
 
 const user = ref(getUser())
 
@@ -140,6 +123,27 @@ const onLogout = (value) => {
 onMounted(() => {
     fetchTracks()
 })
+
+const save = async () => {
+    if (adding.category !== 'track' && adding.track_type !== 'atomfast') {
+        return
+    }
+    loading.value = true;
+    try {
+        const payload = await addAtomfastTrack()
+        if (payload.error) {
+            ElMessage.error(payload.error)
+        } else {
+            ElMessage.success('Трек с Atomfast успешно добавлен')
+            addingDialog.value = false
+        }
+    } catch (e) {
+        ElMessage.error('Произошла ошибка')
+        throw e;
+    } finally {
+        loading.value = false;
+    }
+}
 
 watch(() => adding.category,
     (category) => {
@@ -259,7 +263,10 @@ watch(() => adding.category,
          @attachspectrum="attachSpectrum"/>
     <el-dialog v-model="addingDialog" @close="adding.category = ''">
         <h3>Добавить...</h3>
-        <el-form class="pdng-t-10px" label-width="180px">
+        <el-form class="pdng-t-10px" label-width="180px"
+                 v-loading="loading"
+                 :model="adding"
+                 @submit.prevent="save">
             <el-form-item label="Категория">
                 <el-radio-group v-model="adding.category" size="large">
                     <el-radio-button :label="'track'">Трек</el-radio-button>
@@ -273,9 +280,15 @@ watch(() => adding.category,
                         <el-radio-button :label="'radiocode'">RadioCode</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="Atomfast" v-if="adding.track_type === 'atomfast'">
-                    <el-input placeholder="Ссылка"></el-input>
-                </el-form-item>
+                <template v-if="adding.track_type === 'atomfast'">
+                    <el-form-item label="Ссылка на трек" required prop="atomfast_url">
+                        <el-input placeholder="http://atomfast" v-model="adding.atomfast_url"></el-input>
+                    </el-form-item>
+                    <el-form-item label="Название" required prop="name">
+                        <el-input placeholder="" v-model="adding.name"></el-input>
+                    </el-form-item>
+                </template>
+
                 <el-form-item label="RadioCode" v-if="adding.track_type === 'radiocode'">
                     <el-input type="textarea" placeholder="Комментарий"></el-input>
                     <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
