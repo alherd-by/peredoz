@@ -19,7 +19,35 @@ computed_fields:
       function:
         schema: public
         name: placeholder_feature_collection_type
+insert_permissions:
+  - role: authorized
+    permission:
+      check:
+        user_id:
+          _eq: X-Hasura-User-Id
+      set:
+        user_id: x-hasura-user-id
+      columns:
+        - atomfast_id
+        - created_at
+        - extra
+        - id
+        - name
+      backend_only: false
 select_permissions:
+  - role: anonymous
+    permission:
+      columns:
+        - name
+        - user_id
+        - atomfast_id
+        - id
+        - extra
+        - created_at
+      computed_fields:
+        - placeholder_feature_collection
+      filter: {}
+      limit: 10
   - role: authorized
     permission:
       columns:

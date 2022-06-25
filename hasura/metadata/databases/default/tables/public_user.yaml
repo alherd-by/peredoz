@@ -16,10 +16,22 @@ array_relationships:
         table:
           schema: public
           name: track
+insert_permissions:
+  - role: authorized
+    permission:
+      check:
+        id:
+          _eq: X-Hasura-User-Id
+      columns:
+        - display_name
+        - email
+        - id
+      backend_only: false
 select_permissions:
   - role: anonymous
     permission:
       columns:
+        - display_name
         - email
         - id
       filter: {}
@@ -27,7 +39,21 @@ select_permissions:
   - role: authorized
     permission:
       columns:
+        - display_name
         - email
         - id
       filter: {}
       limit: 1
+update_permissions:
+  - role: authorized
+    permission:
+      columns:
+        - display_name
+        - email
+        - id
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+      check:
+        id:
+          _eq: X-Hasura-User-Id

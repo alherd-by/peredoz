@@ -22,14 +22,29 @@ computed_fields:
       function:
         schema: public
         name: placeholder_feature_type
+insert_permissions:
+  - role: authorized
+    permission:
+      check:
+        user_id:
+          _eq: X-Hasura-User-Id
+      set:
+        user_id: x-hasura-user-id
+      columns:
+        - geometry
+        - id
+        - properties
+        - track_id
+      backend_only: false
 select_permissions:
   - role: anonymous
     permission:
       columns:
-        - id
         - geometry
-        - track_id
+        - id
         - properties
+        - track_id
+        - user_id
       computed_fields:
         - placeholder_feature
       filter: {}
@@ -37,10 +52,11 @@ select_permissions:
   - role: authorized
     permission:
       columns:
-        - id
-        - track_id
-        - properties
         - geometry
+        - id
+        - properties
+        - track_id
+        - user_id
       computed_fields:
         - placeholder_feature
       filter: {}

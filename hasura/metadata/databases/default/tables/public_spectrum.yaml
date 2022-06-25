@@ -1,18 +1,6 @@
 table:
   schema: public
   name: spectrum
-insert_permissions:
-  - role: anonymous
-    permission:
-      check: {}
-      columns:
-        - id
-        - name
-        - data
-        - created_at
-        - track_point_id
-        - geometry
-      backend_only: false
 select_permissions:
   - role: anonymous
     permission:
