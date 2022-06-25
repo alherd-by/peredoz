@@ -1,19 +1,12 @@
 <script setup>
 import Map from './components/Map.vue'
+import Auth from "./components/Auth.vue";
+
 import {onMounted, reactive, ref, watch} from "vue";
-import {ElLoading as vElLoading, ElMessage, ElDialog} from 'element-plus';
+import {ElMessage} from 'element-plus';
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
-import {List, User, Setting} from '@element-plus/icons-vue'
-import {initializeApp} from "firebase/app";
-import {
-    getAuth,
-    signInWithEmailAndPassword,
-    setPersistence,
-    inMemoryPersistence,
-    createUserWithEmailAndPassword
-} from "firebase/auth";
-import Cookies from 'js-cookie'
+import {getUser} from "./user";
 
 const toolbarDialog      = ref(false);
 const currentTrack       = ref(2);
@@ -29,26 +22,6 @@ const initialAdding = {
 
 let adding = reactive({...initialAdding});
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
-    authDomain: "peredoz-by.firebaseapp.com",
-    projectId: "peredoz-by",
-    storageBucket: "peredoz-by.appspot.com",
-    messagingSenderId: "408847871523",
-    appId: "1:408847871523:web:d62f4308993d449b54cb96"
-};
-
-const app    = initializeApp(firebaseConfig);
-const auth   = getAuth(app);
-const logout = async () => {
-    const response = await fetch('/logout', {
-        method: 'POST',
-        credentials: 'include'
-    })
-    const payload  = await response.json()
-    user.value     = payload.user;
-}
-
 watch(
     currentTrack,
     () => {
@@ -56,8 +29,7 @@ watch(
     }
 )
 
-const login = ref()
-const open  = () => {
+const open = () => {
     ElMessageBox.prompt(
         'Введите ссылку на atomfast',
         'Новый трек',
@@ -88,7 +60,7 @@ const open  = () => {
 
 const list = ref();
 
-const fetchTracks       = async () => {
+const fetchTracks = async () => {
     const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
         {
             credentials: 'include'
@@ -103,7 +75,7 @@ const fetchTracks       = async () => {
     }
     list.value = data.tracks;
 }
-const readFile          = (raw) => {
+const readFile    = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -113,21 +85,15 @@ const readFile          = (raw) => {
         reader.readAsText(raw);
     });
 }
-const loading           = ref(false)
+
 const file              = ref(null);
 const attachment        = ref();
 const addingDialog      = ref(false)
 const currentTrackPoint = ref(null)
-const ruleFormRef       = ref()
-const registerFormRef   = ref()
-const user              = ref(getUser())
-const authModal         = ref(false)
-const registerModal     = ref(false)
+const auth              = ref();
 
-const form           = reactive({
-    username: '',
-    password: '',
-})
+const user = ref(getUser())
+
 const attachSpectrum = (trackPointId) => {
     addingDialog.value      = true
     currentTrackPoint.value = trackPointId
@@ -163,116 +129,17 @@ const uploadSpectrum = () => {
     return false
 }
 
-function getUser() {
-    try {
-        return JSON.parse(Cookies.get('USER'))
-    } catch {
-        return {email: ''}
-    }
-
+const onAuth   = (value) => {
+    console.log(value)
+    user.value = value;
+    fetchTracks()
 }
-
-const submitRegisterForm = async (formEl) => {
-    if (!formEl) {
-        return
-    }
-    await formEl.validate(async (valid, fields) => {
-        if (!valid) {
-            console.log('error submit!', fields)
-            return;
-        }
-        try {
-            loading.value = true;
-            await setPersistence(auth, inMemoryPersistence)
-            const credentials = await createUserWithEmailAndPassword(auth, form.username, form.password)
-            //todo не сразу добавляется custom claim нужно думать над флоу
-            const idToken     = await credentials.user.getIdToken()
-            const response    = await fetch(
-                '/session?signup=true',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: idToken
-                    })
-                }
-            )
-            const result      = await response.json();
-            user.value        = result.user;
-        } catch (error) {
-            loading.value = false;
-            ElMessage.error('Произошла ошибка')
-            throw error;
-        }
-        loading.value = false;
-        ElMessage.success('Успешная регистрация')
-        authModal.value = false;
-        await fetchTracks()
-        form.password = '';
-        form.username = '';
-    })
+const onLogout = (value) => {
+    user.value = value
 }
-const submitForm         = async (formEl) => {
-    if (!formEl) {
-        return
-    }
-    await formEl.validate(async (valid, fields) => {
-        if (!valid) {
-            console.log('error submit!', fields)
-            return;
-        }
-        try {
-            loading.value = true
-            await setPersistence(auth, inMemoryPersistence)
-            const credentials = await signInWithEmailAndPassword(auth, form.username, form.password)
-            //todo перехват ошибок
-            const idToken     = await credentials.user.getIdToken()
-            const response    = await fetch(
-                '/session',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: idToken
-                    })
-                }
-            )
-            const result      = await response.json();
-            user.value        = result.user;
-        } catch (error) {
-            loading.value = false
-            ElMessage.error('Произошла ошибка')
-            throw error;
-        }
-        loading.value = false
-        ElMessage.success('Успешная авторизация')
-        authModal.value = false;
-        await fetchTracks()
-        form.password = '';
-        form.username = '';
-    })
-}
-
-const rules = reactive({
-    username: [
-        {
-            required: true,
-            message: 'Введите логин',
-            trigger: 'change',
-        },
-    ]
-})
-
 onMounted(() => {
     fetchTracks()
 })
-const focusElement = (id) => {
-    document.getElementById(id).focus()
-}
 
 watch(() => adding.category,
     (category) => {
@@ -319,12 +186,12 @@ watch(() => adding.category,
                     </template>
                 </el-popover>
                 <template v-if="! user.email">
-                    <a href="#" @click="authModal = true">Авторизация</a>
-                    <a href="#" @click="registerModal = true">Регистрация</a>
+                    <a href="#" @click="auth.openSignIn()">Авторизация</a>
+                    <a href="#" @click="auth.openSignUp()">Регистрация</a>
                 </template>
                 <template v-else>
                     <span style="padding-left: 10px">{{ user.email }}</span>
-                    <a href="#" @click="logout"> Выход</a>
+                    <a href="#" @click="auth.logout"> Выход</a>
                 </template>
             </div>
             <!-- mobile nav -->
@@ -457,54 +324,7 @@ watch(() => adding.category,
             </el-radio-group>
         </template>
     </el-dialog>
-    <el-dialog v-model="authModal" width="300px" @opened="focusElement('signin-login')" center>
-        <el-form :model="form"
-                 ref="ruleFormRef"
-                 :rules="rules"
-                 @submit.prevent="submitForm(ruleFormRef)"
-                 v-loading="loading"
-                 label-width="150px"
-                 label-position="top">
-            <el-form-item label="Имя пользователя" prop="username">
-                <el-input :tabindex="0" v-model="form.username"
-                          id="signin-login"
-                          ref="login"
-                          autofocus="autofocus"/>
-            </el-form-item>
-            <el-form-item label="Пароль">
-                <el-input v-model="form.password" type="password"/>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="success"
-                           native-type="submit"
-                           @click="submitForm(ruleFormRef)">
-                    Авторизация
-                </el-button>
-            </el-form-item>
-        </el-form>
-    </el-dialog>
-    <el-dialog v-model="registerModal" width="300px" @opened="focusElement('signup-login')" center>
-        <el-form :model="form"
-                 ref="registerFormRef"
-                 :rules="rules"
-                 v-loading="loading"
-                 @submit.prevent="submitRegisterForm(registerFormRef)"
-                 label-width="150px"
-                 label-position="top">
-            <el-form-item label="Имя пользователя" prop="username">
-                <el-input v-model="form.username" id="signup-login"/>
-            </el-form-item>
-            <el-form-item label="Пароль">
-                <el-input v-model="form.password" type="password"/>
-            </el-form-item>
-            <el-form-item>
-                <el-button type="success"
-                           @click="submitRegisterForm(registerFormRef)" :autofocus="true">
-                    Зарегистрироваться
-                </el-button>
-            </el-form-item>
-        </el-form>
-    </el-dialog>
+    <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>
 
 <style scoped>
