@@ -19,7 +19,10 @@ const initialAdding = {
     point_type: '',
     location_type: '',
     name: '',
-    atomfast_url: ''
+    atomfast_url: '',
+    comment: '',
+    location: null,
+    attachment: null
 }
 
 let adding = reactive({...initialAdding});
@@ -57,7 +60,8 @@ const fetchTracks = async () => {
     }
     list.value = data.tracks;
 }
-const readFile    = (raw) => {
+
+const readSpectrumFile = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -67,9 +71,19 @@ const readFile    = (raw) => {
         reader.readAsText(raw);
     });
 }
+const readMediaFile    = (raw) => {
+    return new Promise((resolve, reject) => {
+        const reader   = new FileReader();
+        reader.onload  = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(raw);
+    });
+}
 
+const map               = ref()
 const file              = ref(null);
-const attachment        = ref();
 const addingDialog      = ref(false)
 const currentTrackPoint = ref(null)
 const auth              = ref();
@@ -82,16 +96,19 @@ const attachSpectrum = (trackPointId) => {
     currentTrackPoint.value = trackPointId
 }
 
-const handleFileUpload = async () => {
-    attachment.value = xml2js(await readFile(file.value.files[0]))
+const handleSpectrumFileUpload = async () => {
+    adding.attachment = xml2js(await readSpectrumFile(file.value.files[0]))
+}
+const handleMediaFileUpload    = async () => {
+    adding.attachment = await readMediaFile(file.value.files[0])
 }
 
-const uploadSpectrum = () => {
+const uploadSpectrum  = () => {
     fetch('/spectrum', {
         method: 'POST',
         body: JSON.stringify({
             track_point_id: currentTrackPoint.value,
-            spectrum: attachment.value
+            spectrum: adding.attachment
         })
     }).then(r => r.json())
         .then(
@@ -111,6 +128,19 @@ const uploadSpectrum = () => {
         })
     return false
 }
+const addGenericPoint = async () => {
+    const response = await fetch('/point', {
+        method: 'POST',
+        body: JSON.stringify(adding)
+    })
+    const payload  = await response.json()
+    if (!payload.error) {
+        addingDialog.value = false;
+        ElMessage.success({'message': 'Добавлено'})
+        return
+    }
+    ElMessage.error({'message': payload.error})
+}
 
 const onAuth   = (value) => {
     console.log(value)
@@ -125,24 +155,55 @@ onMounted(() => {
 })
 
 const save = async () => {
-    if (adding.category !== 'track' && adding.track_type !== 'atomfast') {
+    console.log('submit')
+
+    if (adding.point_type === 'generic') {
+        await addGenericPoint()
         return
     }
-    loading.value = true;
-    try {
-        const payload = await addAtomfastTrack()
-        if (payload.error) {
-            ElMessage.error(payload.error)
-        } else {
-            ElMessage.success('Трек с Atomfast успешно добавлен')
-            addingDialog.value = false
+    if (adding.track_type === 'atomfast') {
+        loading.value = true;
+        try {
+            const payload = await addAtomfastTrack()
+            if (payload.error) {
+                ElMessage.error(payload.error)
+            } else {
+                ElMessage.success('Трек с Atomfast успешно добавлен')
+                addingDialog.value = false
+            }
+        } catch (e) {
+            ElMessage.error('Произошла ошибка')
+            throw e;
+        } finally {
+            loading.value = false;
         }
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e;
-    } finally {
-        loading.value = false;
     }
+}
+
+const currentLocation = reactive({
+    error: null,
+    waiting: false,
+});
+
+const requestCurrentLocation = () => {
+    if (adding.location) {
+        return
+    }
+    currentLocation.waiting = true;
+    map.value.requestCurrentLocation()
+}
+
+const onReceivingLocation = (value) => {
+    currentLocation.waiting = false;
+    if (!adding.location) {
+        adding.location = value;
+    }
+}
+
+const onReceivingLocationError = (error) => {
+    currentLocation.waiting = false;
+    currentLocation.error   = error
+    adding.location_type    = '';
 }
 
 watch(() => adding.category,
@@ -259,6 +320,9 @@ watch(() => adding.category,
         </div>
     </div>
     <Map :track-id="currentTrack"
+         ref="map"
+         @get-location="onReceivingLocation"
+         @get-location-error="onReceivingLocationError"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
     <el-dialog v-model="addingDialog" @close="adding.category = ''">
@@ -291,8 +355,10 @@ watch(() => adding.category,
 
                 <el-form-item label="RadioCode" v-if="adding.track_type === 'radiocode'">
                     <el-input type="textarea" placeholder="Комментарий"></el-input>
-                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
-                           v-on:change="handleFileUpload()">
+                    <input type="file"
+                           class="pdng-t-5px"
+                           name="spectrum"
+                           ref="file">
                 </el-form-item>
             </template>
             <template v-if="adding.category === 'point'">
@@ -302,22 +368,35 @@ watch(() => adding.category,
                         <el-radio-button :label="'generic'">Комментарий/файл</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="Спектр" v-if="adding.point_type === 'spectrum'">
-                    <el-input placeholder="Название"></el-input>
-                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
-                           v-on:change="handleFileUpload()">
-                </el-form-item>
-                <el-form-item label="Комментарий/файл" v-if="adding.point_type === 'generic'">
-                    <el-input type="textarea" placeholder="Комментарий"></el-input>
-                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
-                           v-on:change="handleFileUpload()">
-                </el-form-item>
                 <el-form-item label="Локация" v-if="adding.point_type">
                     <el-radio-group v-model="adding.location_type" size="large">
-                        <el-radio-button :label="'current'">Текущее местоположение</el-radio-button>
+                        <el-radio-button :label="'current'"
+                                         v-loading="currentLocation.waiting"
+                                         :disabled="!!currentLocation.error"
+                                         @click="requestCurrentLocation">
+                            Текущее местоположение
+                        </el-radio-button>
                         <el-radio-button :label="'specifying'">Указать на карте</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
+                <el-form-item label="Спектр" v-if="adding.point_type === 'spectrum'">
+                    <el-input placeholder="Название"></el-input>
+                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
+                           v-on:change="handleSpectrumFileUpload()">
+                </el-form-item>
+                <template v-if="adding.point_type === 'generic'">
+                    <el-form-item label="Комментарий" required prop="comment">
+                        <el-input type="textarea"
+                                  v-model="adding.comment"
+                                  placeholder="Комментарий"></el-input>
+                    </el-form-item>
+                    <el-form-item label="File">
+                        <input type="file" class="pdng-t-5px"
+                               name="spectrum"
+                               ref="file"
+                               v-on:change="handleMediaFileUpload()">
+                    </el-form-item>
+                </template>
             </template>
             <template v-if="adding.track_type || adding.point_type">
                 <el-form-item>

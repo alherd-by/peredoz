@@ -39,6 +39,7 @@ import GeoJSON from "ol/format/GeoJSON"
 import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
 import Overlay from 'ol/Overlay';
+import Geolocation from 'ol/Geolocation';
 
 import {ref, onMounted, watch, toRefs} from 'vue'
 import {calcColor} from "../colors";
@@ -54,7 +55,7 @@ const devices = [
 
 const search_modes = ["Fast", "Medium", "Slow", "-"];
 
-const emit = defineEmits(['attachspectrum'])
+const emit = defineEmits(['attachspectrum', 'get-location', 'get-location-error'])
 
 const attachSpectrum         = (id) => {
     emit('attachspectrum', id)
@@ -81,10 +82,10 @@ const loadFeatures = async function (source, projection) {
             credentials: 'include',
         }
     )
-    if (! response.ok) {
+    if (!response.ok) {
         throw 'Invalid http response for fetching track'
     }
-    const payload  = await response.json()
+    const payload = await response.json()
 
     if (payload.features_by_pk) {
         const temp = (new GeoJSON()).readFeatures(
@@ -121,6 +122,31 @@ let featuresSource = new VectorSource({
 
 let styleCache = {};
 
+const view        = new View({
+    zoom: 7.3,
+    center: fromLonLat([27.7834, 53.7098]),
+})
+const geolocation = new Geolocation({
+    trackingOptions: {
+        enableHighAccuracy: true,
+    },
+    projection: 'EPSG:4326',
+});
+
+const requestCurrentLocation = () => {
+    geolocation.setTracking(true);
+}
+
+geolocation.on('change', function () {
+    emit('get-location', geolocation.getPosition())
+});
+geolocation.on('error', function (error) {
+    emit('get-location-error', error)
+});
+
+defineExpose({
+    requestCurrentLocation
+})
 let featureLayer = new VectorLayer({
     source: featuresSource,
     style(feature) {
@@ -149,7 +175,6 @@ let featureLayer = new VectorLayer({
         return style;
     }
 })
-
 watch(
     colorScheme,
     () => {
@@ -204,10 +229,7 @@ onMounted(
             ],
             target: 'map',
             overlays: [overlay],
-            view: new View({
-                zoom: 7.3,
-                center: fromLonLat([27.7834, 53.7098]),
-            })
+            view
         });
         map.addLayer(featureLayer)
         map.on('singleclick', (evt) => {

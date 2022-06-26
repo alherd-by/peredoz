@@ -23,6 +23,9 @@ export default defineConfig({
             },
             '^/logout': {
                 target: 'http://localhost:9999/.netlify/functions'
+            },
+            '^/point': {
+                target: 'http://localhost:9999/.netlify/functions'
             }
         },
     },
