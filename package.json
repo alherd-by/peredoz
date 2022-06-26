@@ -27,9 +27,13 @@
     "ol": "6.13.0",
     "vue": "3.2.36",
     "xml2js": "0.4.23",
-    "xmldom": "0.6.0"
+    "xmldom": "0.6.0",
+    "aws-sdk": "2.1153.0",
+    "uuid": "8.3.2"
+
   },
   "devDependencies": {
+    "@types/uuid": "8.3.4",
     "@vitejs/plugin-vue": "2.3.3",
     "firebase-functions-test": "0.2.0",
     "firebase-tools": "11.1.0",

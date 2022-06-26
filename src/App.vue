@@ -129,11 +129,18 @@ const uploadSpectrum  = () => {
     return false
 }
 const addGenericPoint = async () => {
-    const response = await fetch('/point', {
-        method: 'POST',
-        body: JSON.stringify(adding)
-    })
-    const payload  = await response.json()
+    const response = await fetch(
+        '/point',
+        {
+            method: 'POST',
+            body: JSON.stringify(adding)
+        }
+    )
+    if (!response.ok) {
+        ElMessage.error('Произошла ошибка')
+        return
+    }
+    const payload = await response.json()
     if (!payload.error) {
         addingDialog.value = false;
         ElMessage.success({'message': 'Добавлено'})
@@ -167,10 +174,10 @@ const save = async () => {
             const payload = await addAtomfastTrack()
             if (payload.error) {
                 ElMessage.error(payload.error)
-            } else {
-                ElMessage.success('Трек с Atomfast успешно добавлен')
-                addingDialog.value = false
+                return
             }
+            ElMessage.success('Трек с Atomfast успешно добавлен')
+            addingDialog.value = false
         } catch (e) {
             ElMessage.error('Произошла ошибка')
             throw e;
