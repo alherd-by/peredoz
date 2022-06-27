@@ -61,7 +61,7 @@ const fetchTracks = async () => {
     list.value = data.tracks;
 }
 
-const readSpectrumFile = (raw) => {
+const readFileAsText = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -71,7 +71,7 @@ const readSpectrumFile = (raw) => {
         reader.readAsText(raw);
     });
 }
-const readMediaFile    = (raw) => {
+const readMediaFile  = (raw) => {
     return new Promise((resolve, reject) => {
         const reader   = new FileReader();
         reader.onload  = () => {
@@ -92,16 +92,21 @@ const loading           = ref(false)
 const user = ref(getUser())
 
 const attachSpectrum = (trackPointId) => {
-    addingDialog.value      = true
-    adding.category         = 'point'
-    adding.point_type       = 'spectrum'
+    addingDialog.value = true
+    adding.category    = 'point'
+    adding.point_type  = 'spectrum'
 
     currentTrackPoint.value = trackPointId
 }
 
+const handleRadiocodeTrackFileUpload = async () => {
+    adding.attachment.length = 0;
+    adding.attachment.push(await readFileAsText(file.value.files[0]))
+}
+
 const handleSpectrumFileUpload = async () => {
     adding.attachment.length = 0;
-    adding.attachment.push(xml2js(await readSpectrumFile(file.value.files[0])))
+    adding.attachment.push(xml2js(await readFileAsText(file.value.files[0])))
 }
 const handleMediaFileUpload    = async () => {
     adding.attachment.length = 0;
@@ -110,6 +115,37 @@ const handleMediaFileUpload    = async () => {
     }
 }
 
+const uploadRadiocode = async () => {
+    const response = await fetch(
+        '/radiocode',
+        {
+            method: 'POST',
+            credentials: 'include',
+            body: JSON.stringify({
+                name: adding.name,
+                track: adding.attachment[0],
+            })
+        }
+    )
+    let payload;
+    try {
+        payload = await response.json()
+    } catch (e) {
+        ElMessage.error('Произошла ошибка')
+        throw e;
+    }
+    if (payload.error) {
+        ElMessage.error(payload.error)
+        return
+    }
+    addingDialog.value = false;
+    // trackPointHash.value[result.data.spectrum.track_point_id] = [{
+    //     id: result.data.spectrum.id,
+    //     name: result.data.spectrum.name,
+    //     data: result.data.spectrum.data
+    // }]
+    ElMessage.success({'message': 'Добавлено'})
+}
 const uploadSpectrum  = async () => {
     let body = {
         track_point_id: currentTrackPoint.value,
@@ -190,6 +226,10 @@ const save = async () => {
     }
     if (adding.point_type === 'spectrum') {
         await uploadSpectrum()
+        return
+    }
+    if (adding.track_type === 'radiocode') {
+        await uploadRadiocode()
         return
     }
     if (adding.track_type === 'atomfast') {
@@ -391,14 +431,19 @@ watch(() => adding.category,
                         <el-input placeholder="" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
+                <template v-if="adding.track_type === 'radiocode'">
+                    <el-form-item label="RadioCode">
+                        <input type="file"
+                               class="pdng-t-5px"
+                               name="spectrum"
+                               v-on:change="handleRadiocodeTrackFileUpload"
+                               ref="file">
+                    </el-form-item>
+                    <el-form-item label="name" prop="name" required>
+                        <el-input type="textarea" placeholder="name" v-model="adding.name"></el-input>
+                    </el-form-item>
+                </template>
 
-                <el-form-item label="RadioCode" v-if="adding.track_type === 'radiocode'">
-                    <el-input type="textarea" placeholder="Комментарий"></el-input>
-                    <input type="file"
-                           class="pdng-t-5px"
-                           name="spectrum"
-                           ref="file">
-                </el-form-item>
             </template>
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">

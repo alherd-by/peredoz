@@ -1,6 +1,6 @@
 import {Handler, HandlerResponse} from "@netlify/functions";
 import fetch from 'node-fetch'
-import {insertTrack} from "../src/tracks";
+import {insertTrack, Track} from "../src/tracks";
 import {JSONResponse} from "../src/json_response";
 import {initializeApp, cert} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
@@ -97,14 +97,22 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
 
     let result: { data?: object, error?: string, points?: any };
     try {
-        result = await insertTrack(
-            {
-                id: trackNumber,
-                points: points,
-                name,
-            },
-            cookies['AUTH']
-        )
+        let object: Track = {
+            name: name,
+            track_points: {
+                data: points.map((item: any) => ({
+                    properties: item,
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [item.lng, item.lat]
+                    }
+                }))
+            }
+        }
+        if (trackNumber) {
+            object.atomfast_id = trackNumber;
+        }
+        result = await insertTrack(object, cookies['AUTH'])
         result['points'] = trackNumber;
     } catch (e) {
         console.error(e);

@@ -1,12 +1,26 @@
 import {mutation} from './client'
 
-interface PreTrack {
-    id: number,
+interface Track {
+    id?: number,
     name: string
-    points: Array<{ lat: number, lng: number }>
+    extra?: {
+        original_name?: string
+    }
+    atomfast_id?: number
+    track_points: {
+        data: Array<{
+            geometry: {
+                type: 'Point',
+                coordinates: Array<number>
+            },
+            properties: {
+                [key: string]: any
+            }
+        }>
+    },
 }
 
-const insertTrack = async (raw: PreTrack, token: string): Promise<{ data?: object, error?: string }> => {
+const insertTrack = async (object: Track, token: string): Promise<{ data?: object, error?: string }> => {
     const result = await mutation(`mutation ($object: track_insert_input!) {
 track: insert_track_one(object: $object) {
     id
@@ -19,19 +33,7 @@ track: insert_track_one(object: $object) {
 }
 }`,
         {
-            object: {
-                name: raw.name,
-                atomfast_id: raw.id,
-                track_points: {
-                    data: raw.points.map((item) => ({
-                        properties: item,
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [item.lng, item.lat]
-                        }
-                    }))
-                }
-            }
+            object
         },
         token
     )
@@ -44,4 +46,4 @@ track: insert_track_one(object: $object) {
     return {data: result.data};
 }
 
-export {insertTrack}
+export {insertTrack, Track}

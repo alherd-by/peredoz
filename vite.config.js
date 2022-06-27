@@ -26,6 +26,9 @@ export default defineConfig({
             },
             '^/point': {
                 target: 'http://localhost:9999/.netlify/functions'
+            },
+            '^/radiocode': {
+                target: 'http://localhost:9999/.netlify/functions'
             }
         },
     },
