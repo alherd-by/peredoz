@@ -93,10 +93,14 @@ const user = ref(getUser())
 
 const attachSpectrum = (trackPointId) => {
     addingDialog.value      = true
+    adding.category         = 'point'
+    adding.point_type       = 'spectrum'
+
     currentTrackPoint.value = trackPointId
 }
 
 const handleSpectrumFileUpload = async () => {
+    adding.attachment.length = 0;
     adding.attachment.push(xml2js(await readSpectrumFile(file.value.files[0])))
 }
 const handleMediaFileUpload    = async () => {
@@ -106,30 +110,44 @@ const handleMediaFileUpload    = async () => {
     }
 }
 
-const uploadSpectrum  = () => {
-    fetch('/spectrum', {
-        method: 'POST',
-        body: JSON.stringify({
-            track_point_id: currentTrackPoint.value,
-            spectrum: adding.attachment
-        })
-    }).then(r => r.json())
-        .then(
-            () => {
-                addingDialog.value = false;
-                // trackPointHash.value[result.data.spectrum.track_point_id] = [{
-                //     id: result.data.spectrum.id,
-                //     name: result.data.spectrum.name,
-                //     data: result.data.spectrum.data
-                // }]
-                ElMessage.success({'message': 'Добавлено'})
-            }
-        )
-        .catch(e => {
-            ElMessage.error({'message': 'Произошла ошибка'})
-            throw e;
-        })
-    return false
+const uploadSpectrum  = async () => {
+    let body = {
+        track_point_id: currentTrackPoint.value,
+        spectrum: adding.attachment[0],
+    }
+    if (currentTrackPoint.value) {
+        body['track_point_id'] = currentTrackPoint.value;
+    } else {
+        body['name']     = adding.name
+        body['location'] = adding.location
+    }
+
+    const response = await fetch(
+        '/spectrum',
+        {
+            method: 'POST',
+            credentials: 'include',
+            body: JSON.stringify(body)
+        }
+    )
+    let payload;
+    try {
+        payload = await response.json()
+    } catch (e) {
+        ElMessage.error('Произошла ошибка')
+        throw e;
+    }
+    if (payload.error) {
+        ElMessage.error(payload.error)
+        return
+    }
+    addingDialog.value = false;
+    // trackPointHash.value[result.data.spectrum.track_point_id] = [{
+    //     id: result.data.spectrum.id,
+    //     name: result.data.spectrum.name,
+    //     data: result.data.spectrum.data
+    // }]
+    ElMessage.success({'message': 'Добавлено'})
 }
 const addGenericPoint = async () => {
     const response = await fetch(
@@ -168,6 +186,10 @@ onMounted(() => {
 const save = async () => {
     if (adding.point_type === 'generic') {
         await addGenericPoint()
+        return
+    }
+    if (adding.point_type === 'spectrum') {
+        await uploadSpectrum()
         return
     }
     if (adding.track_type === 'atomfast') {
@@ -215,8 +237,16 @@ const onReceivingLocationError = (error) => {
     adding.location_type    = '';
 }
 
+const onAddingDialogClose = () => {
+    currentTrackPoint.value = null;
+    adding.category         = ''
+}
+
 watch(() => adding.category,
     (category) => {
+        if (currentTrackPoint) {
+            return;
+        }
         Object.assign(adding, {
             ...initialAdding,
             category
@@ -334,14 +364,14 @@ watch(() => adding.category,
          @get-location-error="onReceivingLocationError"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
-    <el-dialog v-model="addingDialog" @close="adding.category = ''">
+    <el-dialog v-model="addingDialog" @close="onAddingDialogClose">
         <h3>Добавить...</h3>
         <el-form class="pdng-t-10px" label-width="180px"
                  v-loading="loading"
                  :model="adding"
                  @submit.prevent="save">
             <el-form-item label="Категория">
-                <el-radio-group v-model="adding.category" size="large">
+                <el-radio-group v-model="adding.category" size="large" :disabled="currentTrackPoint">
                     <el-radio-button :label="'track'">Трек</el-radio-button>
                     <el-radio-button :label="'point'">Точка</el-radio-button>
                 </el-radio-group>
@@ -372,12 +402,12 @@ watch(() => adding.category,
             </template>
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">
-                    <el-radio-group v-model="adding.point_type" size="large">
+                    <el-radio-group v-model="adding.point_type" size="large" :disabled="currentTrackPoint">
                         <el-radio-button :label="'spectrum'">Спектр</el-radio-button>
                         <el-radio-button :label="'generic'">Комментарий/файл</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="Локация" v-if="adding.point_type">
+                <el-form-item label="Локация" v-if="adding.point_type && !currentTrackPoint">
                     <el-radio-group v-model="adding.location_type" size="large">
                         <el-radio-button :label="'current'"
                                          v-loading="currentLocation.waiting"
@@ -388,11 +418,19 @@ watch(() => adding.category,
                         <el-radio-button :label="'specifying'">Указать на карте</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
-                <el-form-item label="Спектр" v-if="adding.point_type === 'spectrum'">
-                    <el-input placeholder="Название"></el-input>
-                    <input type="file" class="pdng-t-5px" name="spectrum" ref="file"
-                           v-on:change="handleSpectrumFileUpload()">
-                </el-form-item>
+                <template v-if="adding.point_type === 'spectrum'">
+                    <el-form-item label="Спектр">
+                        <input type="file"
+                               class="pdng-t-5px"
+                               accept="text/xml"
+                               name="spectrum" ref="file"
+                               v-on:change="handleSpectrumFileUpload()">
+                    </el-form-item>
+                    <el-form-item label="Название">
+                        <el-input placeholder="Название" v-model="adding.name"></el-input>
+                    </el-form-item>
+                </template>
+
                 <template v-if="adding.point_type === 'generic'">
                     <el-form-item label="Комментарий" required prop="comment">
                         <el-input type="textarea"

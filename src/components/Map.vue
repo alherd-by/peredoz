@@ -13,9 +13,9 @@
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.getProperties().sm] }} </b></span>
                 <br>
-                <p>
+                <p class="pdng-t-5px">
                     <a href="#" @click="attachSpectrum(feature.getId())">
-                        Прикрепить спектр к точке
+                        Прикрепить спектр
                     </a>
                 </p>
             </template>
