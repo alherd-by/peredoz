@@ -1,26 +1,48 @@
 table:
   schema: public
   name: spectrum
+object_relationships:
+  - name: point
+    using:
+      foreign_key_constraint_on: track_point_id
+insert_permissions:
+  - role: authorized
+    permission:
+      check:
+        user_id:
+          _eq: X-Hasura-User-Id
+      set:
+        user_id: x-hasura-user-id
+      columns:
+        - created_at
+        - data
+        - geometry
+        - id
+        - name
+        - track_point_id
+      backend_only: false
 select_permissions:
   - role: anonymous
     permission:
       columns:
-        - name
-        - id
-        - track_point_id
-        - data
         - created_at
+        - data
         - geometry
+        - id
+        - name
+        - track_point_id
+        - user_id
       filter: {}
       allow_aggregations: true
   - role: authorized
     permission:
       columns:
-        - name
-        - id
-        - track_point_id
-        - data
         - created_at
+        - data
         - geometry
+        - id
+        - name
+        - track_point_id
+        - user_id
       filter: {}
       allow_aggregations: true
