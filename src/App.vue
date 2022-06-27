@@ -22,7 +22,7 @@ const initialAdding = {
     atomfast_url: '',
     comment: '',
     location: null,
-    attachment: null
+    attachment: []
 }
 
 let adding = reactive({...initialAdding});
@@ -97,10 +97,13 @@ const attachSpectrum = (trackPointId) => {
 }
 
 const handleSpectrumFileUpload = async () => {
-    adding.attachment = xml2js(await readSpectrumFile(file.value.files[0]))
+    adding.attachment.push(xml2js(await readSpectrumFile(file.value.files[0])))
 }
 const handleMediaFileUpload    = async () => {
-    adding.attachment = await readMediaFile(file.value.files[0])
+    adding.attachment.length = 0;
+    for (let elem of file.value.files) {
+        adding.attachment.push(await readMediaFile(elem))
+    }
 }
 
 const uploadSpectrum  = () => {
@@ -144,6 +147,7 @@ const addGenericPoint = async () => {
     if (!payload.error) {
         addingDialog.value = false;
         ElMessage.success({'message': 'Добавлено'})
+        Object.assign(adding, initialAdding);
         return
     }
     ElMessage.error({'message': payload.error})
@@ -162,8 +166,6 @@ onMounted(() => {
 })
 
 const save = async () => {
-    console.log('submit')
-
     if (adding.point_type === 'generic') {
         await addGenericPoint()
         return
@@ -401,6 +403,8 @@ watch(() => adding.category,
                         <input type="file" class="pdng-t-5px"
                                name="spectrum"
                                ref="file"
+                               accept="image/*,video/*"
+                               multiple
                                v-on:change="handleMediaFileUpload()">
                     </el-form-item>
                 </template>

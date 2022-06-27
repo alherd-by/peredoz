@@ -48,42 +48,47 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         )
     }
     const attachments: any[] = [];
-    if (raw.attachment) {
-        try {
-            let buf = Buffer.from(raw.attachment.replace(/^data:image\/\w+;base64,/, ""), 'base64')
-            const fileName = uuidv4();
-            if (buf.byteLength > 10 * 1000 * 1000) {
-                return JSONResponse(
-                    {error: 'Файл слишком большой по размеру'},
+    if (raw.attachment && Array.isArray(raw.attachment)) {
+        for (let attachment of raw.attachment) {
+            try {
+                const format = attachment.substring(attachment.indexOf('data:') + 5, attachment.indexOf(';base64'));
+                let buf = Buffer.from(attachment.replace(/^data:.+;base64,/, ""), 'base64')
+                const fileName = uuidv4();
+                if (buf.byteLength > 10 * 1000 * 1000) {
+                    return JSONResponse(
+                        {error: 'Файл слишком большой по размеру'},
+                        {
+                            statusCode: 400,
+                        }
+                    )
+                }
+                await s3.putObject(
                     {
-                        statusCode: 400,
+                        Bucket: process.env.S3_BUCKET,
+                        Key: fileName,
+                        Tagging: 'type=point',
+                        Body: buf,
+                        ContentType: format,
+                        ACL: 'public-read',
+                    }
+                ).promise()
+                attachments.push({
+                    mime: format,
+                    size: buf.byteLength,
+                    url: `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${fileName}`
+                })
+            } catch (e) {
+                console.log(e);
+                return JSONResponse(
+                    {error: 'Произошла ошибка при загрузке файла'},
+                    {
+                        statusCode: 500,
                     }
                 )
             }
-            await s3.putObject(
-                {
-                    Bucket: process.env.S3_BUCKET,
-                    Key: fileName,
-                    Tagging: 'type=point',
-                    Body: buf,
-                    ContentType: 'image/jpeg',
-                    ACL: 'public-read',
-                }
-            ).promise()
-            attachments.push({
-                mime: 'image/jpeg',
-                size: buf.byteLength,
-                url: `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${fileName}`
-            })
-        } catch (e) {
-            console.log(e);
-            return JSONResponse(
-                {error: 'Произошла ошибка при загрузке файла'},
-                {
-                    statusCode: 500,
-                }
-            )
         }
+
+
     }
 
     const geometry = {
