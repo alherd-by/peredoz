@@ -136,11 +136,11 @@ const addGenericPoint = async () => {
             body: JSON.stringify(adding)
         }
     )
+    const payload  = await response.json()
     if (!response.ok) {
-        ElMessage.error('Произошла ошибка')
+        ElMessage.error(payload.error || 'Произошла ошибка')
         return
     }
-    const payload = await response.json()
     if (!payload.error) {
         addingDialog.value = false;
         ElMessage.success({'message': 'Добавлено'})

@@ -52,6 +52,14 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         try {
             let buf = Buffer.from(raw.attachment.replace(/^data:image\/\w+;base64,/, ""), 'base64')
             const fileName = uuidv4();
+            if (buf.byteLength > 10 * 1000 * 1000) {
+                return JSONResponse(
+                    {error: 'Файл слишком большой по размеру'},
+                    {
+                        statusCode: 400,
+                    }
+                )
+            }
             await s3.putObject(
                 {
                     Bucket: process.env.S3_BUCKET,
@@ -64,6 +72,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             ).promise()
             attachments.push({
                 mime: 'image/jpeg',
+                size: buf.byteLength,
                 url: `https://${process.env.S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${fileName}`
             })
         } catch (e) {
