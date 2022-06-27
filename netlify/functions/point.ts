@@ -2,8 +2,8 @@ import {Handler, HandlerResponse} from "@netlify/functions";
 import {JSONResponse} from "../src/json_response";
 import {mutation, parseCookies} from "../src/client";
 import {initializeApp, cert} from "firebase-admin/app";
-import AWS from 'aws-sdk';
 import {getAuth} from "firebase-admin/auth";
+import AWS from 'aws-sdk';
 import {v4 as uuidv4} from 'uuid';
 
 const app = initializeApp({
