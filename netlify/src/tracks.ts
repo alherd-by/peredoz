@@ -38,7 +38,7 @@ track: insert_track_one(object: $object) {
         token
     )
     if (result.error) {
-        if (/\[GraphQL] Uniqueness violation./.test(result.error.message)) {
+        if (/\[GraphQL] Uniqueness violation./.test(result.error.message) && /unique_atomfast_id/.test(result.error.message)) {
             console.error(result.error)
             return {error: 'Такой трек уже был загружен с Atomfast'}
         }
