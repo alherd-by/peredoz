@@ -440,7 +440,7 @@ watch(() => adding.category,
                                ref="file">
                     </el-form-item>
                     <el-form-item label="Название" prop="name" required>
-                        <el-input type="textarea" placeholder="name" v-model="adding.name"></el-input>
+                        <el-input type="textarea" placeholder="Название" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
 
