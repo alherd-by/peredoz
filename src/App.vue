@@ -439,7 +439,7 @@ watch(() => adding.category,
                                v-on:change="handleRadiocodeTrackFileUpload"
                                ref="file">
                     </el-form-item>
-                    <el-form-item label="name" prop="name" required>
+                    <el-form-item label="Название" prop="name" required>
                         <el-input type="textarea" placeholder="name" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
@@ -482,9 +482,8 @@ watch(() => adding.category,
                                   v-model="adding.comment"
                                   placeholder="Комментарий"></el-input>
                     </el-form-item>
-                    <el-form-item label="File">
+                    <el-form-item label="Медиа-файлы">
                         <input type="file" class="pdng-t-5px"
-                               name="spectrum"
                                ref="file"
                                accept="image/*,video/*"
                                multiple
