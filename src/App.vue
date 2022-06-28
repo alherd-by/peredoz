@@ -221,15 +221,21 @@ onMounted(() => {
 
 const save = async () => {
     if (adding.point_type === 'generic') {
+        loading.value = true;
         await addGenericPoint()
+        loading.value = false;
         return
     }
     if (adding.point_type === 'spectrum') {
+        loading.value = true;
         await uploadSpectrum()
+        loading.value = false;
         return
     }
     if (adding.track_type === 'radiocode') {
+        loading.value = true;
         await uploadRadiocode()
+        loading.value = false;
         return
     }
     if (adding.track_type === 'atomfast') {
@@ -284,7 +290,7 @@ const onAddingDialogClose = () => {
 
 watch(() => adding.category,
     (category) => {
-        if (currentTrackPoint) {
+        if (currentTrackPoint.value) {
             return;
         }
         Object.assign(adding, {
