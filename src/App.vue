@@ -86,6 +86,7 @@ const map               = ref()
 const file              = ref(null);
 const addingDialog      = ref(false)
 const currentTrackPoint = ref(null)
+const drawingEnabled    = ref(false)
 const auth              = ref();
 const loading           = ref(false)
 
@@ -270,13 +271,17 @@ const requestCurrentLocation = () => {
     map.value.requestCurrentLocation()
 }
 
-const onReceivingLocation = (value) => {
+const onReceivingLocation      = (value) => {
     currentLocation.waiting = false;
     if (!adding.location) {
         adding.location = value;
     }
 }
-
+const onPointLocated           = (coordinates) => {
+    drawingEnabled.value = false
+    addingDialog.value   = true;
+    adding.location      = coordinates
+}
 const onReceivingLocationError = (error) => {
     currentLocation.waiting = false;
     currentLocation.error   = error
@@ -284,10 +289,23 @@ const onReceivingLocationError = (error) => {
 }
 
 const onAddingDialogClose = () => {
+    if (drawingEnabled.value) {
+        return
+    }
     currentTrackPoint.value = null;
     adding.category         = ''
 }
 
+watch(() => adding.location_type,
+    () => {
+        if (adding.location_type !== 'specifying') {
+            return
+        }
+        addingDialog.value   = false
+        drawingEnabled.value = true;
+        map.value.enableDrawing()
+    }
+)
 watch(() => adding.category,
     (category) => {
         if (currentTrackPoint.value) {
@@ -408,6 +426,7 @@ watch(() => adding.category,
          ref="map"
          @get-location="onReceivingLocation"
          @get-location-error="onReceivingLocationError"
+         @point-located="onPointLocated"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
     <el-dialog v-model="addingDialog" @close="onAddingDialogClose">
@@ -459,9 +478,8 @@ watch(() => adding.category,
                     </el-radio-group>
                 </el-form-item>
                 <el-form-item label="Локация" v-if="adding.point_type && !currentTrackPoint">
-                    <el-radio-group v-model="adding.location_type" size="large">
+                    <el-radio-group v-model="adding.location_type" size="large" v-loading="currentLocation.waiting">
                         <el-radio-button :label="'current'"
-                                         v-loading="currentLocation.waiting"
                                          :disabled="!!currentLocation.error"
                                          @click="requestCurrentLocation">
                             Текущее местоположение

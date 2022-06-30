@@ -4,24 +4,24 @@
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content">
             <template v-if="feature">
-                <p>id: {{ feature.getId() }}</p>
-                <span>Doserate: {{ feature.getProperties().d.toFixed(2) }}uSv/h</span>
+                <p>id: {{ feature.id }}</p>
+                <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
-                <span>GPS accuracy: <b>±{{ feature.getProperties().r }} m</b></span>
+                <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
                 <br>
-                <span>Device: <b>  <span v-html="devices[feature.getProperties().dv]"></span> </b></span>
+                <span>Device: <b>  <span v-html="devices[feature.properties.dv]"></span> </b></span>
                 <br>
-                <span>Search mode: <b> {{ search_modes[feature.getProperties().sm] }} </b></span>
+                <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
                 <p class="pdng-t-5px">
-                    <a href="#" @click="attachSpectrum(feature.getId())">
+                    <a href="#" @click="attachSpectrum(feature.id)">
                         Прикрепить спектр
                     </a>
                 </p>
             </template>
-            <template v-if="feature && trackPointHash[feature.getId()]">
+            <template v-if="feature && trackPointHash[feature.id]">
                 <br>
-                <span v-for="(spectrum) in trackPointHash[feature.getId()]">{{ spectrum.name }}</span>
+                <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
             </template>
         </div>
     </div>
@@ -40,6 +40,7 @@ import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
 import Overlay from 'ol/Overlay';
 import Geolocation from 'ol/Geolocation';
+import Draw from 'ol/interaction/Draw';
 
 import {ref, onMounted, watch, toRefs} from 'vue'
 import {calcColor} from "../colors";
@@ -55,7 +56,12 @@ const devices = [
 
 const search_modes = ["Fast", "Medium", "Slow", "-"];
 
-const emit = defineEmits(['attachspectrum', 'get-location', 'get-location-error'])
+const emit = defineEmits([
+    'attachspectrum',
+    'get-location',
+    'get-location-error',
+    'point-located'
+])
 
 const attachSpectrum         = (id) => {
     emit('attachspectrum', id)
@@ -66,7 +72,8 @@ const props                  = defineProps({
 })
 const {trackId, colorScheme} = toRefs(props)
 
-let trackPointHash = ref({})
+const drawingEnabled = ref(false);
+let trackPointHash   = ref({})
 
 const loadFeatures = async function (source, projection) {
     // const response = await fetch(
@@ -144,9 +151,12 @@ geolocation.on('error', function (error) {
     emit('get-location-error', error)
 });
 
-defineExpose({
-    requestCurrentLocation
-})
+let drawingSource = new VectorSource()
+let drawingLayer  = new VectorLayer({
+        source: drawingSource,
+    }
+)
+
 let featureLayer = new VectorLayer({
     source: featuresSource,
     style(feature) {
@@ -203,6 +213,25 @@ watch(
 )
 
 const feature = ref();
+let map;
+const draw    = new Draw({
+    type: 'Point',
+    source: drawingSource,
+    finishCondition: function () {
+        return true;
+    }
+})
+draw.on('drawend', function (e) {
+    map.removeInteraction(draw)
+    emit(
+        'point-located',
+        e.feature.getGeometry().transform('EPSG:3857', 'EPSG:4326').getCoordinates()
+    )
+    drawingSource.clear()
+    drawingEnabled.value = false
+});
+
+
 onMounted(
     () => {
         document.getElementById('map').innerHTML = '';
@@ -221,11 +250,12 @@ onMounted(
             },
         });
 
-        let map = new Map({
+        map = new Map({
             layers: [
                 new TileLayer({
                     source: new OSM(),
                 }),
+                drawingLayer
             ],
             target: 'map',
             overlays: [overlay],
@@ -240,13 +270,27 @@ onMounted(
                 return
             }
             map.forEachFeatureAtPixel(evt.pixel, baseFeature => {
-
-                feature.value = baseFeature;
+                console.log(baseFeature.getProperties())
+                feature.value = {
+                    id: baseFeature.getId(),
+                    properties: baseFeature.getProperties()
+                };
                 overlay.setPosition(coordinate);
             })
         });
     }
 );
+
+const enableDrawing = () => {
+    drawingEnabled.value = true;
+    map.addInteraction(draw);
+}
+
+defineExpose({
+    enableDrawing,
+    requestCurrentLocation
+})
+
 
 </script>
 
