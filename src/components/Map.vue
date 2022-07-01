@@ -3,7 +3,7 @@
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content">
-            <template v-if="feature">
+            <template v-if="feature && feature.properties && feature.properties.d">
                 <p>id: {{ feature.id }}</p>
                 <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
