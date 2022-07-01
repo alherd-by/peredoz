@@ -53,8 +53,8 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         name: raw.spectrum.ResultDataList.ResultData.BackgroundSpectrumFile,
         data: raw.spectrum
     }
-    if (raw.track_point_id) {
-        input.track_point_id = raw.track_point_id
+    if (raw.point_id) {
+        input.point_id = raw.point_id
     } else {
         if (!raw.location) {
             return JSONResponse(

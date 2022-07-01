@@ -8,7 +8,7 @@ array_relationships:
         column: user_id
         table:
           schema: public
-          name: track_point
+          name: point
   - name: tracks
     using:
       foreign_key_constraint_on:

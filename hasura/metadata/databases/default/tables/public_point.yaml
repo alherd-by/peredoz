@@ -1,6 +1,6 @@
 table:
   schema: public
-  name: track_point
+  name: point
 object_relationships:
   - name: track
     using:
@@ -12,7 +12,7 @@ array_relationships:
   - name: spectrums
     using:
       foreign_key_constraint_on:
-        column: track_point_id
+        column: point_id
         table:
           schema: public
           name: spectrum

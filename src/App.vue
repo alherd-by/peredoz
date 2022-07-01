@@ -140,20 +140,15 @@ const uploadRadiocode = async () => {
         return
     }
     addingDialog.value = false;
-    // trackPointHash.value[result.data.spectrum.track_point_id] = [{
-    //     id: result.data.spectrum.id,
-    //     name: result.data.spectrum.name,
-    //     data: result.data.spectrum.data
-    // }]
     ElMessage.success({'message': 'Добавлено'})
 }
 const uploadSpectrum  = async () => {
     let body = {
-        track_point_id: currentTrackPoint.value,
+        point_id: currentTrackPoint.value,
         spectrum: adding.attachment[0],
     }
     if (currentTrackPoint.value) {
-        body['track_point_id'] = currentTrackPoint.value;
+        body['point_id'] = currentTrackPoint.value;
     } else {
         body['name']     = adding.name
         body['location'] = adding.location

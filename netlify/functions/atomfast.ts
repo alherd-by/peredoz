@@ -99,7 +99,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
     try {
         let object: Track = {
             name: name,
-            track_points: {
+            points: {
                 data: points.map((item: any) => ({
                     properties: item,
                     geometry: {

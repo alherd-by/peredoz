@@ -7,7 +7,7 @@ interface Track {
         original_name?: string
     }
     atomfast_id?: number
-    track_points: {
+    points: {
         data: Array<{
             geometry: {
                 type: 'Point',
@@ -21,11 +21,12 @@ interface Track {
 }
 
 const insertTrack = async (object: Track, token: string): Promise<{ data?: object, error?: string }> => {
+    // language=GraphQL
     const result = await mutation(`mutation ($object: track_insert_input!) {
 track: insert_track_one(object: $object) {
     id
     name
-    track_points_aggregate {
+    points_aggregate {
        aggregate {
             count       
        }

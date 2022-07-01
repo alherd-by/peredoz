@@ -96,8 +96,8 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         coordinates: raw.location
     }
     // language=GraphQL
-    const result = await mutation(`mutation ($object: track_point_insert_input!) {
-        point: insert_track_point_one(object: $object) {
+    const result = await mutation(`mutation ($object: point_insert_input!) {
+        point: insert_point_one(object: $object) {
             id
             geometry
             properties

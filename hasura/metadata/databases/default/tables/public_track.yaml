@@ -6,13 +6,13 @@ object_relationships:
     using:
       foreign_key_constraint_on: user_id
 array_relationships:
-  - name: track_points
+  - name: points
     using:
       foreign_key_constraint_on:
         column: track_id
         table:
           schema: public
-          name: track_point
+          name: point
 computed_fields:
   - name: placeholder_feature_collection
     definition:

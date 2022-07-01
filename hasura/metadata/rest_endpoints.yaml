@@ -1,11 +1,11 @@
 - definition:
     query:
       collection_name: allowed-queries
-      query_name: track_points
+      query_name: points
   url: points/track/:id
   methods:
     - GET
-  name: track_points
+  name: points
   comment: null
 - definition:
     query:

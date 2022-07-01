@@ -79,7 +79,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 extra: {
                     original_name: raw.track_name
                 },
-                track_points: {
+                points: {
                     data: raw.points
                 }
             },
