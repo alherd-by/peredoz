@@ -193,21 +193,32 @@ let drawingLayer  = new VectorLayer({
 let featureLayer  = new VectorLayer({
     source: clusterSource,
     style(feature) {
-        const size = feature.get('features').length;
-        let style  = styleCache[size];
+        let size          = feature.get('features').length;
+        const length      = size;
+        let colors, color = '#3399CC';
+        let style         = styleCache[size];
         if (!style) {
+            if (size === 1) {
+                const props = feature.get('features')[0].getProperties();
+                if (props.point_id) {
+                    size = size + '_' + props.point_id
+                }
+                if (props['d']) {
+                    console.log(props['d'])
+                    colors = calcColor(props['d'], colorScheme.value)
+                    color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
+                }
+            }
             style            = new Style({
                 image: new CircleStyle({
                     radius: 14,
                     stroke: new Stroke({
                         color: '#fff',
                     }),
-                    fill: new Fill({
-                        color: '#3399CC',
-                    }),
+                    fill: new Fill({color}),
                 }),
                 text: new Text({
-                    text: size === 1 ? '' : size.toString(),
+                    text: length === 1 ? '' : length.toString(),
                     fill: new Fill({
                         color: '#fff',
                     }),

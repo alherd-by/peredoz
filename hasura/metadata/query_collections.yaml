@@ -17,14 +17,12 @@
           }
       - name: points
         query: |
-          query track ($id: Int = 1) {
-          	track: track_by_pk(id: $id) {
-          		type: placeholder_feature_collection
-          		features: points {
-          			id
-          			type: placeholder_feature
-          			properties
-          			geometry
-          		}
+          query geodata ($track_id: Int = -1) {
+          	features: point(where: {_or:[{track_id:{_eq:$track_id}},{track_id:{_is_null:true}}]}) {
+          		id
+          		type: placeholder_feature
+          		properties: merged_properties
+          		geometry
+          		track_id
           	}
           }
