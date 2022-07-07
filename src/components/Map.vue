@@ -19,6 +19,15 @@
                     </a>
                 </p>
             </template>
+            <template v-if="feature && feature.properties.district">
+                <span>Населенный пункт: {{ feature.properties.name }}</span>
+                <br>
+                <span>Район: {{ feature.properties.district }}</span>
+                <br>
+                <span>{{ feature.properties.status }}</span>
+                <br>
+                <span>{{ feature.properties.comment }}</span>
+            </template>
             <template v-if="feature && trackPointHash[feature.id]">
                 <br>
                 <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
@@ -106,10 +115,10 @@ const loadFeatures = async function (source, projection) {
 
     if (payload.track) {
         trackPointHash.value = {}
-        const tmp            = payload.track.features.filter(i => i.spectrums.length > 0)
-        for (let item of tmp) {
-            trackPointHash.value[item.id] = item.spectrums
-        }
+        // const tmp            = payload.track.features.filter(i => i.spectrums.length > 0)
+        // for (let item of tmp) {
+        //     trackPointHash.value[item.id] = item.spectrums
+        // }
         const temp = (new GeoJSON()).readFeatures(
             payload.track,
             {featureProjection: projection}
@@ -150,6 +159,17 @@ geolocation.on('change', function () {
 geolocation.on('error', function (error) {
     emit('get-location-error', error)
 });
+
+let placesLayer = new VectorLayer({
+        source: new VectorSource(
+            {
+                url: '/places.json',
+                format: new GeoJSON()
+            }
+        ),
+    }
+)
+
 
 let drawingSource = new VectorSource()
 let drawingLayer  = new VectorLayer({
@@ -255,7 +275,8 @@ onMounted(
                 new TileLayer({
                     source: new OSM(),
                 }),
-                drawingLayer
+                drawingLayer,
+                placesLayer
             ],
             target: 'map',
             overlays: [overlay],
