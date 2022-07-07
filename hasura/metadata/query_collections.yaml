@@ -1,26 +1,6 @@
 - name: allowed-queries
   definition:
     queries:
-      - name: points
-        query: |
-          query track ($id: Int = 1) {
-          	track: track_by_pk(id: $id) {
-          		type: placeholder_feature_collection
-          		features: points {
-          			id
-          			type: placeholder_feature
-          			properties
-          			geometry
-          			spectrums {
-          				id
-          				name
-          				data
-          				created_at
-          				geometry
-          			}
-          		}
-          	}
-          }
       - name: tracks
         query: |
           query tracks {
@@ -32,6 +12,19 @@
           		user {
           			email
           			id
+          		}
+          	}
+          }
+      - name: points
+        query: |
+          query track ($id: Int = 1) {
+          	track: track_by_pk(id: $id) {
+          		type: placeholder_feature_collection
+          		features: points {
+          			id
+          			type: placeholder_feature
+          			properties
+          			geometry
           		}
           	}
           }
