@@ -2,7 +2,7 @@
     <div id="map" style="height: 100%;width: 100%"></div>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-        <div id="popup-content">
+        <div id="popup-content" v-if="feature">
             <template v-if="feature && feature.properties && feature.properties.d">
                 <p>id: {{ feature.id }}</p>
                 <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
@@ -19,16 +19,25 @@
                     </a>
                 </p>
             </template>
-            <template v-if="feature && feature.properties.district">
+            <template v-if="feature.properties.attachments">
+                <ul class="pdng-t-5px pdng-l-10px pdng-b-10px">
+                    <li v-for="(attachment, index) of feature.properties.attachments">
+                        <a :href="attachment.url">Файл {{ index + 1 }}</a>
+                    </li>
+                </ul>
+            </template>
+            <template v-if="feature.properties.district">
                 <span>Населенный пункт: {{ feature.properties.name }}</span>
                 <br>
                 <span>Район: {{ feature.properties.district }}</span>
                 <br>
                 <span>{{ feature.properties.status }}</span>
                 <br>
-                <span>{{ feature.properties.comment }}</span>
             </template>
-            <template v-if="feature && trackPointHash[feature.id]">
+            <template v-if="feature.properties.comment">
+                <span class="pdng-t-5px pdng-b-5px">{{ feature.properties.comment }}</span>
+            </template>
+            <template v-if="trackPointHash[feature.id]">
                 <br>
                 <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
             </template>
@@ -46,7 +55,7 @@ import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import ClusterSource from "ol/source/Cluster";
 import GeoJSON from "ol/format/GeoJSON"
-import {Circle, Fill, Style} from 'ol/style';
+import {Circle as CircleStyle, Fill, Style, Text, Stroke} from 'ol/style';
 import 'ol/ol.css'
 import Overlay from 'ol/Overlay';
 import Geolocation from 'ol/Geolocation';
@@ -93,7 +102,7 @@ const loadFeatures = async function (source, projection) {
     //     }
     // )
     const response = await fetch(
-        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points/track/' + trackId.value,
+        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points/track/' + (trackId.value || '-1'),
         {
             method: 'GET',
             credentials: 'include',
@@ -113,15 +122,17 @@ const loadFeatures = async function (source, projection) {
             temp
         )
     }
-
-    if (payload.track) {
+    if (payload.features) {
         trackPointHash.value = {}
         // const tmp            = payload.track.features.filter(i => i.spectrums.length > 0)
         // for (let item of tmp) {
         //     trackPointHash.value[item.id] = item.spectrums
         // }
         const temp = (new GeoJSON()).readFeatures(
-            payload.track,
+            {
+                type: 'FeatureCollection',
+                features: payload.features
+            },
             {featureProjection: projection}
         )
         source.addFeatures(temp)
@@ -130,9 +141,7 @@ const loadFeatures = async function (source, projection) {
 
 let featuresSource = new VectorSource({
     loader: function (extent, resolution, projection) {
-        if (trackId.value > 0) {
-            loadFeatures(this, projection, extent)
-        }
+        loadFeatures(this, projection, extent)
     },
     format: new GeoJSON()
 })
@@ -186,29 +195,60 @@ let drawingLayer  = new VectorLayer({
 let featureLayer = new VectorLayer({
     source: clusterSource,
     style(feature) {
-        let size;
-
-        const props  = feature.getProperties();
-        size         = props['d'] + '_' + colorScheme.value
-        const colors = calcColor(props['d'], colorScheme.value)
-
-        let style = styleCache[size];
-        if (style) {
-            return style
-        }
-
-        style = new Style({
-            image: new Circle({
-                radius: 10,
-                fill: new Fill({
-                    color: `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`,
+        const size = feature.get('features').length;
+        let style  = styleCache[size];
+        if (!style) {
+            style            = new Style({
+                image: new CircleStyle({
+                    radius: 14,
+                    stroke: new Stroke({
+                        color: '#fff',
+                    }),
+                    fill: new Fill({
+                        color: '#3399CC',
+                    }),
                 }),
-            }),
-        });
-
-        styleCache[size] = style;
-
+                text: new Text({
+                    text: size === 1 ? '' : size.toString(),
+                    fill: new Fill({
+                        color: '#fff',
+                    }),
+                }),
+            });
+            styleCache[size] = style;
+        }
         return style;
+
+
+        // let size;
+        // const length = feature.get('features').length;
+        // const props  = feature.getProperties();
+        // size         = props['d'] + '_' + colorScheme.value
+        // const colors = calcColor(props['d'], colorScheme.value)
+        //
+        // let style = styleCache[size];
+        // if (style) {
+        //     return style
+        // }
+        //
+        // style = new Style({
+        //     image: new Circle({
+        //         radius: 10,
+        //         fill: new Fill({
+        //             color: `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`,
+        //         }),
+        //     }),
+        //     text: new Text({
+        //         text: length.toString(),
+        //         fill: new Fill({
+        //             color: '#fff',
+        //         }),
+        //     }),
+        // });
+        //
+        // styleCache[size] = style;
+        //
+        // return style;
     }
 })
 watch(
