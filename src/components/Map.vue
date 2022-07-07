@@ -175,7 +175,8 @@ geolocation.on('error', function (error) {
     emit('get-location-error', error)
 });
 
-let placesLayer = new VectorLayer({
+let placesLayer   = new VectorLayer(
+    {
         source: new VectorSource(
             {
                 url: '/places.json',
@@ -184,15 +185,12 @@ let placesLayer = new VectorLayer({
         ),
     }
 )
-
-
 let drawingSource = new VectorSource()
 let drawingLayer  = new VectorLayer({
         source: drawingSource,
     }
 )
-
-let featureLayer = new VectorLayer({
+let featureLayer  = new VectorLayer({
     source: clusterSource,
     style(feature) {
         const size = feature.get('features').length;
@@ -262,14 +260,14 @@ watch(
 )
 
 const refreshMap = () => {
-    const newLayer = new VectorSource({
+    const refreshSource = new VectorSource({
         loader: function (extent, resolution, projection) {
             loadFeatures(this, projection)
         },
         format: new GeoJSON()
     })
-    featureLayer.setSource(newLayer)
-    featuresSource = newLayer
+    featureLayer.setSource(new ClusterSource({source: refreshSource, distance: 13}))
+    featuresSource = refreshSource
 }
 watch(
     trackId,

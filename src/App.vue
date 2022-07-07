@@ -9,7 +9,7 @@ import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser} from "./user";
 
 const toolbarDialog      = ref(false);
-const currentTrack       = ref(2);
+const currentTrack       = ref();
 const listTracksDialog   = ref(false);
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 
