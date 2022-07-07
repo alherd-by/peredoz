@@ -29,7 +29,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         let d = new Date((new Date()).getTime() + expiresIn);
         const decoded = await auth.verifySessionCookie(sessionCookie);
         const u = await auth.getUser(decoded.uid);
-        const user = {email: decoded['email'], displayName: u.displayName};
+        const user = {email: decoded['email'], displayName: u.displayName, uid: decoded.uid};
         let result;
         if (event.queryStringParameters['signup']) {
             // language=GraphQL
