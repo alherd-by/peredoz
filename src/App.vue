@@ -27,12 +27,6 @@ const initialAdding = {
 
 let adding = reactive({...initialAdding});
 
-watch(
-    currentTrack,
-    () => {
-        listTracksDialog.value = false;
-    }
-)
 
 const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
@@ -104,6 +98,7 @@ const handleRadiocodeTrackFileUpload = async () => {
     adding.attachment.length = 0;
     adding.attachment.push(await readFileAsText(file.value.files[0]))
 }
+
 
 const handleSpectrumFileUpload = async () => {
     adding.attachment.length = 0;
@@ -265,6 +260,15 @@ const requestCurrentLocation = () => {
     currentLocation.waiting = true;
     map.value.requestCurrentLocation()
 }
+
+watch(
+    currentTrack,
+    () => {
+        listTracksDialog.value = false;
+        map.value.refreshMap()
+    }
+)
+
 
 const onReceivingLocation      = (value) => {
     currentLocation.waiting = false;
@@ -519,14 +523,12 @@ watch(() => adding.category,
     </el-dialog>
     <el-dialog v-model="listTracksDialog">
         <h3>Список треков</h3>
-        <template v-if="list">
-            <el-radio-group v-model="currentTrack">
-                <el-radio :label="track.id" v-for="track of list.tracks" style="width: 600px; float: left">
-                    {{ track.id }} - {{ track.name }}
-                    <template v-if="track.atomfast_id"> (Atomfast)</template>
-                </el-radio>
-            </el-radio-group>
-        </template>
+        <el-radio-group v-model="currentTrack">
+            <el-radio :label="track.id" v-for="track of list" style="width: 600px; float: left">
+                {{ track.id }} - {{ track.name }}
+                <template v-if="track.atomfast_id"> (Atomfast)</template>
+            </el-radio>
+        </el-radio-group>
     </el-dialog>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>

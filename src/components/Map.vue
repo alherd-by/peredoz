@@ -44,6 +44,7 @@ import {fromLonLat} from "ol/proj";
 
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
+import ClusterSource from "ol/source/Cluster";
 import GeoJSON from "ol/format/GeoJSON"
 import {Circle, Fill, Style} from 'ol/style';
 import 'ol/ol.css'
@@ -136,6 +137,11 @@ let featuresSource = new VectorSource({
     format: new GeoJSON()
 })
 
+let clusterSource = new ClusterSource({
+    source: featuresSource,
+    distance: 13
+})
+
 let styleCache = {};
 
 const view        = new View({
@@ -178,7 +184,7 @@ let drawingLayer  = new VectorLayer({
 )
 
 let featureLayer = new VectorLayer({
-    source: featuresSource,
+    source: clusterSource,
     style(feature) {
         let size;
 
@@ -291,11 +297,23 @@ onMounted(
                 return
             }
             map.forEachFeatureAtPixel(evt.pixel, baseFeature => {
-                console.log(baseFeature.getProperties())
-                feature.value = {
-                    id: baseFeature.getId(),
-                    properties: baseFeature.getProperties()
-                };
+                let f = baseFeature.getProperties();
+                if (f.features) {
+                    let t = f.features[0];
+                    if (!t) {
+                        return
+                    }
+                    feature.value = {
+                        id: t.getId(),
+                        properties: t.getProperties()
+                    };
+                } else {
+                    feature.value = {
+                        id: baseFeature.getId(),
+                        properties: baseFeature.getProperties()
+                    };
+                }
+
                 overlay.setPosition(coordinate);
             })
         });
@@ -309,7 +327,8 @@ const enableDrawing = () => {
 
 defineExpose({
     enableDrawing,
-    requestCurrentLocation
+    requestCurrentLocation,
+    refreshMap
 })
 
 
