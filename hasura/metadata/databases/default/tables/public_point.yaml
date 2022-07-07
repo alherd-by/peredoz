@@ -11,6 +11,14 @@ object_relationships:
   - name: user
     using:
       foreign_key_constraint_on: user_id
+array_relationships:
+  - name: spectrums
+    using:
+      foreign_key_constraint_on:
+        column: point_id
+        table:
+          schema: public
+          name: spectrum
 computed_fields:
   - name: placeholder_feature
     definition:
@@ -35,9 +43,11 @@ select_permissions:
   - role: anonymous
     permission:
       columns:
+        - created_at
         - geometry
         - id
         - properties
+        - spectrum_id
         - track_id
         - user_id
       computed_fields:
@@ -47,9 +57,11 @@ select_permissions:
   - role: authorized
     permission:
       columns:
+        - created_at
         - geometry
         - id
         - properties
+        - spectrum_id
         - track_id
         - user_id
       computed_fields:

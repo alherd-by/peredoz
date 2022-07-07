@@ -5,6 +5,14 @@ object_relationships:
   - name: point
     using:
       foreign_key_constraint_on: point_id
+array_relationships:
+  - name: points
+    using:
+      foreign_key_constraint_on:
+        column: spectrum_id
+        table:
+          schema: public
+          name: point
 insert_permissions:
   - role: authorized
     permission:
@@ -16,7 +24,6 @@ insert_permissions:
       columns:
         - created_at
         - data
-        - geometry
         - id
         - name
         - point_id
@@ -27,7 +34,6 @@ select_permissions:
       columns:
         - created_at
         - data
-        - geometry
         - id
         - name
         - point_id
@@ -39,7 +45,6 @@ select_permissions:
       columns:
         - created_at
         - data
-        - geometry
         - id
         - name
         - point_id
