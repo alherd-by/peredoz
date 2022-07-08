@@ -14,7 +14,7 @@
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
                 <p class="pdng-t-5px">
-                    <a href="#" @click="attachSpectrum(feature.id)">
+                    <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
                         Прикрепить спектр
                     </a>
                 </p>
@@ -26,7 +26,7 @@
             </template>
             <template v-if="feature.properties.track_id">
                 <div class="pdng-t-10px">
-                    <a href="#" @click="trackDrawer = true">
+                    <a class="txt-underline" href="#" @click="trackDrawer = true">
                         Трек
                         <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
                              style="width: 15px;height: 15px"
@@ -47,9 +47,9 @@
                 </ul>
             </template>
             <template v-if="feature.properties.district">
-                <span>Населенный пункт: {{ feature.properties.name }}</span>
+                <span>Населенный пункт: <b>{{ feature.properties.name }}</b></span>
                 <br>
-                <span>Район: {{ feature.properties.district }}</span>
+                <span>Район: <b>{{ feature.properties.district }}</b></span>
                 <br>
                 <span>{{ feature.properties.status }}</span>
                 <br>

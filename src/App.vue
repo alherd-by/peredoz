@@ -221,6 +221,10 @@ const save = async () => {
             return
         }
         if (adding.point_type === 'spectrum') {
+            if (adding.attachment.length === 0) {
+                ElMessage.error('Необходимо прикрепить файл спектра');
+                return
+            }
             loading.value = true;
             await uploadSpectrum()
             loading.value = false;
@@ -431,12 +435,13 @@ const saveFilter = () => {
          @attachspectrum="attachSpectrum"/>
     <el-dialog v-model="addingDialog" @close="onAddingDialogClose">
         <h3>Добавить...</h3>
-        <el-form class="pdng-t-10px" label-width="180px"
+        <el-form class="pdng-t-10px"
+                 label-width="180px"
                  v-loading="loading"
                  :model="adding"
                  @submit.prevent="save">
             <el-form-item label="Категория">
-                <el-radio-group v-model="adding.category" size="large" :disabled="currentTrackPoint">
+                <el-radio-group v-model="adding.category" size="large" :disabled="!!currentTrackPoint">
                     <el-radio-button :label="'track'">Трек</el-radio-button>
                     <el-radio-button :label="'point'">Точка</el-radio-button>
                 </el-radio-group>
@@ -472,7 +477,7 @@ const saveFilter = () => {
             </template>
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">
-                    <el-radio-group v-model="adding.point_type" size="large" :disabled="currentTrackPoint">
+                    <el-radio-group v-model="adding.point_type" size="large" :disabled="!!currentTrackPoint">
                         <el-radio-button :label="'spectrum'">Спектр</el-radio-button>
                         <el-radio-button :label="'generic'">Комментарий/файл</el-radio-button>
                     </el-radio-group>
@@ -488,7 +493,7 @@ const saveFilter = () => {
                     </el-radio-group>
                 </el-form-item>
                 <template v-if="adding.point_type === 'spectrum'">
-                    <el-form-item label="Спектр">
+                    <el-form-item label="Спектр" required>
                         <input type="file"
                                class="pdng-t-5px"
                                accept="text/xml"
