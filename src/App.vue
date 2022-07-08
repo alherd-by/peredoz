@@ -525,31 +525,39 @@ watch(() => adding.category,
             </template>
         </el-form>
     </el-dialog>
-    <el-dialog v-model="filterDialog" fullscreen :show-close="false">
-        <el-row>
+    <el-dialog v-model="filterDialog" fullscreen>
+        <div class="scene">
+            <div class="flex-column">
+                <el-row>
+                    <el-button @click="filterDialog = false">Сохранить</el-button>
+                </el-row>
+                <el-row class="pdng-t-25px">
             <span class="pdng-t-10px pdng-r-10px">
                 <b>Объекты добавлены:</b>
             </span>
-            <el-radio-group v-model="filter.user_id">
-                <el-radio-button :label="''">Всеми</el-radio-button>
-                <el-radio-button :label="JSON.stringify({user_id: {_eq: user.uid}})">
-                    Мною
-                </el-radio-button>
-                <el-radio-button :label="JSON.stringify({user_id: {_neq: user.uid}})">
-                    Не мною
-                </el-radio-button>
-            </el-radio-group>
-        </el-row>
-        <div class="pdng-t-10px">
-            <h4>Выберите треки (не больше трех)</h4>
-            <el-checkbox-group v-model="filter.track_id" :min="0" :max="3">
-                <el-checkbox :label="track.id"
-                             :key="track.id"
-                             v-for="track of list">
-                    {{ track.id }} - {{ track.name }}
-                    <template v-if="track.atomfast_id"> (Atomfast)</template>
-                </el-checkbox>
-            </el-checkbox-group>
+                    <el-radio-group v-model="filter.user_id">
+                        <el-radio-button :label="''">Всеми</el-radio-button>
+                        <el-radio-button :label="JSON.stringify({user_id: {_eq: user.uid}})">
+                            Мною
+                        </el-radio-button>
+                        <el-radio-button :label="JSON.stringify({user_id: {_neq: user.uid}})">
+                            Не мною
+                        </el-radio-button>
+                    </el-radio-group>
+                </el-row>
+                <div class="pdng-t-10px">
+                    <h4>Выберите треки (не больше трех)</h4>
+                    <el-checkbox-group v-model="filter.track_id" :min="0" :max="3">
+                        <el-checkbox :label="track.id"
+                                     :key="track.id"
+                                     class="committee-view"
+                                     v-for="track of list">
+                            {{ track.id }} - {{ track.name }}
+                            <template v-if="track.atomfast_id"> (Atomfast)</template>
+                        </el-checkbox>
+                    </el-checkbox-group>
+                </div>
+            </div>
         </div>
     </el-dialog>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
@@ -560,6 +568,11 @@ watch(() => adding.category,
     .toolbar {
         margin-left: 100px;
     }
+}
+
+.committee-view {
+    display: flex;
+    align-items: flex-start;
 }
 
 .toolbar {
