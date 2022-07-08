@@ -82,26 +82,24 @@ const emit = defineEmits([
     'point-located'
 ])
 
-const attachSpectrum        = (id) => {
+const attachSpectrum = (id) => {
     emit('attachspectrum', id)
 }
-const props                 = defineProps({
-    colorScheme: String,
-    filter: Object
+const props          = defineProps({
+    colorScheme: String
 })
-const {colorScheme, filter} = toRefs(props)
+const {colorScheme}  = toRefs(props)
+const filter         = ref({})
 
 const drawingEnabled = ref(false);
 let trackPointHash   = ref({})
 
-const loadFeatures = async function (source, projection) {
-    console.log(filter.value)
+const loadFeatures = async (source, projection) => {
     let body = {
         _or: [
             {track_id: {_is_null: true}}
         ]
     }
-    console.log(filter.value.track_id)
     if (Array.isArray(filter.value.track_id)) {
         body['_or'].push({track_id: {_in: filter.value.track_id}})
     }
@@ -266,7 +264,10 @@ watch(
     }
 )
 
-const refreshMap = () => {
+const refreshMap = (input) => {
+    if (input) {
+        filter.value = input
+    }
     const refreshSource = new VectorSource({
         loader: function (extent, resolution, projection) {
             loadFeatures(this, projection)
@@ -276,15 +277,6 @@ const refreshMap = () => {
     featureLayer.setSource(new ClusterSource({source: refreshSource, distance: 13}))
     featuresSource = refreshSource
 }
-watch(
-    filter,
-    () => {
-        refreshMap()
-    },
-    {
-        deep: true
-    }
-)
 
 const feature = ref();
 let map;

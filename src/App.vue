@@ -9,7 +9,6 @@ import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser} from "./user";
 
 const toolbarDialog      = ref(false);
-const currentTrack       = ref();
 const filterDialog       = ref(false);
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const filter             = reactive({
@@ -17,8 +16,7 @@ const filter             = reactive({
     user_id: '',
     track_id: []
 })
-
-const initialAdding = {
+const initialAdding      = {
     category: '',
     track_type: '',
     point_type: '',
@@ -29,8 +27,17 @@ const initialAdding = {
     location: null,
     attachment: []
 }
-
-let adding = reactive({...initialAdding});
+const trackList          = ref();
+const trackListLoading   = ref(false)
+const map                = ref()
+const file               = ref(null);
+const addingDialog       = ref(false)
+const currentTrackPoint  = ref(null)
+const drawingEnabled     = ref(false)
+const auth               = ref();
+const loading            = ref(false)
+const user               = ref(getUser())
+let adding               = reactive({...initialAdding});
 
 const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
@@ -41,22 +48,25 @@ const addAtomfastTrack = async () => {
     return await response.json()
 }
 
-const list = ref();
-
 const fetchTracks = async () => {
-    const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
-        {
-            credentials: 'include'
+    trackListLoading.value = true
+    try {
+        const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
+            {
+                credentials: 'include'
+            }
+        )
+        if (!response.ok) {
+            throw 'Invalid track list http response';
         }
-    )
-    if (!response.ok) {
-        throw 'Invalid track list http response';
+        const data = await response.json();
+        if (!data.tracks) {
+            throw 'Invalid track list format response';
+        }
+        trackList.value = data.tracks;
+    } finally {
+        trackListLoading.value = false
     }
-    const data = await response.json();
-    if (!data.tracks) {
-        throw 'Invalid track list format response';
-    }
-    list.value = data.tracks;
 }
 
 const readFileAsText = (raw) => {
@@ -79,17 +89,6 @@ const readMediaFile  = (raw) => {
         reader.readAsDataURL(raw);
     });
 }
-
-const map               = ref()
-const file              = ref(null);
-const addingDialog      = ref(false)
-const currentTrackPoint = ref(null)
-const drawingEnabled    = ref(false)
-const auth              = ref();
-const loading           = ref(false)
-
-const user = ref(getUser())
-
 const attachSpectrum = (trackPointId) => {
     addingDialog.value = true
     adding.category    = 'point'
@@ -102,7 +101,6 @@ const handleRadiocodeTrackFileUpload = async () => {
     adding.attachment.length = 0;
     adding.attachment.push(await readFileAsText(file.value.files[0]))
 }
-
 
 const handleSpectrumFileUpload = async () => {
     adding.attachment.length = 0;
@@ -265,14 +263,6 @@ const requestCurrentLocation = () => {
     map.value.requestCurrentLocation()
 }
 
-watch(
-    currentTrack,
-    () => {
-        filterDialog.value = false;
-        map.value.refreshMap()
-    }
-)
-
 
 const onReceivingLocation      = (value) => {
     currentLocation.waiting = false;
@@ -319,6 +309,10 @@ watch(() => adding.category,
             category
         });
     })
+const saveFilter = () => {
+    map.value.refreshMap(filter)
+    filterDialog.value = false
+}
 </script>
 
 <template>
@@ -344,7 +338,7 @@ watch(() => adding.category,
                     </template>
                     <template #default>
                         <h3>Схемы</h3>
-                        <template v-if="list">
+                        <template v-if="trackList">
                             <el-radio-group v-model="currentColorScheme">
                                 <el-radio :label="key"
                                           v-for="(track, key) in colorSchemes"
@@ -393,7 +387,7 @@ watch(() => adding.category,
                                 </template>
                                 <template #default>
                                     <h3>Схемы</h3>
-                                    <template v-if="list">
+                                    <template v-if="trackList">
                                         <el-radio-group v-model="currentColorScheme">
                                             <el-radio :label="key"
                                                       v-for="(track, key) in colorSchemes"
@@ -426,7 +420,6 @@ watch(() => adding.category,
         </div>
     </div>
     <Map ref="map"
-         :filter="filter"
          @get-location="onReceivingLocation"
          @get-location-error="onReceivingLocationError"
          @point-located="onPointLocated"
@@ -529,12 +522,14 @@ watch(() => adding.category,
         <div class="scene">
             <div class="flex-column">
                 <el-row>
-                    <el-button @click="filterDialog = false">Сохранить</el-button>
+                    <el-button @click="saveFilter">
+                        Применить фильтр
+                    </el-button>
                 </el-row>
                 <el-row class="pdng-t-25px">
-            <span class="pdng-t-10px pdng-r-10px">
-                <b>Объекты добавлены:</b>
-            </span>
+                    <span class="pdng-t-10px pdng-r-10px">
+                        <b>Объекты добавлены:</b>
+                    </span>
                     <el-radio-group v-model="filter.user_id">
                         <el-radio-button :label="''">Всеми</el-radio-button>
                         <el-radio-button :label="JSON.stringify({user_id: {_eq: user.uid}})">
@@ -545,13 +540,13 @@ watch(() => adding.category,
                         </el-radio-button>
                     </el-radio-group>
                 </el-row>
-                <div class="pdng-t-10px">
+                <div class="pdng-t-10px" v-loading="trackListLoading">
                     <h4>Выберите треки (не больше трех)</h4>
-                    <el-checkbox-group v-model="filter.track_id" :min="0" :max="3">
+                    <el-checkbox-group v-model="filter.track_id" :min="0" :max="3" class="pdng-t-10px">
                         <el-checkbox :label="track.id"
                                      :key="track.id"
                                      class="committee-view"
-                                     v-for="track of list">
+                                     v-for="track of trackList">
                             {{ track.id }} - {{ track.name }}
                             <template v-if="track.atomfast_id"> (Atomfast)</template>
                         </el-checkbox>
