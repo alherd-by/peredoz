@@ -24,6 +24,21 @@
                 <br>
                 {{ spectrums[feature.properties.spectrum_id].name }}
             </template>
+            <template v-if="feature.properties.track_id">
+                <div class="pdng-t-10px">
+                    <a href="#" @click="trackDrawer = true">
+                        Трек
+                        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
+                             style="width: 15px;height: 15px"
+                             data-v-78e17ca8="">
+                            <path fill="currentColor"
+                                  d="M768 256H353.6a32 32 0 1 1 0-64H800a32 32 0 0 1 32 32v448a32 32 0 0 1-64 0V256z"></path>
+                            <path fill="currentColor"
+                                  d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </template>
             <template v-if="feature.properties.attachments">
                 <ul class="pdng-t-5px pdng-l-10px pdng-b-10px">
                     <li v-for="(attachment, index) of feature.properties.attachments">
@@ -48,6 +63,13 @@
             </template>
         </div>
     </div>
+    <el-drawer
+        v-model="trackDrawer"
+        title="I am the title"
+        :direction="'rtl'"
+    >
+        <span>{{ tracks[feature.properties.track_id] }}</span>
+    </el-drawer>
 </template>
 <script setup>
 import Map from "ol/Map";
@@ -93,9 +115,11 @@ const attachSpectrum = (id) => {
 const props          = defineProps({
     colorScheme: String
 })
+const trackDrawer    = ref(false)
 const {colorScheme}  = toRefs(props)
 const filter         = ref({})
 const spectrums      = ref({})
+const tracks         = ref({})
 
 const drawingEnabled = ref(false);
 let trackPointHash   = ref({})
@@ -140,6 +164,11 @@ const loadFeatures = async (source, projection) => {
     if (payload.spectrums) {
         for (let s of payload.spectrums) {
             spectrums.value[s.id] = s;
+        }
+    }
+    if (payload.tracks) {
+        for (let t of payload.tracks) {
+            tracks.value[t.id] = t;
         }
     }
 }
