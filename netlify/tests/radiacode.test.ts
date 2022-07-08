@@ -1,5 +1,5 @@
 import {expect, test} from '@jest/globals'
-import {parse} from '../src/radiocode';
+import {parse} from '../src/radiacode';
 
 const correct = `
 Track: 2021-12-03  Белоуша\tRC-101-000983\t 

@@ -115,7 +115,7 @@ const handleMediaFileUpload    = async () => {
 
 const uploadRadiocode = async () => {
     const response = await fetch(
-        '/radiocode',
+        '/radiacode',
         {
             method: 'POST',
             credentials: 'include',
@@ -226,7 +226,7 @@ const save = async () => {
             loading.value = false;
             return
         }
-        if (adding.track_type === 'radiocode') {
+        if (adding.track_type === 'radiacode') {
             loading.value = true;
             await uploadRadiocode()
             loading.value = false;
@@ -445,7 +445,7 @@ const saveFilter = () => {
                 <el-form-item label="Тип">
                     <el-radio-group v-model="adding.track_type" size="large">
                         <el-radio-button :label="'atomfast'">Atomfast</el-radio-button>
-                        <el-radio-button :label="'radiocode'">RadioCode</el-radio-button>
+                        <el-radio-button :label="'radiacode'">RadiaCode</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
                 <template v-if="adding.track_type === 'atomfast'">
@@ -456,8 +456,8 @@ const saveFilter = () => {
                         <el-input placeholder="" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
-                <template v-if="adding.track_type === 'radiocode'">
-                    <el-form-item label="RadioCode">
+                <template v-if="adding.track_type === 'radiacode'">
+                    <el-form-item label="RadiaCode">
                         <input type="file"
                                class="pdng-t-5px"
                                name="spectrum"

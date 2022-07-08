@@ -4,7 +4,7 @@ import {JSONResponse} from "../src/json_response";
 import {initializeApp, cert} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {parseCookies} from "../src/client";
-import {parse} from "../src/radiocode";
+import {parse} from "../src/radiacode";
 
 const app = initializeApp({
     credential: cert(JSON.parse(process.env.FIREBASE_CREDENTIALS))
