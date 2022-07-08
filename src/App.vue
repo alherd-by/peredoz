@@ -213,40 +213,44 @@ onMounted(() => {
 })
 
 const save = async () => {
-    if (adding.point_type === 'generic') {
-        loading.value = true;
-        await addGenericPoint()
-        loading.value = false;
-        return
-    }
-    if (adding.point_type === 'spectrum') {
-        loading.value = true;
-        await uploadSpectrum()
-        loading.value = false;
-        return
-    }
-    if (adding.track_type === 'radiocode') {
-        loading.value = true;
-        await uploadRadiocode()
-        loading.value = false;
-        return
-    }
-    if (adding.track_type === 'atomfast') {
-        loading.value = true;
-        try {
-            const payload = await addAtomfastTrack()
-            if (payload.error) {
-                ElMessage.error(payload.error)
-                return
-            }
-            ElMessage.success('Трек с Atomfast успешно добавлен')
-            addingDialog.value = false
-        } catch (e) {
-            ElMessage.error('Произошла ошибка')
-            throw e;
-        } finally {
+    try {
+        if (adding.point_type === 'generic') {
+            loading.value = true;
+            await addGenericPoint()
             loading.value = false;
+            return
         }
+        if (adding.point_type === 'spectrum') {
+            loading.value = true;
+            await uploadSpectrum()
+            loading.value = false;
+            return
+        }
+        if (adding.track_type === 'radiocode') {
+            loading.value = true;
+            await uploadRadiocode()
+            loading.value = false;
+            return
+        }
+        if (adding.track_type === 'atomfast') {
+            loading.value = true;
+            try {
+                const payload = await addAtomfastTrack()
+                if (payload.error) {
+                    ElMessage.error(payload.error)
+                    return
+                }
+                ElMessage.success('Трек с Atomfast успешно добавлен')
+                addingDialog.value = false
+            } catch (e) {
+                ElMessage.error('Произошла ошибка')
+                throw e;
+            } finally {
+                loading.value = false;
+            }
+        }
+    } finally {
+        loading.value = false;
     }
 }
 

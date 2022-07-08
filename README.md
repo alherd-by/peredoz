@@ -1,5 +1,9 @@
 # Peredoz
 
+## Measurements
+https://github.com/cdump/radiacode/tree/master/radiacode-examples
+
+## Auth
 https://hasura.io/blog/authentication-and-authorization-using-hasura-and-firebase/
 https://hasura.io/docs/latest/graphql/core/auth/authentication/jwt/
 https://firebase.google.com/docs/auth/web/manage-users

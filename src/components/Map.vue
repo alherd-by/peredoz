@@ -19,6 +19,11 @@
                     </a>
                 </p>
             </template>
+            <template v-if="feature.properties.spectrum_id">
+                Спектр #{{ feature.properties.spectrum_id }}
+                <br>
+                {{ spectrums[feature.properties.spectrum_id].name }}
+            </template>
             <template v-if="feature.properties.attachments">
                 <ul class="pdng-t-5px pdng-l-10px pdng-b-10px">
                     <li v-for="(attachment, index) of feature.properties.attachments">
@@ -90,6 +95,7 @@ const props          = defineProps({
 })
 const {colorScheme}  = toRefs(props)
 const filter         = ref({})
+const spectrums      = ref({})
 
 const drawingEnabled = ref(false);
 let trackPointHash   = ref({})
@@ -130,6 +136,11 @@ const loadFeatures = async (source, projection) => {
             {featureProjection: projection}
         )
         source.addFeatures(temp)
+    }
+    if (payload.spectrums) {
+        for (let s of payload.spectrums) {
+            spectrums.value[s.id] = s;
+        }
     }
 }
 

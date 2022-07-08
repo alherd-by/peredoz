@@ -50,11 +50,16 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         )
     }
     const input: any = {
-        name: raw.spectrum.ResultDataList.ResultData.BackgroundSpectrumFile,
-        data: raw.spectrum
+        geometry: {
+            type: "Point",
+            coordinates: raw.location
+        },
+        properties: {
+            name: raw.name
+        },
     }
     if (raw.point_id) {
-        input.point_id = raw.point_id
+        input.id = raw.point_id
     } else {
         if (!raw.location) {
             return JSONResponse(
@@ -64,29 +69,31 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 }
             )
         }
-        input.point = {
+        input.spectrum = {
             data: {
-                geometry: {
-                    type: "Point",
-                    coordinates: raw.location
-                },
-                properties: {
-                    name: raw.name
-                }
+                name: raw.spectrum.ResultDataList.ResultData.BackgroundSpectrumFile,
+                data: raw.spectrum
             }
         }
     }
     // language=GraphQL
-    const result = await mutation(`mutation ($input: spectrum_insert_input!) {
-        spectrum: insert_spectrum_one(object: $input) {
-            id
-            name
-            point {
-                id
-                geometry
-                properties
+    const result = await mutation(`mutation ($input: point_insert_input!) {
+        point: insert_point_one(
+            object: $input,
+            on_conflict: {
+                constraint: point_pk,
+                update_columns: [spectrum_id]
             }
-            data
+        ) {
+            id
+            spectrum {
+                id
+                data
+                name
+                point_id
+            }
+            geometry
+            properties
         }
     }`,
         {
