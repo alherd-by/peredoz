@@ -2,9 +2,10 @@
     query:
       collection_name: allowed-queries
       query_name: points
-  url: points/track/:track_id
+  url: points
   methods:
     - GET
+    - POST
   name: points
   comment: null
 - definition:

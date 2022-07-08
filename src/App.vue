@@ -10,8 +10,13 @@ import {getUser} from "./user";
 
 const toolbarDialog      = ref(false);
 const currentTrack       = ref();
-const listTracksDialog   = ref(false);
+const filterDialog       = ref(false);
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
+const filter             = reactive({
+    created_at: '',
+    user_id: '',
+    track_id: []
+})
 
 const initialAdding = {
     category: '',
@@ -26,7 +31,6 @@ const initialAdding = {
 }
 
 let adding = reactive({...initialAdding});
-
 
 const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
@@ -264,7 +268,7 @@ const requestCurrentLocation = () => {
 watch(
     currentTrack,
     () => {
-        listTracksDialog.value = false;
+        filterDialog.value = false;
         map.value.refreshMap()
     }
 )
@@ -327,7 +331,7 @@ watch(() => adding.category,
                      class="zoom-0_75 mil-zoom-0_5">
             </a>
             <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
-                <a href="#" @click="listTracksDialog = true">Список треков</a>
+                <a href="#" @click="filterDialog = true">Показать</a>
                 <a href="#" @click="addingDialog = true">Добавить</a>
                 <el-popover
                     placement="left-end"
@@ -372,7 +376,7 @@ watch(() => adding.category,
                 <div class="brgr-nav notdisplay mil-show">
                     <div class="header-links pdng-l-20px pdng-r-20px">
                         <div class="pdng-t-5px">
-                            <a href="#" @click="listTracksDialog = true">Список треков</a>
+                            <a href="#" @click="filterDialog = true">Список треков</a>
                         </div>
                         <div class="pdng-t-5px">
                             <a href="#" @click="addingDialog = true">Добавить</a>
@@ -421,8 +425,8 @@ watch(() => adding.category,
             </div>
         </div>
     </div>
-    <Map :track-id="currentTrack"
-         ref="map"
+    <Map ref="map"
+         :filter="filter"
          @get-location="onReceivingLocation"
          @get-location-error="onReceivingLocationError"
          @point-located="onPointLocated"
@@ -521,14 +525,32 @@ watch(() => adding.category,
             </template>
         </el-form>
     </el-dialog>
-    <el-dialog v-model="listTracksDialog">
-        <h3>Список треков</h3>
-        <el-radio-group v-model="currentTrack">
-            <el-radio :label="track.id" v-for="track of list" style="width: 600px; float: left">
-                {{ track.id }} - {{ track.name }}
-                <template v-if="track.atomfast_id"> (Atomfast)</template>
-            </el-radio>
-        </el-radio-group>
+    <el-dialog v-model="filterDialog" fullscreen :show-close="false">
+        <el-row>
+            <span class="pdng-t-10px pdng-r-10px">
+                <b>Объекты добавлены:</b>
+            </span>
+            <el-radio-group v-model="filter.user_id">
+                <el-radio-button :label="''">Всеми</el-radio-button>
+                <el-radio-button :label="JSON.stringify({user_id: {_eq: user.uid}})">
+                    Мною
+                </el-radio-button>
+                <el-radio-button :label="JSON.stringify({user_id: {_neq: user.uid}})">
+                    Не мною
+                </el-radio-button>
+            </el-radio-group>
+        </el-row>
+        <div class="pdng-t-10px">
+            <h4>Выберите треки (не больше трех)</h4>
+            <el-checkbox-group v-model="filter.track_id" :min="0" :max="3">
+                <el-checkbox :label="track.id"
+                             :key="track.id"
+                             v-for="track of list">
+                    {{ track.id }} - {{ track.name }}
+                    <template v-if="track.atomfast_id"> (Atomfast)</template>
+                </el-checkbox>
+            </el-checkbox-group>
+        </div>
     </el-dialog>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>

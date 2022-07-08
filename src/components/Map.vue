@@ -82,53 +82,49 @@ const emit = defineEmits([
     'point-located'
 ])
 
-const attachSpectrum         = (id) => {
+const attachSpectrum        = (id) => {
     emit('attachspectrum', id)
 }
-const props                  = defineProps({
-    trackId: Number,
-    colorScheme: String
+const props                 = defineProps({
+    colorScheme: String,
+    filter: Object
 })
-const {trackId, colorScheme} = toRefs(props)
+const {colorScheme, filter} = toRefs(props)
 
 const drawingEnabled = ref(false);
 let trackPointHash   = ref({})
 
 const loadFeatures = async function (source, projection) {
-    // const response = await fetch(
-    //     'https://peredoz.hasura.app/api/rest/track',
-    //     {
-    //         method: 'GET',
-    //     }
-    // )
+    console.log(filter.value)
+    let body = {
+        _or: [
+            {track_id: {_is_null: true}}
+        ]
+    }
+    console.log(filter.value.track_id)
+    if (Array.isArray(filter.value.track_id)) {
+        body['_or'].push({track_id: {_in: filter.value.track_id}})
+    }
+    if (filter.value.user_id) {
+        body['_or'].push(JSON.parse(filter.value.user_id))
+    }
     const response = await fetch(
-        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points/track/' + (trackId.value || '-1'),
+        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points',
         {
-            method: 'GET',
+            method: 'POST',
             credentials: 'include',
+            body: JSON.stringify({
+                filter: body
+            })
         }
     )
     if (!response.ok) {
         throw 'Invalid http response for fetching track'
     }
     const payload = await response.json()
-
-    if (payload.features_by_pk) {
-        const temp = (new GeoJSON()).readFeatures(
-            payload.features_by_pk.data,
-            {featureProjection: projection}
-        )
-        source.addFeatures(
-            temp
-        )
-    }
     if (payload.features) {
         trackPointHash.value = {}
-        // const tmp            = payload.track.features.filter(i => i.spectrums.length > 0)
-        // for (let item of tmp) {
-        //     trackPointHash.value[item.id] = item.spectrums
-        // }
-        const temp = (new GeoJSON()).readFeatures(
+        const temp           = (new GeoJSON()).readFeatures(
             {
                 type: 'FeatureCollection',
                 features: payload.features
@@ -281,9 +277,12 @@ const refreshMap = () => {
     featuresSource = refreshSource
 }
 watch(
-    trackId,
+    filter,
     () => {
         refreshMap()
+    },
+    {
+        deep: true
     }
 )
 

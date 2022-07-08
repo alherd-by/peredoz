@@ -17,8 +17,8 @@
           }
       - name: points
         query: |
-          query geodata ($track_id: Int = -1) {
-          	features: point(where: {_or:[{track_id:{_eq:$track_id}},{track_id:{_is_null:true}}]}) {
+          query geodata ($filter: point_bool_exp) {
+          	features: point(where: $filter) {
           		id
           		type: placeholder_feature
           		properties: merged_properties
