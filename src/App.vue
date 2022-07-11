@@ -214,8 +214,8 @@ const save = async () => {
                 ElMessage.error('Прикрепите пожалуйста минимум один файл');
                 return
             }
-            if (adding.comment.length > 10) {
-                ElMessage.error('Укажите коротки комментарий');
+            if (adding.comment.length < 8) {
+                ElMessage.error('Укажите короткий комментарий (не менее 8 символов)');
                 return
             }
             loading.value = true;
@@ -261,6 +261,7 @@ const save = async () => {
             }
         }
     } finally {
+        map.value.refreshMap();
         loading.value = false;
     }
 }
