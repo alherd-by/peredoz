@@ -65,13 +65,32 @@
     </div>
     <el-drawer
         v-model="trackDrawer"
-        title="I am the title"
+        :title="'Трек #' + (feature ? feature.properties.track_id : '')"
         :direction="'rtl'"
     >
-        <span>{{ tracks[feature.properties.track_id] }}</span>
+        <div class="track-drawer">
+           <span>
+                <b>Название</b>: {{ tracks[feature.properties.track_id].name }}
+            </span>
+            <br>
+            <span v-if="tracks[feature.properties.track_id].user">
+                <b>Пользователь</b>: {{
+                    tracks[feature.properties.track_id].user.displayName ? tracks[feature.properties.track_id].user.displayName : tracks[feature.properties.track_id].user.email
+                }}
+            </span>
+            <br>
+            <span>
+                <b>Дата</b>:
+                <span :title="tracks[feature.properties.track_id].created_at">
+                    {{ format(tracks[feature.properties.track_id].created_at) }}
+                </span>
+            </span>
+        </div>
     </el-drawer>
 </template>
 <script setup>
+import {format} from '../date'
+
 import Map from "ol/Map";
 import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source";
@@ -415,6 +434,11 @@ defineExpose({
 </script>
 
 <style scoped>
+
+.track-drawer {
+    font-size: 20px;
+}
+
 #map {
     position: fixed;
     top: 0;
