@@ -26,7 +26,6 @@ insert_permissions:
         - display_name
         - email
         - id
-      backend_only: false
 select_permissions:
   - role: anonymous
     permission:

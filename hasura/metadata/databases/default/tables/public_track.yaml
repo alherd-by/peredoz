@@ -33,7 +33,6 @@ insert_permissions:
         - extra
         - id
         - name
-      backend_only: false
 select_permissions:
   - role: anonymous
     permission:

@@ -13,6 +13,7 @@
           			email
           			id
           		}
+          		created_at
           	}
           }
       - name: points
@@ -21,8 +22,36 @@
           	features: point(where: $filter) {
           		id
           		type: placeholder_feature
+          		track {
+          			name
+          			atomfast_id
+          			extra
+          		}
           		properties: merged_properties
           		geometry
-          		track_id
+          		created_at
+          	}
+          	spectrums: spectrum(where: {point:$filter}) {
+          		id
+          		name
+          		data
+          		created_at
+          	}
+          	tracks: track(where: {points:$filter}) {
+          		id
+          		name
+          		extra
+          		atomfast_id
+          		user {
+          			id
+          			display_name
+          			email
+          		}
+          		created_at
+          	}
+          	users: user(where: {points:$filter}) {
+          		id
+          		display_name
+          		email
           	}
           }

@@ -39,7 +39,7 @@
                     </a>
                 </div>
             </template>
-            <template v-if="feature.properties.attachments">
+            <template v-if="feature.properties.attachments && feature.properties.attachments.length > 0">
                 <ul class="pdng-t-5px pdng-l-10px pdng-b-10px">
                     <li v-for="(attachment, index) of feature.properties.attachments">
                         <a :href="attachment.url">Файл {{ index + 1 }}</a>
@@ -55,11 +55,22 @@
                 <br>
             </template>
             <template v-if="feature.properties.comment">
-                <span class="pdng-t-5px pdng-b-5px">{{ feature.properties.comment }}</span>
+                <span class="pdng-t-5px pdng-b-5px">
+                    <b>Комментарий</b>: <br>{{ feature.properties.comment }}
+                </span>
             </template>
             <template v-if="trackPointHash[feature.id]">
                 <br>
                 <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
+            </template>
+            <template v-if="feature.properties.user_id">
+                <p>
+                    <b>От пользователя</b>: {{
+                        users[feature.properties.user_id].display_name
+                            ? users[feature.properties.user_id].display_name
+                            : users[feature.properties.user_id].email
+                    }}
+                </p>
             </template>
         </div>
     </div>
@@ -138,6 +149,7 @@ const trackDrawer    = ref(false)
 const {colorScheme}  = toRefs(props)
 const filter         = ref({})
 const spectrums      = ref({})
+const users          = ref({})
 const tracks         = ref({})
 
 const drawingEnabled = ref(false);
@@ -183,6 +195,11 @@ const loadFeatures = async (source, projection) => {
     if (payload.spectrums) {
         for (let s of payload.spectrums) {
             spectrums.value[s.id] = s;
+        }
+    }
+    if (payload.users) {
+        for (let s of payload.users) {
+            users.value[s.id] = s;
         }
     }
     if (payload.tracks) {

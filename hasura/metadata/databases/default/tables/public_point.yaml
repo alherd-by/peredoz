@@ -43,7 +43,6 @@ insert_permissions:
         - id
         - properties
         - track_id
-      backend_only: false
 select_permissions:
   - role: anonymous
     permission:
@@ -75,3 +74,14 @@ select_permissions:
         - placeholder_feature
       filter: {}
       allow_aggregations: true
+update_permissions:
+  - role: authorized
+    permission:
+      columns:
+        - spectrum_id
+      filter:
+        user_id:
+          _eq: X-Hasura-User-Id
+      check:
+        user_id:
+          _eq: X-Hasura-User-Id
