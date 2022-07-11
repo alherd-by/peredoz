@@ -171,11 +171,6 @@ const uploadSpectrum  = async () => {
         return
     }
     addingDialog.value = false;
-    // trackPointHash.value[result.data.spectrum.track_point_id] = [{
-    //     id: result.data.spectrum.id,
-    //     name: result.data.spectrum.name,
-    //     data: result.data.spectrum.data
-    // }]
     ElMessage.success({'message': 'Добавлено'})
 }
 const addGenericPoint = async () => {
@@ -215,6 +210,14 @@ onMounted(() => {
 const save = async () => {
     try {
         if (adding.point_type === 'generic') {
+            if (adding.attachment.length === 0) {
+                ElMessage.error('Прикрепите пожалуйста минимум один файл');
+                return
+            }
+            if (adding.comment.length > 10) {
+                ElMessage.error('Укажите коротки комментарий');
+                return
+            }
             loading.value = true;
             await addGenericPoint()
             loading.value = false;
@@ -231,6 +234,10 @@ const save = async () => {
             return
         }
         if (adding.track_type === 'radiacode') {
+            if (adding.attachment.length === 0) {
+                ElMessage.error('Необходимо прикрепить файл');
+                return
+            }
             loading.value = true;
             await uploadRadiocode()
             loading.value = false;
@@ -462,7 +469,7 @@ const saveFilter = () => {
                     </el-form-item>
                 </template>
                 <template v-if="adding.track_type === 'radiacode'">
-                    <el-form-item label="RadiaCode">
+                    <el-form-item label="RadiaCode" required>
                         <input type="file"
                                class="pdng-t-5px"
                                name="spectrum"
@@ -473,7 +480,6 @@ const saveFilter = () => {
                         <el-input type="textarea" placeholder="Название" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
-
             </template>
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">
@@ -511,7 +517,7 @@ const saveFilter = () => {
                                   v-model="adding.comment"
                                   placeholder="Комментарий"></el-input>
                     </el-form-item>
-                    <el-form-item label="Медиа-файлы">
+                    <el-form-item label="Медиа-файлы" required>
                         <input type="file" class="pdng-t-5px"
                                ref="file"
                                accept="image/*,video/*"
