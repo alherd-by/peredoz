@@ -37,6 +37,7 @@ const drawingEnabled     = ref(false)
 const auth               = ref();
 const loading            = ref(false)
 const user               = ref(getUser())
+const mobileToolbar      = ref(false)
 let adding               = reactive({...initialAdding});
 
 const addAtomfastTrack = async () => {
@@ -377,7 +378,7 @@ const saveFilter = () => {
             </div>
             <!-- mobile nav -->
             <div class="section toolbar notdisplay mil-show">
-                <input id="brgrbtn" class="notdisplay mil-show" type="checkbox">
+                <input id="brgrbtn" class="notdisplay mil-show" type="checkbox" v-model="mobileToolbar">
                 <label for="brgrbtn" class="notdisplay burger-button mil-show">
                     <div class="burger-button-line"></div>
                     <div class="burger-button-line"></div>
@@ -386,7 +387,7 @@ const saveFilter = () => {
                 <div class="brgr-nav notdisplay mil-show">
                     <div class="header-links pdng-l-20px pdng-r-20px">
                         <div class="pdng-t-5px">
-                            <a href="#" @click="filterDialog = true">Список треков</a>
+                            <a href="#" @click="filterDialog = true;mobileToolbar = false">Просмотр</a>
                         </div>
                         <div class="pdng-t-5px">
                             <a href="#" @click="addingDialog = true">Добавить</a>
@@ -441,28 +442,33 @@ const saveFilter = () => {
          @point-located="onPointLocated"
          :color-scheme="currentColorScheme"
          @attachspectrum="attachSpectrum"/>
-    <el-dialog v-model="addingDialog" @close="onAddingDialogClose">
+    <el-dialog v-model="addingDialog"
+               width="var(--dialog-width)"
+               center
+               @open="mobileToolbar = false"
+               @close="onAddingDialogClose">
         <h3>Добавить...</h3>
         <el-form class="pdng-t-10px"
-                 label-width="180px"
                  v-loading="loading"
+                 label-position="left"
+                 label-width="8.5em"
                  :model="adding"
                  @submit.prevent="save">
             <el-form-item label="Категория">
                 <el-radio-group v-model="adding.category" size="large" :disabled="!!currentTrackPoint">
-                    <el-radio-button :label="'track'">Трек</el-radio-button>
-                    <el-radio-button :label="'point'">Точка</el-radio-button>
+                    <el-radio :label="'track'">Трек</el-radio>
+                    <el-radio :label="'point'">Точка</el-radio>
                 </el-radio-group>
             </el-form-item>
             <template v-if="adding.category === 'track'">
                 <el-form-item label="Тип">
                     <el-radio-group v-model="adding.track_type" size="large">
-                        <el-radio-button :label="'atomfast'">Atomfast</el-radio-button>
-                        <el-radio-button :label="'radiacode'">RadiaCode</el-radio-button>
+                        <el-radio :label="'atomfast'">Atomfast</el-radio>
+                        <el-radio :label="'radiacode'">RadiaCode</el-radio>
                     </el-radio-group>
                 </el-form-item>
                 <template v-if="adding.track_type === 'atomfast'">
-                    <el-form-item label="Ссылка на трек" required prop="atomfast_url">
+                    <el-form-item label="Ссылка" required prop="atomfast_url">
                         <el-input placeholder="http://atomfast" v-model="adding.atomfast_url"></el-input>
                     </el-form-item>
                     <el-form-item label="Название" required prop="name">
@@ -478,25 +484,25 @@ const saveFilter = () => {
                                ref="file">
                     </el-form-item>
                     <el-form-item label="Название" prop="name" required>
-                        <el-input type="textarea" placeholder="Название" v-model="adding.name"></el-input>
+                        <el-input placeholder="Название" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
             </template>
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">
                     <el-radio-group v-model="adding.point_type" size="large" :disabled="!!currentTrackPoint">
-                        <el-radio-button :label="'spectrum'">Спектр</el-radio-button>
-                        <el-radio-button :label="'generic'">Комментарий/файл</el-radio-button>
+                        <el-radio :label="'spectrum'">Спектр</el-radio>
+                        <el-radio :label="'generic'">Комментарий/файл</el-radio>
                     </el-radio-group>
                 </el-form-item>
                 <el-form-item label="Локация" v-if="adding.point_type && !currentTrackPoint">
                     <el-radio-group v-model="adding.location_type" size="large" v-loading="currentLocation.waiting">
-                        <el-radio-button :label="'current'"
-                                         :disabled="!!currentLocation.error"
-                                         @click="requestCurrentLocation">
+                        <el-radio :label="'current'"
+                                  :disabled="!!currentLocation.error"
+                                  @click="requestCurrentLocation">
                             Текущее местоположение
-                        </el-radio-button>
-                        <el-radio-button :label="'specifying'">Указать на карте</el-radio-button>
+                        </el-radio>
+                        <el-radio :label="'specifying'">Указать на карте</el-radio>
                     </el-radio-group>
                 </el-form-item>
                 <template v-if="adding.point_type === 'spectrum'">
@@ -516,6 +522,7 @@ const saveFilter = () => {
                     <el-form-item label="Комментарий" required prop="comment">
                         <el-input type="textarea"
                                   v-model="adding.comment"
+                                  rows="5"
                                   placeholder="Комментарий"></el-input>
                     </el-form-item>
                     <el-form-item label="Медиа-файлы" required>
@@ -534,7 +541,7 @@ const saveFilter = () => {
             </template>
         </el-form>
     </el-dialog>
-    <el-dialog v-model="filterDialog" fullscreen>
+    <el-dialog v-model="filterDialog" width="var(--dialog-width)">
         <div class="scene">
             <div class="flex-column">
                 <el-row>
@@ -574,7 +581,17 @@ const saveFilter = () => {
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>
 
-<style scoped>
+<style>
+.el-dialog {
+    --dialog-width: 50%;
+}
+
+@media (max-width: 820px) {
+    .el-dialog {
+        --dialog-width: 100%;
+    }
+}
+
 @media (max-width: 820px) {
     .toolbar {
         margin-left: 100px;
