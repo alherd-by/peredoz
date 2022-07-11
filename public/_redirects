@@ -1,5 +1,6 @@
 /atomfast https://peredoz.netlify.app/.netlify/functions/atomfast 200
 /spectrum https://peredoz.netlify.app/.netlify/functions/spectrum 200
+/point https://peredoz.netlify.app/.netlify/functions/point 200
 /radiacode https://peredoz.netlify.app/.netlify/functions/radiacode 200
 /session https://peredoz.netlify.app/.netlify/functions/session 200
 /logout https://peredoz.netlify.app/.netlify/functions/logout 200

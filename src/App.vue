@@ -254,13 +254,13 @@ const save = async () => {
                 }
                 ElMessage.success('Трек с Atomfast успешно добавлен')
                 addingDialog.value = false
-            } catch (e) {
-                ElMessage.error('Произошла ошибка')
-                throw e;
             } finally {
                 loading.value = false;
             }
         }
+    } catch (e) {
+        ElMessage.error('Произошла ошибка')
+        throw e
     } finally {
         map.value.refreshMap();
         loading.value = false;
