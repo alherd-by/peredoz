@@ -373,7 +373,7 @@ const saveFilter = () => {
                 </template>
                 <template v-else>
                     <span style="padding-left: 10px">{{ user.email }}</span>
-                    <a href="#" @click="auth.logout"> Выход</a>
+                    <a href="#" @click="auth.logout()"> Выход</a>
                 </template>
             </div>
             <!-- mobile nav -->
@@ -419,16 +419,16 @@ const saveFilter = () => {
                         </div>
                         <template v-if="! user.email">
                             <div class="pdng-t-5px">
-                                <a href="#" @click="authModal = true">Авторизация</a>
+                                <a href="#" @click="auth.openSignIn()">Авторизация</a>
                             </div>
                             <div class="pdng-t-5px">
-                                <a href="#" @click="registerModal = true">Регистрация</a>
+                                <a href="#" @click="auth.openSignUp()">Регистрация</a>
                             </div>
                         </template>
                         <template v-else>
                             <div class="pdng-t-5px">
                                 <span style="color:black">{{ user.email }}</span>
-                                <a href="#" @click="logout"> Выход</a>
+                                <a href="#" @click="auth.logout()"> Выход</a>
                             </div>
                         </template>
                     </div>
