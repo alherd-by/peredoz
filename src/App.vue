@@ -246,17 +246,16 @@ const save = async () => {
         }
         if (adding.track_type === 'atomfast') {
             loading.value = true;
-            try {
-                const payload = await addAtomfastTrack()
-                if (payload.error) {
-                    ElMessage.error(payload.error)
-                    return
-                }
-                ElMessage.success('Трек с Atomfast успешно добавлен')
-                addingDialog.value = false
-            } finally {
-                loading.value = false;
+            const payload = await addAtomfastTrack()
+            if (payload.error) {
+                ElMessage.error(payload.error)
+                return
             }
+            ElMessage.success('Трек с Atomfast успешно добавлен')
+            addingDialog.value = false
+        }
+        if (adding.track_type) {
+            await fetchTracks()
         }
     } catch (e) {
         ElMessage.error('Произошла ошибка')
@@ -342,36 +341,36 @@ const saveFilter = () => {
                      class="zoom-0_75 mil-zoom-0_5">
             </a>
             <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
-                <a href="#" @click="filterDialog = true">Показать</a>
-                <a href="#" @click="addingDialog = true">Добавить</a>
-                <el-popover
-                    placement="left-end"
-                    :width="200"
-                    trigger="click"
-                    content="this is content, this is content, this is content"
-                >
-                    <template #reference>
-                        <a href="#" @click="toolbarDialog = true">Цвета</a>
-                    </template>
-                    <template #default>
-                        <h3>Схемы</h3>
-                        <template v-if="trackList">
-                            <el-radio-group v-model="currentColorScheme">
-                                <el-radio :label="key"
-                                          v-for="(track, key) in colorSchemes"
-                                          style="width: 600px; float: left">
-                                    {{ track.name }}
-                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                </el-radio>
-                            </el-radio-group>
-                        </template>
-                    </template>
-                </el-popover>
                 <template v-if="! user.email">
                     <a href="#" @click="auth.openSignIn()">Авторизация</a>
                     <a href="#" @click="auth.openSignUp()">Регистрация</a>
                 </template>
                 <template v-else>
+                    <a href="#" @click="filterDialog = true" v-show="user.email">Показать</a>
+                    <a href="#" @click="addingDialog = true" v-show="user.email">Добавить</a>
+                    <el-popover
+                        placement="left-end"
+                        :width="200"
+                        trigger="click"
+                        content="this is content, this is content, this is content"
+                    >
+                        <template #reference>
+                            <a href="#" @click="toolbarDialog = true">Цвета</a>
+                        </template>
+                        <template #default>
+                            <h3>Схемы</h3>
+                            <template v-if="trackList">
+                                <el-radio-group v-model="currentColorScheme">
+                                    <el-radio :label="key"
+                                              v-for="(track, key) in colorSchemes"
+                                              style="width: 600px; float: left">
+                                        {{ track.name }}
+                                        <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                    </el-radio>
+                                </el-radio-group>
+                            </template>
+                        </template>
+                    </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
                     <a href="#" @click="auth.logout()"> Выход</a>
                 </template>
@@ -386,47 +385,47 @@ const saveFilter = () => {
                 </label>
                 <div class="brgr-nav notdisplay mil-show">
                     <div class="header-links pdng-l-20px pdng-r-20px">
-                        <div class="pdng-t-5px">
-                            <a href="#" @click="filterDialog = true;mobileToolbar = false">Просмотр</a>
-                        </div>
-                        <div class="pdng-t-5px">
-                            <a href="#" @click="addingDialog = true">Добавить</a>
-                        </div>
-                        <div class="pdng-t-5px">
-                            <el-popover
-                                placement="left-end"
-                                :width="200"
-                                trigger="click"
-                                content="this is content, this is content, this is content"
-                            >
-                                <template #reference>
-                                    <a href="#" @click="toolbarDialog = true">Цвета</a>
-                                </template>
-                                <template #default>
-                                    <h3>Схемы</h3>
-                                    <template v-if="trackList">
-                                        <el-radio-group v-model="currentColorScheme">
-                                            <el-radio :label="key"
-                                                      v-for="(track, key) in colorSchemes"
-                                                      style="width: 600px; float: left">
-                                                {{ track.name }}
-                                                <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                            </el-radio>
-                                        </el-radio-group>
-                                    </template>
-                                </template>
-                            </el-popover>
-                        </div>
                         <template v-if="! user.email">
-                            <div class="pdng-t-5px">
+                            <div class="pdng-t-25px">
                                 <a href="#" @click="auth.openSignIn()">Авторизация</a>
                             </div>
-                            <div class="pdng-t-5px">
+                            <div class="pdng-t-25px">
                                 <a href="#" @click="auth.openSignUp()">Регистрация</a>
                             </div>
                         </template>
                         <template v-else>
-                            <div class="pdng-t-5px">
+                            <div class="pdng-t-25px">
+                                <a href="#" @click="filterDialog = true;mobileToolbar = false">Просмотр</a>
+                            </div>
+                            <div class="pdng-t-25px">
+                                <a href="#" @click="addingDialog = true">Добавить</a>
+                            </div>
+                            <div class="pdng-t-25px">
+                                <el-popover
+                                    placement="left-end"
+                                    :width="200"
+                                    trigger="click"
+                                    content="this is content, this is content, this is content"
+                                >
+                                    <template #reference>
+                                        <a href="#" @click="toolbarDialog = true">Цвета</a>
+                                    </template>
+                                    <template #default>
+                                        <h3>Схемы</h3>
+                                        <template v-if="trackList">
+                                            <el-radio-group v-model="currentColorScheme">
+                                                <el-radio :label="key"
+                                                          v-for="(track, key) in colorSchemes"
+                                                          style="width: 600px; float: left">
+                                                    {{ track.name }}
+                                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                                </el-radio>
+                                            </el-radio-group>
+                                        </template>
+                                    </template>
+                                </el-popover>
+                            </div>
+                            <div class="pdng-t-25px">
                                 <span style="color:black">{{ user.email }}</span>
                                 <a href="#" @click="auth.logout()"> Выход</a>
                             </div>

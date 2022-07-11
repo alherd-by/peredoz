@@ -64,7 +64,7 @@
                 <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
             </template>
             <template v-if="feature.properties.user_id">
-                <p>
+                <p class="pdng-t-5px">
                     <b>От пользователя</b>: {{
                         users[feature.properties.user_id].display_name
                             ? users[feature.properties.user_id].display_name
@@ -79,13 +79,13 @@
         :title="'Трек #' + (feature ? feature.properties.track_id : '')"
         :direction="'rtl'"
     >
-        <div class="track-drawer">
+        <div class="track-drawer" v-if="tracks[feature.properties.track_id]">
            <span>
                 <b>Название</b>: {{ tracks[feature.properties.track_id].name }}
             </span>
             <br>
             <span v-if="tracks[feature.properties.track_id].user">
-                <b>Пользователь</b>: {{
+                <b>От пользователя</b>: {{
                     tracks[feature.properties.track_id].user.displayName ? tracks[feature.properties.track_id].user.displayName : tracks[feature.properties.track_id].user.email
                 }}
             </span>
@@ -274,7 +274,6 @@ let featureLayer  = new VectorLayer({
                     size = size + '_' + props.point_id
                 }
                 if (props['d']) {
-                    console.log(props['d'])
                     colors = calcColor(props['d'], colorScheme.value)
                     color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
                 }
