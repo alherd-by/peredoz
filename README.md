@@ -14,3 +14,11 @@ JWK url: https://identitytoolkit.googleapis.com/v1/sessionCookiePublicKeys
 Issuer: https://session.firebase.google.com/peredoz-by
 
 https://stackoverflow.com/questions/70935951/what-is-the-firebase-auth-session-cookie-jwk-url
+
+
+## Satellite
+
+https://github.com/openlayers/ol-mapbox-style#readme
+https://openlayers.org/en/latest/examples/bing-maps.html
+https://openlayers.org/en/latest/examples/?q=mapbox
+https://cloud.maptiler.com/maps/hybrid/

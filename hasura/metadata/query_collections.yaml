@@ -1,21 +1,6 @@
 - name: allowed-queries
   definition:
     queries:
-      - name: tracks
-        query: |
-          query tracks {
-          	tracks: track {
-          		id
-          		name
-          		atomfast_id
-          		extra
-          		user {
-          			email
-          			id
-          		}
-          		created_at
-          	}
-          }
       - name: points
         query: |
           query geodata ($filter: point_bool_exp) {
@@ -53,5 +38,20 @@
           		id
           		display_name
           		email
+          	}
+          }
+      - name: tracks
+        query: |
+          query tracks {
+          	tracks: track(order_by: [{created_at:desc}]) {
+          		id
+          		name
+          		atomfast_id
+          		extra
+          		user {
+          			email
+          			id
+          		}
+          		created_at
           	}
           }
