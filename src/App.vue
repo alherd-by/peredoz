@@ -627,7 +627,9 @@ const onSelectAll  = () => {
                             </template>
                         </el-table-column>
                         <el-table-column label="Пользователь" sortable #default="{row}" min-width="300">
-                            {{ row.user.display_name ? row.user.display_name : row.user.email }}
+                            <template v-if="row.user">
+                                {{ row.user.display_name ? row.user.display_name : row.user.email }}
+                            </template>
                         </el-table-column>
                         <el-table-column label="Добавлен" #default="{row}" sortable min-width="300">
                             {{ formatWithTime(row.created_at) }}
