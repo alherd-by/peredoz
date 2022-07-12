@@ -29,8 +29,7 @@
     "uuid": "8.3.2",
     "vue": "3.2.37",
     "xml2js": "0.4.23",
-    "xmldom": "0.6.0",
-    "ol-mapbox-style": "8.1.2"
+    "xmldom": "0.6.0"
   },
   "devDependencies": {
     "@types/jest": "27.5.1",
