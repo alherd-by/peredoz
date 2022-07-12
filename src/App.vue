@@ -604,7 +604,7 @@ const onSelectAll  = () => {
                         <el-table-column type="selection" width="50" fixed/>
                         <el-table-column label="Название" min-width="150" sortable>
                             <template #header>
-                                Название (Всего: {{ trackList.length }})
+                                Название (Всего: {{ trackList ? '0' : trackList.length }})
                                 <div class="notdisplay mil-show hint-scroll">
                                     <svg
                                         width="25"
