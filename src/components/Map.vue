@@ -1,5 +1,6 @@
 <template>
-    <div id="map" style="height: 100%;width: 100%"></div>
+    <div id="map" style="height: 100%;width: 100%"
+         v-loading="loading"></div>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content" v-if="feature">
@@ -151,7 +152,7 @@ const filter         = ref({})
 const spectrums      = ref({})
 const users          = ref({})
 const tracks         = ref({})
-
+const loading        = ref(false)
 const drawingEnabled = ref(false);
 let trackPointHash   = ref({})
 
@@ -167,46 +168,53 @@ const loadFeatures = async (source, projection) => {
     if (filter.value.user_id) {
         body['_or'].push(JSON.parse(filter.value.user_id))
     }
-    const response = await fetch(
-        import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points',
-        {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify({
-                filter: body
-            })
-        }
-    )
-    if (!response.ok) {
-        throw 'Invalid http response for fetching track'
-    }
-    const payload = await response.json()
-    if (payload.features) {
-        trackPointHash.value = {}
-        const temp           = (new GeoJSON()).readFeatures(
+    try {
+        loading.value  = true
+        const response = await fetch(
+            import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points',
             {
-                type: 'FeatureCollection',
-                features: payload.features
-            },
-            {featureProjection: projection}
+                method: 'POST',
+                credentials: 'include',
+                body: JSON.stringify({
+                    filter: body
+                })
+            }
         )
-        source.addFeatures(temp)
-    }
-    if (payload.spectrums) {
-        for (let s of payload.spectrums) {
-            spectrums.value[s.id] = s;
+        if (!response.ok) {
+            throw 'Invalid http response for fetching track'
         }
-    }
-    if (payload.users) {
-        for (let s of payload.users) {
-            users.value[s.id] = s;
+        const payload = await response.json()
+        if (payload.features) {
+            trackPointHash.value = {}
+            const temp           = (new GeoJSON()).readFeatures(
+                {
+                    type: 'FeatureCollection',
+                    features: payload.features
+                },
+                {featureProjection: projection}
+            )
+            source.addFeatures(temp)
         }
-    }
-    if (payload.tracks) {
-        for (let t of payload.tracks) {
-            tracks.value[t.id] = t;
+
+        if (payload.spectrums) {
+            for (let s of payload.spectrums) {
+                spectrums.value[s.id] = s;
+            }
         }
+        if (payload.users) {
+            for (let s of payload.users) {
+                users.value[s.id] = s;
+            }
+        }
+        if (payload.tracks) {
+            for (let t of payload.tracks) {
+                tracks.value[t.id] = t;
+            }
+        }
+    } finally {
+        loading.value = false
     }
+
 }
 
 let featuresSource = new VectorSource({
