@@ -104,11 +104,10 @@ import {format} from '../date'
 
 import Map from "ol/Map";
 import TileLayer from "ol/layer/Tile";
-import {OSM} from "ol/source";
 import View from "ol/View";
 import {fromLonLat} from "ol/proj";
-
 import VectorLayer from "ol/layer/Vector";
+import BingMaps from 'ol/source/BingMaps';
 import VectorSource from "ol/source/Vector";
 import ClusterSource from "ol/source/Cluster";
 import GeoJSON from "ol/format/GeoJSON"
@@ -372,7 +371,6 @@ draw.on('drawend', function (e) {
     drawingEnabled.value = false
 });
 
-
 onMounted(
     () => {
         document.getElementById('map').innerHTML = '';
@@ -390,11 +388,17 @@ onMounted(
                 duration: 250,
             },
         });
-
-        map = new Map({
+        map                                      = new Map({
             layers: [
                 new TileLayer({
-                    source: new OSM(),
+                    preload: Infinity,
+                    source: new BingMaps({
+                        key: 'AtXKi1Lhi0y82A-GnVnhQDCZ2c-KPhFMnFKPluxziM8WadA5xk5SzHsxnKpXTIzx',
+                        imagerySet: 'AerialWithLabelsOnDemand',
+                        // use maxZoom 19 to see stretched tiles instead of the BingMaps
+                        // "no photos at this zoom level" tiles
+                        // maxZoom: 19
+                    }),
                 }),
                 drawingLayer,
                 placesLayer
