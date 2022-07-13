@@ -457,7 +457,7 @@ defineExpose({
 
 </script>
 
-<style scoped>
+<style>
 
 .track-drawer {
     font-size: 20px;
@@ -523,4 +523,15 @@ defineExpose({
 .ol-popup-closer:after {
     content: "✖";
 }
+
+@media (max-width: 820px) {
+    .ol-zoom.ol-unselectable.ol-control {
+        display: none;
+    }
+}
+
+.ol-zoom.ol-unselectable.ol-control {
+    margin-top: 10px;
+}
+
 </style>

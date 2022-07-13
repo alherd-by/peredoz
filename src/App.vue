@@ -2,6 +2,8 @@
 import Map from './components/Map.vue'
 import Auth from "./components/Auth.vue";
 
+import { UserFilled, Filter, Plus, Setting } from '@element-plus/icons-vue'
+
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from 'element-plus';
 import {xml2js} from "./xml2js";
@@ -369,7 +371,7 @@ const onSelectAll  = () => {
 <template>
     <div class="header-wrp fixedhrd">
         <div class="header flex-row flex-algn-itms-c">
-            <a href="#" class="section pdng-l-20px">
+            <a href="/" class="section pdng-l-20px">
                 <img src="/imgs/logo.png"
                      alt="logo"
                      style="height: 20px"
@@ -377,20 +379,28 @@ const onSelectAll  = () => {
             </a>
             <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
                 <template v-if="! user.email">
-                    <a href="#" @click="auth.openSignIn()">Авторизация</a>
-                    <a href="#" @click="auth.openSignUp()">Регистрация</a>
+                    <el-button :icon="UserFilled" @click="auth.openSignIn()">
+                        Авторизация
+                    </el-button>
+                    <el-button :icon="UserFilled" @click="auth.openSignUp()">
+                        Регистрация
+                    </el-button>
                 </template>
                 <template v-else>
-                    <a href="#" @click="filterDialog = true" v-show="user.email">Показать</a>
-                    <a href="#" @click="addingDialog = true" v-show="user.email">Добавить</a>
+                    <el-button :icon="Filter" @click="filterDialog = true" v-show="user.email">
+                        Показать
+                    </el-button>
+                    <el-button :icon="Plus" @click="addingDialog = true" v-show="user.email">
+                        Добавить
+                    </el-button>
                     <el-popover
-                        placement="left-end"
+                        placement="bottom-end"
                         :width="200"
                         trigger="click"
                         content="this is content, this is content, this is content"
                     >
                         <template #reference>
-                            <a href="#" @click="toolbarDialog = true">Цвета</a>
+                            <el-button :icon="Setting" @click="toolbarDialog = true">Настройки</el-button>
                         </template>
                         <template #default>
                             <h3>Схемы</h3>
@@ -405,7 +415,9 @@ const onSelectAll  = () => {
                         </template>
                     </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
-                    <a href="#" @click="auth.logout()"> Выход</a>
+                    <el-button @click="auth.logout()" class="mrgn-l-10px">
+                        Выход
+                    </el-button>
                 </template>
             </div>
             <!-- mobile nav -->
@@ -428,7 +440,7 @@ const onSelectAll  = () => {
                         </template>
                         <template v-else>
                             <div class="pdng-t-25px">
-                                <a href="#" @click="filterDialog = true;mobileToolbar = false">Просмотр</a>
+                                <el-button @click="filterDialog = true;mobileToolbar = false">Просмотр</el-button>
                             </div>
                             <div class="pdng-t-25px">
                                 <a href="#" @click="addingDialog = true">Добавить</a>
