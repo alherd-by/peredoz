@@ -577,7 +577,7 @@ const onSelectAll  = () => {
                :show-close="false"
                width="var(--dialog-width)">
         <div class="scene" style="padding-top: 0">
-            <div class="flex-column">
+            <div class="flex-column pdng-b-15px" id="filter-actions">
                 <el-row class="pdng-l-5px">
                     <el-button @click="saveFilter" type="success">
                         Применить фильтр
@@ -606,6 +606,8 @@ const onSelectAll  = () => {
                     </span>
                     <el-input v-model="trackListFilter" autofocus></el-input>
                 </el-row>
+            </div>
+            <div class="flex-column">
                 <div class="pdng-t-20px" v-loading="trackListLoading" style="overflow-x: auto">
                     <h4 class="pdng-l-5px">Выберите треки (не больше трех)</h4>
                     <el-table :data="trackListFiltered"
@@ -696,5 +698,15 @@ const onSelectAll  = () => {
     display: inline-block;
     margin-left: 10px;
     margin-right: 10px;
+}
+
+#filter-actions {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+    padding-top: 10px;
+    background-color: white;
+    z-index: 5;
+    width: 100%;
 }
 </style>
