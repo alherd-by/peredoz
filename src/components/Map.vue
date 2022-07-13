@@ -282,7 +282,7 @@ let featureLayer  = new VectorLayer({
                     size = size + '_' + props.point_id
                 }
                 if (props['d']) {
-                    colors = calcColor(props['d'], colorScheme.value)
+                    colors = calcColor(props['d'], parseInt(colorScheme.value))
                     color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
                 }
             }

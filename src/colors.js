@@ -15,35 +15,13 @@ const colorSchemes = {
     }
 }
 
-const colorLegend = () => {
-
-    var maxIntensity = 0.1141;
-    var minIntensity = 0.041;
-    var colors_count = color_scheme == SCHEME_RED_BLUE_16 ? 16 : 32;
-    var diff         = maxIntensity - minIntensity;
-    for (var i = 0; i < colors_count; i++) {
-        var v               = 1 - i / (colors_count - 1);
-        var li              = document.createElement("li");
-        var color           = calcColor(v, color_scheme);
-        li.style.background = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-        if (i == 0 || i == colors_count - 1 || i == colors_count / 2 || i == colors_count / 4 || i == 3 * colors_count / 4) {
-            var d        = minIntensity + diff * v;
-            li.innerText = d.toFixed(2);
-        }
-        if (i == 1) {
-            li.innerText = "uSv/h";
-        }
-        this.ul.appendChild(li);
-    }
-}
-
 const calcColor = (value, color_scheme) => {
     if (value > 1.0) value = 1.0;
     if (value < 0) value = 0;
 
     var r, g;
     var q = 1;
-    if (color_scheme == SCHEME_RED_GREEN) {
+    if (color_scheme === SCHEME_RED_GREEN) {
         if (value < 0.5) {
             g = 255;
             value /= 0.5;
@@ -59,9 +37,9 @@ const calcColor = (value, color_scheme) => {
             g: g | 0,
             b: 0
         };
-    } else if (color_scheme == SCHEME_RED_BLUE_16) {
+    } else if (color_scheme === SCHEME_RED_BLUE_16) {
         q = 16;
-    } else if (color_scheme == SCHEME_RED_BLUE_32) {
+    } else if (color_scheme === SCHEME_RED_BLUE_32) {
         q = 32;
     }
     let gray = (((value * q) | 0) / q) * 2 - 1;

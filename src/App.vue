@@ -2,12 +2,12 @@
 import Map from './components/Map.vue'
 import Auth from "./components/Auth.vue";
 
-import { UserFilled, Filter, Plus, Setting } from '@element-plus/icons-vue'
+import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
 
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from 'element-plus';
 import {xml2js} from "./xml2js";
-import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
+import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser} from "./user";
 import {formatWithTime} from './date'
 
@@ -19,6 +19,7 @@ const filter             = reactive({
     user_id: '',
     track_id: []
 })
+const showLegend         = ref(false);
 const initialAdding      = {
     category: '',
     track_type: '',
@@ -227,6 +228,33 @@ const onLogout = (value) => {
     user.value = value
 }
 onMounted(() => {
+    const maxIntensity = 4.7033;
+    const minIntensity = 0.0386;
+
+    const redrawLegend = () => {
+        const ul = document.getElementById('legend-list')
+        while (ul.firstChild) {
+            ul.removeChild(ul.firstChild);
+        }
+        let colors_count = currentColorScheme.value === SCHEME_RED_BLUE_16 ? 16 : 32;
+        let diff         = maxIntensity - minIntensity;
+        for (let i = 0; i < colors_count; i++) {
+            let v               = 1 - i / (colors_count - 1);
+            let li              = document.createElement("li");
+            let color           = calcColor(v, parseInt(currentColorScheme.value));
+            li.style.background = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
+            if (i === 0 || i === colors_count - 1 || i === colors_count / 2 || i === colors_count / 4 || i === 3 * colors_count / 4) {
+                let d        = minIntensity + diff * v;
+                li.innerText = d.toFixed(2);
+            } else if (i === 1) {
+                li.innerText = "uSv/h";
+            } else {
+                li.innerHTML = '&nbsp;'
+            }
+            ul.appendChild(li);
+        }
+    }
+    redrawLegend()
     fetchTracks()
 })
 
@@ -370,14 +398,14 @@ const onSelectAll  = () => {
 
 <template>
     <div class="header-wrp fixedhrd">
-        <div class="header flex-row flex-algn-itms-c">
+        <div class="header flex-row flex-algn-itms-c mil-notdisplay">
             <a href="/" class="section pdng-l-20px">
                 <img src="/imgs/logo.png"
                      alt="logo"
                      style="height: 20px"
                      class="zoom-0_75 mil-zoom-0_5">
             </a>
-            <div class="header-links flex-grow-all pdng-l-20px mil-notdisplay">
+            <div class="header-links flex-grow-all pdng-l-20px">
                 <template v-if="! user.email">
                     <el-button :icon="UserFilled" @click="auth.openSignIn()">
                         Авторизация
@@ -412,6 +440,7 @@ const onSelectAll  = () => {
                                     <div class="bgr_gradient" :style="{'background': track.color}"></div>
                                 </el-radio>
                             </el-radio-group>
+                            <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
                         </template>
                     </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
@@ -421,63 +450,82 @@ const onSelectAll  = () => {
                 </template>
             </div>
             <!-- mobile nav -->
-            <div class="section toolbar notdisplay mil-show">
-                <input id="brgrbtn" class="notdisplay mil-show" type="checkbox" v-model="mobileToolbar">
-                <label for="brgrbtn" class="notdisplay burger-button mil-show">
-                    <div class="burger-button-line"></div>
-                    <div class="burger-button-line"></div>
-                    <div class="burger-button-line"></div>
-                </label>
-                <div class="brgr-nav notdisplay mil-show">
-                    <div class="header-links pdng-l-20px pdng-r-20px">
-                        <template v-if="! user.email">
-                            <div class="pdng-t-25px">
-                                <a href="#" @click="auth.openSignIn()">Авторизация</a>
-                            </div>
-                            <div class="pdng-t-25px">
-                                <a href="#" @click="auth.openSignUp()">Регистрация</a>
-                            </div>
-                        </template>
-                        <template v-else>
-                            <div class="pdng-t-25px">
-                                <el-button @click="filterDialog = true;mobileToolbar = false">Просмотр</el-button>
-                            </div>
-                            <div class="pdng-t-25px">
-                                <a href="#" @click="addingDialog = true">Добавить</a>
-                            </div>
-                            <div class="pdng-t-25px">
-                                <el-popover
-                                    placement="left-end"
-                                    :width="200"
-                                    trigger="click"
-                                    content="this is content, this is content, this is content"
-                                >
-                                    <template #reference>
-                                        <a href="#" @click="toolbarDialog = true">Цвета</a>
-                                    </template>
-                                    <template #default>
-                                        <h3>Схемы</h3>
-                                        <el-radio-group v-model="currentColorScheme">
-                                            <el-radio :label="key"
-                                                      v-for="(track, key) in colorSchemes"
-                                                      style="width: 600px; float: left">
-                                                {{ track.name }}
-                                                <div class="bgr_gradient"
-                                                     :style="{'background': track.color}"></div>
-                                            </el-radio>
-                                        </el-radio-group>
-                                    </template>
-                                </el-popover>
-                            </div>
-                            <div class="pdng-t-25px">
-                                <span style="color:black">{{ user.email }}</span>
-                                <a href="#" @click="auth.logout()"> Выход</a>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
         </div>
+    </div>
+    <div id="legend" v-show="showLegend">
+        <ul id="legend-list"></ul>
+    </div>
+    <div class="toolbar notdisplay mil-show">
+        <template v-if="! user.email">
+            <div class="pdng-t-15px">
+                <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
+                    Авторизация
+                </el-button>
+            </div>
+            <div class="pdng-t-15px">
+                <el-button :icon="UserFilled" @click="auth.openSignUp()" round>
+                    Регистрация
+                </el-button>
+            </div>
+            <div class="pdng-t-15px">
+                <el-button :icon="QuestionFilled" round>
+                    О проекте &nbsp; &nbsp;
+                </el-button>
+            </div>
+        </template>
+        <template v-else>
+            <div class="pdng-t-15px">
+                <el-button :icon="Filter" circle @click="filterDialog = true;mobileToolbar = false"
+                           size="large"></el-button>
+            </div>
+            <div class="pdng-t-15px">
+                <el-button :icon="Plus" circle @click="addingDialog = true" size="large"></el-button>
+            </div>
+            <div class="pdng-t-15px">
+                <el-popover
+                    placement="left-end"
+                    :width="200"
+                    trigger="click"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <el-button :icon="Setting" @click="toolbarDialog = true" circle size="large"></el-button>
+                    </template>
+                    <template #default>
+                        <h3>Схемы</h3>
+                        <el-radio-group v-model="currentColorScheme">
+                            <el-radio :label="key"
+                                      v-for="(track, key) in colorSchemes">
+                                {{ track.name }}
+                                <div class="bgr_gradient"
+                                     :style="{'background': track.color}"></div>
+                            </el-radio>
+                        </el-radio-group>
+                        <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
+                    </template>
+                </el-popover>
+            </div>
+            <div class="pdng-t-15px">
+                <el-popover
+                    placement="left-end"
+                    :width="300"
+                    trigger="click"
+                >
+                    <template #reference>
+                        <el-button :icon="UserFilled" circle size="large"></el-button>
+                    </template>
+                    <template #default>
+                        <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
+                        <el-button @click="auth.logout()">
+                            Выход
+                        </el-button>
+                    </template>
+                </el-popover>
+            </div>
+            <div class="pdng-t-15px">
+                <el-button :icon="QuestionFilled" circle size="large"></el-button>
+            </div>
+        </template>
     </div>
     <Map ref="map"
          @get-location="onReceivingLocation"
@@ -683,22 +731,33 @@ const onSelectAll  = () => {
     }
 }
 
-@media (max-width: 820px) {
-    .toolbar {
-        margin-left: 100px;
-    }
-}
-
 .committee-view {
     display: flex;
     align-items: flex-start;
 }
 
-.toolbar {
+#legend {
+    position: absolute;
     left: 0;
-    z-index: 1;
+    top: 50px;
+    z-index: 3;
+}
+#legend ul {
+    list-style-type: none;
+}
+
+@media (min-width: 820px) {
+    #legend {
+        top: 150px;
+        padding-left: 10px;
+    }
+}
+
+.toolbar {
+    position: absolute;
+    right: 10px;
     top: 0;
-    width: 99%;
+    z-index: 3;
     display: flex;
     justify-content: space-between;
     padding: 10px;
