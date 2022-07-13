@@ -15,5 +15,6 @@
   url: tracks
   methods:
     - GET
+    - POST
   name: tracks
   comment: null

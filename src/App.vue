@@ -2,7 +2,7 @@
 import Map from './components/Map.vue'
 import Auth from "./components/Auth.vue";
 
-import {onMounted, reactive, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import {ElMessage} from 'element-plus';
 import {xml2js} from "./xml2js";
 import {colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
@@ -30,16 +30,36 @@ const initialAdding      = {
 }
 const trackList          = ref();
 const trackListLoading   = ref(false)
-const map                = ref()
-const file               = ref(null);
-const addingDialog       = ref(false)
-const currentTrackPoint  = ref(null)
-const drawingEnabled     = ref(false)
-const auth               = ref();
-const loading            = ref(false)
-const user               = ref(getUser())
-const mobileToolbar      = ref(false)
-let adding               = reactive({...initialAdding});
+const trackListSorting   = ref({created_at: 'desc'})
+const trackListFilter    = ref('')
+const trackListFiltered  = computed(() => {
+    if (!trackList.value) {
+        return []
+    }
+    let tmp = trackList.value;
+    if (filter.user_id) {
+        let uf   = JSON.parse(filter.user_id)
+        const ff = uf['user_id']['_neq']
+            ? (s) => s.user.id !== uf['user_id']['_neq']
+            : (s) => s.user.id === uf['user_id']['_eq']
+        tmp      = tmp.filter(ff)
+    }
+    if (trackListFilter.value.length >= 3) {
+        tmp = tmp.filter(s => s.name.toLowerCase().includes(trackListFilter.value.toLowerCase()))
+    }
+    return tmp;
+})
+
+const map               = ref()
+const file              = ref(null);
+const addingDialog      = ref(false)
+const currentTrackPoint = ref(null)
+const drawingEnabled    = ref(false)
+const auth              = ref();
+const loading           = ref(false)
+const user              = ref(getUser())
+const mobileToolbar     = ref(false)
+let adding              = reactive({...initialAdding});
 
 const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
@@ -198,7 +218,6 @@ const addGenericPoint = async () => {
 }
 
 const onAuth   = (value) => {
-    console.log(value)
     user.value = value;
     fetchTracks()
 }
@@ -334,7 +353,7 @@ const saveFilter = () => {
 const trackListTable = ref();
 
 const onRowsSelect = (rows) => {
-    if (rows.length === trackList.value.length || rows.length === 0) {
+    if (rows.length === trackListFiltered.value.length || rows.length === 0) {
         return
     }
     if (rows.length > 3) {
@@ -375,16 +394,14 @@ const onSelectAll  = () => {
                         </template>
                         <template #default>
                             <h3>Схемы</h3>
-                            <template v-if="trackList">
-                                <el-radio-group v-model="currentColorScheme">
-                                    <el-radio :label="key"
-                                              v-for="(track, key) in colorSchemes"
-                                              style="width: 600px; float: left">
-                                        {{ track.name }}
-                                        <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                    </el-radio>
-                                </el-radio-group>
-                            </template>
+                            <el-radio-group v-model="currentColorScheme">
+                                <el-radio :label="key"
+                                          v-for="(track, key) in colorSchemes"
+                                          style="width: 600px; float: left">
+                                    {{ track.name }}
+                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                </el-radio>
+                            </el-radio-group>
                         </template>
                     </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
@@ -428,17 +445,15 @@ const onSelectAll  = () => {
                                     </template>
                                     <template #default>
                                         <h3>Схемы</h3>
-                                        <template v-if="trackList">
-                                            <el-radio-group v-model="currentColorScheme">
-                                                <el-radio :label="key"
-                                                          v-for="(track, key) in colorSchemes"
-                                                          style="width: 600px; float: left">
-                                                    {{ track.name }}
-                                                    <div class="bgr_gradient"
-                                                         :style="{'background': track.color}"></div>
-                                                </el-radio>
-                                            </el-radio-group>
-                                        </template>
+                                        <el-radio-group v-model="currentColorScheme">
+                                            <el-radio :label="key"
+                                                      v-for="(track, key) in colorSchemes"
+                                                      style="width: 600px; float: left">
+                                                {{ track.name }}
+                                                <div class="bgr_gradient"
+                                                     :style="{'background': track.color}"></div>
+                                            </el-radio>
+                                        </el-radio-group>
                                     </template>
                                 </el-popover>
                             </div>
@@ -589,22 +604,23 @@ const onSelectAll  = () => {
                     <span class="pdng-t-10px pdng-r-10px">
                         <b>Название трека:</b>
                     </span>
-                    <el-input></el-input>
+                    <el-input v-model="trackListFilter" autofocus></el-input>
                 </el-row>
                 <div class="pdng-t-20px" v-loading="trackListLoading" style="overflow-x: auto">
                     <h4 class="pdng-l-5px">Выберите треки (не больше трех)</h4>
-                    <el-table :data="trackList"
+                    <el-table :data="trackListFiltered"
                               class="pdng-t-10px"
                               ref="trackListTable"
                               row-key="id"
+                              :default-sort="{ prop: Object.keys(trackListSorting)[0], order: Object.values(trackListSorting)[0] + 'ending' }"
                               highlight-current-row
                               @select-all="onSelectAll"
                               @selection-change="onRowsSelect"
                               table-layout="auto">
                         <el-table-column type="selection" width="50" fixed/>
-                        <el-table-column label="Название" min-width="150" sortable>
+                        <el-table-column label="Название" prop="name" min-width="150" sortable>
                             <template #header>
-                                Название (Всего: {{ trackList ? '0' : trackList.length }})
+                                Название (Всего: {{ trackListFiltered.length }})
                                 <div class="notdisplay mil-show hint-scroll">
                                     <svg
                                         width="25"
@@ -626,12 +642,12 @@ const onSelectAll  = () => {
                                 <template v-if="row.atomfast_id"> (Atomfast)</template>
                             </template>
                         </el-table-column>
-                        <el-table-column label="Пользователь" sortable #default="{row}" min-width="300">
+                        <el-table-column label="Пользователь" prop="user.id" sortable #default="{row}" min-width="300">
                             <template v-if="row.user">
                                 {{ row.user.display_name ? row.user.display_name : row.user.email }}
                             </template>
                         </el-table-column>
-                        <el-table-column label="Добавлен" #default="{row}" sortable min-width="300">
+                        <el-table-column label="Добавлен" #default="{row}" prop="created_at" sortable min-width="300">
                             {{ formatWithTime(row.created_at) }}
                         </el-table-column>
                     </el-table>

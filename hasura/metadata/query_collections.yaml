@@ -42,8 +42,8 @@
           }
       - name: tracks
         query: |
-          query tracks {
-          	tracks: track(order_by: [{created_at:desc}]) {
+          query tracks ($sort: track_order_by! = {created_at:desc}) {
+          	tracks: track(order_by: [$sort]) {
           		id
           		name
           		atomfast_id
