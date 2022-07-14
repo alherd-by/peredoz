@@ -19,7 +19,7 @@ const filter             = reactive({
     user_id: '',
     track_id: []
 })
-const showLegend         = ref(false);
+const showLegend         = ref(true);
 const initialAdding      = {
     category: '',
     track_type: '',
@@ -227,34 +227,32 @@ const onAuth   = (value) => {
 const onLogout = (value) => {
     user.value = value
 }
-onMounted(() => {
-    const maxIntensity = 4.7033;
-    const minIntensity = 0.0386;
 
-    const redrawLegend = () => {
-        const ul = document.getElementById('legend-list')
-        while (ul.firstChild) {
-            ul.removeChild(ul.firstChild);
+const maxIntensity = 4.7033;
+const minIntensity = 0.0386;
+const legend       = computed(() => {
+    let colors_count = currentColorScheme.value === SCHEME_RED_BLUE_16 ? 16 : 32;
+    let diff         = maxIntensity - minIntensity;
+    const items      = [];
+    for (let i = 0; i < colors_count; i++) {
+        let v     = 1 - i / (colors_count - 1);
+        let color = calcColor(v, parseInt(currentColorScheme.value));
+        let item  = {
+            background: "rgb(" + color.r + "," + color.g + "," + color.b + ")",
+            innerHtml: ''
         }
-        let colors_count = currentColorScheme.value === SCHEME_RED_BLUE_16 ? 16 : 32;
-        let diff         = maxIntensity - minIntensity;
-        for (let i = 0; i < colors_count; i++) {
-            let v               = 1 - i / (colors_count - 1);
-            let li              = document.createElement("li");
-            let color           = calcColor(v, parseInt(currentColorScheme.value));
-            li.style.background = "rgb(" + color.r + "," + color.g + "," + color.b + ")";
-            if (i === 0 || i === colors_count - 1 || i === colors_count / 2 || i === colors_count / 4 || i === 3 * colors_count / 4) {
-                let d        = minIntensity + diff * v;
-                li.innerText = d.toFixed(2);
-            } else if (i === 1) {
-                li.innerText = "uSv/h";
-            } else {
-                li.innerHTML = '&nbsp;'
-            }
-            ul.appendChild(li);
+        if (i === 0 || i === colors_count - 1 || i === colors_count / 2 || i === colors_count / 4 || i === 3 * colors_count / 4) {
+            let d          = minIntensity + diff * v;
+            item.innerHtml = d.toFixed(2);
+        } else if (i === 1) {
+            item.innerHtml = "uSv/h";
         }
+        items.push(item);
     }
-    redrawLegend()
+    return items
+})
+
+onMounted(() => {
     fetchTracks()
 })
 
@@ -453,7 +451,11 @@ const onSelectAll  = () => {
         </div>
     </div>
     <div id="legend" v-show="showLegend">
-        <ul id="legend-list"></ul>
+        <ul id="legend-list">
+            <li v-for="item of legend" v-html="item.innerHtml ? item.innerHtml : '&nbsp;'"
+                :style="{background: item.background}">
+            </li>
+        </ul>
     </div>
     <div class="toolbar notdisplay mil-show">
         <template v-if="! user.email">
@@ -739,9 +741,10 @@ const onSelectAll  = () => {
 #legend {
     position: absolute;
     left: 0;
-    top: 50px;
+    top: 25px;
     z-index: 3;
 }
+
 #legend ul {
     list-style-type: none;
 }
