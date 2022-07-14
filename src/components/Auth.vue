@@ -60,9 +60,7 @@ import {
     inMemoryPersistence,
     createUserWithEmailAndPassword
 } from "firebase/auth";
-
 import {getUser} from "../user";
-
 
 const emit = defineEmits(['auth', 'logout'])
 

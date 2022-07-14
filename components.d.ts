@@ -21,6 +21,7 @@ declare module '@vue/runtime-core' {
     ElRow: typeof import('element-plus/es')['ElRow']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
+    Filters: typeof import('./src/components/Filters.vue')['default']
     Loading: typeof import('element-plus/es')['ElLoadingDirective']
     Map: typeof import('./src/components/Map.vue')['default']
   }
