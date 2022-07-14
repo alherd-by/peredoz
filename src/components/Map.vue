@@ -116,7 +116,6 @@ import GeoJSON from "ol/format/GeoJSON"
 import {Circle as CircleStyle, Fill, Style, Text, Stroke} from 'ol/style';
 import 'ol/ol.css'
 import Overlay from 'ol/Overlay';
-import Geolocation from 'ol/Geolocation';
 import Draw from 'ol/interaction/Draw';
 
 import {ref, onMounted, watch, toRefs} from 'vue'
@@ -134,14 +133,12 @@ const devices = [
 const search_modes = ["Fast", "Medium", "Slow", "-"];
 
 const emit = defineEmits([
-    'attachspectrum',
-    'get-location',
-    'get-location-error',
+    'spectrum-attached',
     'point-located'
 ])
 
 const attachSpectrum = (id) => {
-    emit('attachspectrum', id)
+    emit('spectrum-attached', id)
 }
 const props          = defineProps({
     colorScheme: String
@@ -231,27 +228,10 @@ let clusterSource = new ClusterSource({
 
 let styleCache = {};
 
-const view        = new View({
+const view = new View({
     zoom: 7.3,
     center: fromLonLat([27.7834, 53.7098]),
 })
-const geolocation = new Geolocation({
-    trackingOptions: {
-        enableHighAccuracy: true,
-    },
-    projection: 'EPSG:4326',
-});
-
-const requestCurrentLocation = () => {
-    geolocation.setTracking(true);
-}
-
-geolocation.on('change', function () {
-    emit('get-location', geolocation.getPosition())
-});
-geolocation.on('error', function (error) {
-    emit('get-location-error', error)
-});
 
 let placesLayer   = new VectorLayer(
     {
@@ -347,7 +327,7 @@ watch(
     }
 )
 
-const refreshMap = (input) => {
+const refresh = (input) => {
     if (input) {
         filter.value = input
     }
@@ -450,8 +430,7 @@ const enableDrawing = () => {
 
 defineExpose({
     enableDrawing,
-    requestCurrentLocation,
-    refreshMap
+    refresh
 })
 
 

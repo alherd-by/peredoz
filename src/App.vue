@@ -1,12 +1,12 @@
 <script setup>
 import Map from './components/Map.vue'
 import Auth from "./components/Auth.vue";
+import Adding from "./components/Adding.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
 
-import {computed, onMounted, reactive, ref, watch} from "vue";
-import {ElMessage} from 'element-plus';
-import {xml2js} from "./xml2js";
+import {computed, onMounted, reactive, ref} from "vue";
+
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser} from "./user";
 import {formatWithTime} from './date'
@@ -20,22 +20,15 @@ const filter             = reactive({
     track_id: []
 })
 const showLegend         = ref(true);
-const initialAdding      = {
-    category: '',
-    track_type: '',
-    point_type: '',
-    location_type: '',
-    name: '',
-    atomfast_url: '',
-    comment: '',
-    location: null,
-    attachment: []
-}
-const trackList          = ref();
-const trackListLoading   = ref(false)
-const trackListSorting   = ref({created_at: 'desc'})
-const trackListFilter    = ref('')
-const trackListFiltered  = computed(() => {
+const adding             = ref();
+const map                = ref()
+const auth               = ref();
+
+const trackList         = ref();
+const trackListLoading  = ref(false)
+const trackListSorting  = ref({created_at: 'desc'})
+const trackListFilter   = ref('')
+const trackListFiltered = computed(() => {
     if (!trackList.value) {
         return []
     }
@@ -52,27 +45,9 @@ const trackListFiltered  = computed(() => {
     }
     return tmp;
 })
+const trackListTable    = ref();
 
-const map               = ref()
-const file              = ref(null);
-const addingDialog      = ref(false)
-const currentTrackPoint = ref(null)
-const drawingEnabled    = ref(false)
-const auth              = ref();
-const loading           = ref(false)
-const user              = ref(getUser())
-const mobileToolbar     = ref(false)
-let adding              = reactive({...initialAdding});
-
-const addAtomfastTrack = async () => {
-    const response = await fetch('/atomfast', {
-        method: 'POST',
-        body: JSON.stringify({url: adding.atomfast_url, name: adding.name})
-    })
-
-    return await response.json()
-}
-
+const user        = ref(getUser())
 const fetchTracks = async () => {
     trackListLoading.value = true
     try {
@@ -92,132 +67,6 @@ const fetchTracks = async () => {
     } finally {
         trackListLoading.value = false
     }
-}
-
-const readFileAsText = (raw) => {
-    return new Promise((resolve, reject) => {
-        const reader   = new FileReader();
-        reader.onload  = () => {
-            resolve(reader.result);
-        };
-        reader.onerror = reject;
-        reader.readAsText(raw);
-    });
-}
-const readMediaFile  = (raw) => {
-    return new Promise((resolve, reject) => {
-        const reader   = new FileReader();
-        reader.onload  = () => {
-            resolve(reader.result);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(raw);
-    });
-}
-const attachSpectrum = (trackPointId) => {
-    addingDialog.value = true
-    adding.category    = 'point'
-    adding.point_type  = 'spectrum'
-
-    currentTrackPoint.value = trackPointId
-}
-
-const handleRadiocodeTrackFileUpload = async () => {
-    adding.attachment.length = 0;
-    adding.attachment.push(await readFileAsText(file.value.files[0]))
-}
-
-const handleSpectrumFileUpload = async () => {
-    adding.attachment.length = 0;
-    adding.attachment.push(xml2js(await readFileAsText(file.value.files[0])))
-}
-const handleMediaFileUpload    = async () => {
-    adding.attachment.length = 0;
-    for (let elem of file.value.files) {
-        adding.attachment.push(await readMediaFile(elem))
-    }
-}
-
-const uploadRadiocode = async () => {
-    const response = await fetch(
-        '/radiacode',
-        {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify({
-                name: adding.name,
-                track: adding.attachment[0],
-            })
-        }
-    )
-    let payload;
-    try {
-        payload = await response.json()
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e;
-    }
-    if (payload.error) {
-        ElMessage.error(payload.error)
-        return
-    }
-    addingDialog.value = false;
-    ElMessage.success({'message': 'Добавлено'})
-}
-const uploadSpectrum  = async () => {
-    let body = {
-        point_id: currentTrackPoint.value,
-        spectrum: adding.attachment[0],
-    }
-    if (currentTrackPoint.value) {
-        body['point_id'] = currentTrackPoint.value;
-    } else {
-        body['name']     = adding.name
-        body['location'] = adding.location
-    }
-
-    const response = await fetch(
-        '/spectrum',
-        {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify(body)
-        }
-    )
-    let payload;
-    try {
-        payload = await response.json()
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e;
-    }
-    if (payload.error) {
-        ElMessage.error(payload.error)
-        return
-    }
-    addingDialog.value = false;
-    ElMessage.success({'message': 'Добавлено'})
-}
-const addGenericPoint = async () => {
-    const response = await fetch(
-        '/point',
-        {
-            method: 'POST',
-            body: JSON.stringify(adding)
-        }
-    )
-    const payload  = await response.json()
-    if (!response.ok) {
-        ElMessage.error(payload.error || 'Произошла ошибка')
-        return
-    }
-    if (!payload.error) {
-        addingDialog.value = false;
-        ElMessage.success({'message': 'Добавлено'})
-        Object.assign(adding, initialAdding);
-        return
-    }
-    ElMessage.error({'message': payload.error})
 }
 
 const onAuth   = (value) => {
@@ -256,129 +105,10 @@ onMounted(() => {
     fetchTracks()
 })
 
-const save = async () => {
-    try {
-        if (adding.point_type === 'generic') {
-            if (adding.attachment.length === 0) {
-                ElMessage.error('Прикрепите пожалуйста минимум один файл');
-                return
-            }
-            if (adding.comment.length < 8) {
-                ElMessage.error('Укажите короткий комментарий (не менее 8 символов)');
-                return
-            }
-            loading.value = true;
-            await addGenericPoint()
-            loading.value = false;
-            return
-        }
-        if (adding.point_type === 'spectrum') {
-            if (adding.attachment.length === 0) {
-                ElMessage.error('Необходимо прикрепить файл спектра');
-                return
-            }
-            loading.value = true;
-            await uploadSpectrum()
-            loading.value = false;
-            return
-        }
-        if (adding.track_type === 'radiacode') {
-            if (adding.attachment.length === 0) {
-                ElMessage.error('Необходимо прикрепить файл');
-                return
-            }
-            loading.value = true;
-            await uploadRadiocode()
-            loading.value = false;
-            return
-        }
-        if (adding.track_type === 'atomfast') {
-            loading.value = true;
-            const payload = await addAtomfastTrack()
-            if (payload.error) {
-                ElMessage.error(payload.error)
-                return
-            }
-            ElMessage.success('Трек с Atomfast успешно добавлен')
-            addingDialog.value = false
-        }
-        if (adding.track_type) {
-            await fetchTracks()
-        }
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e
-    } finally {
-        map.value.refreshMap();
-        loading.value = false;
-    }
-}
-
-const currentLocation = reactive({
-    error: null,
-    waiting: false,
-});
-
-const requestCurrentLocation = () => {
-    if (adding.location) {
-        return
-    }
-    currentLocation.waiting = true;
-    map.value.requestCurrentLocation()
-}
-
-
-const onReceivingLocation      = (value) => {
-    currentLocation.waiting = false;
-    if (!adding.location) {
-        adding.location = value;
-    }
-}
-const onPointLocated           = (coordinates) => {
-    drawingEnabled.value = false
-    addingDialog.value   = true;
-    adding.location      = coordinates
-}
-const onReceivingLocationError = (error) => {
-    currentLocation.waiting = false;
-    currentLocation.error   = error
-    adding.location_type    = '';
-}
-
-const onAddingDialogClose = () => {
-    if (drawingEnabled.value) {
-        return
-    }
-    currentTrackPoint.value = null;
-    adding.category         = ''
-}
-
-watch(() => adding.location_type,
-    () => {
-        if (adding.location_type !== 'specifying') {
-            return
-        }
-        addingDialog.value   = false
-        drawingEnabled.value = true;
-        map.value.enableDrawing()
-    }
-)
-watch(() => adding.category,
-    (category) => {
-        if (currentTrackPoint.value) {
-            return;
-        }
-        Object.assign(adding, {
-            ...initialAdding,
-            category
-        });
-    })
 const saveFilter = () => {
-    map.value.refreshMap(filter)
+    map.value.refresh(filter)
     filterDialog.value = false
 }
-
-const trackListTable = ref();
 
 const onRowsSelect = (rows) => {
     if (rows.length === trackListFiltered.value.length || rows.length === 0) {
@@ -393,7 +123,6 @@ const onSelectAll  = () => {
     trackListTable.value.clearSelection()
 }
 </script>
-
 <template>
     <div class="header-wrp fixedhrd">
         <div class="header flex-row flex-algn-itms-c mil-notdisplay">
@@ -416,7 +145,7 @@ const onSelectAll  = () => {
                     <el-button :icon="Filter" @click="filterDialog = true" v-show="user.email">
                         Показать
                     </el-button>
-                    <el-button :icon="Plus" @click="addingDialog = true" v-show="user.email">
+                    <el-button :icon="Plus" @click="adding.open()" v-show="user.email">
                         Добавить
                     </el-button>
                     <el-popover
@@ -447,7 +176,6 @@ const onSelectAll  = () => {
                     </el-button>
                 </template>
             </div>
-            <!-- mobile nav -->
         </div>
     </div>
     <div id="legend" v-show="showLegend">
@@ -457,6 +185,7 @@ const onSelectAll  = () => {
             </li>
         </ul>
     </div>
+    <!-- mobile nav -->
     <div class="toolbar notdisplay mil-show">
         <template v-if="! user.email">
             <div class="pdng-t-15px">
@@ -477,11 +206,11 @@ const onSelectAll  = () => {
         </template>
         <template v-else>
             <div class="pdng-t-15px">
-                <el-button :icon="Filter" circle @click="filterDialog = true;mobileToolbar = false"
+                <el-button :icon="Filter" circle @click="filterDialog = true;"
                            size="large"></el-button>
             </div>
             <div class="pdng-t-15px">
-                <el-button :icon="Plus" circle @click="addingDialog = true" size="large"></el-button>
+                <el-button :icon="Plus" circle @click="adding.open()" size="large"></el-button>
             </div>
             <div class="pdng-t-15px">
                 <el-popover
@@ -529,111 +258,15 @@ const onSelectAll  = () => {
             </div>
         </template>
     </div>
+    <Adding @new-track="fetchTracks()"
+            @new-objects="map.refresh()"
+            @request-point-locating="map.enableDrawing()"
+            ref="adding"></Adding>
     <Map ref="map"
-         @get-location="onReceivingLocation"
-         @get-location-error="onReceivingLocationError"
-         @point-located="onPointLocated"
+         @point-located="adding.onPointLocated($event)"
+         @spectrum-attached="adding.attachSpectrum($event)"
          :color-scheme="currentColorScheme"
-         @attachspectrum="attachSpectrum"/>
-    <el-dialog v-model="addingDialog"
-               width="var(--dialog-width)"
-               center
-               @open="mobileToolbar = false"
-               @close="onAddingDialogClose">
-        <h3>Добавить...</h3>
-        <el-form class="pdng-t-10px"
-                 v-loading="loading"
-                 label-position="left"
-                 label-width="8.5em"
-                 :model="adding"
-                 @submit.prevent="save">
-            <el-form-item label="Категория">
-                <el-radio-group v-model="adding.category" size="large" :disabled="!!currentTrackPoint">
-                    <el-radio :label="'track'">Трек</el-radio>
-                    <el-radio :label="'point'">Точка</el-radio>
-                </el-radio-group>
-            </el-form-item>
-            <template v-if="adding.category === 'track'">
-                <el-form-item label="Тип">
-                    <el-radio-group v-model="adding.track_type" size="large">
-                        <el-radio :label="'atomfast'">Atomfast</el-radio>
-                        <el-radio :label="'radiacode'">RadiaCode</el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <template v-if="adding.track_type === 'atomfast'">
-                    <el-form-item label="Ссылка" required prop="atomfast_url">
-                        <el-input placeholder="http://atomfast" v-model="adding.atomfast_url"></el-input>
-                    </el-form-item>
-                    <el-form-item label="Название" required prop="name">
-                        <el-input placeholder="" v-model="adding.name"></el-input>
-                    </el-form-item>
-                </template>
-                <template v-if="adding.track_type === 'radiacode'">
-                    <el-form-item label="RadiaCode" required>
-                        <input type="file"
-                               class="pdng-t-5px"
-                               name="spectrum"
-                               v-on:change="handleRadiocodeTrackFileUpload"
-                               ref="file">
-                    </el-form-item>
-                    <el-form-item label="Название" prop="name" required>
-                        <el-input placeholder="Название" v-model="adding.name"></el-input>
-                    </el-form-item>
-                </template>
-            </template>
-            <template v-if="adding.category === 'point'">
-                <el-form-item label="Тип">
-                    <el-radio-group v-model="adding.point_type" size="large" :disabled="!!currentTrackPoint">
-                        <el-radio :label="'spectrum'">Спектр</el-radio>
-                        <el-radio :label="'generic'">Комментарий/файл</el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <el-form-item label="Локация" v-if="adding.point_type && !currentTrackPoint">
-                    <el-radio-group v-model="adding.location_type" size="large" v-loading="currentLocation.waiting">
-                        <el-radio :label="'current'"
-                                  :disabled="!!currentLocation.error"
-                                  @click="requestCurrentLocation">
-                            Текущее местоположение
-                        </el-radio>
-                        <el-radio :label="'specifying'">Указать на карте</el-radio>
-                    </el-radio-group>
-                </el-form-item>
-                <template v-if="adding.point_type === 'spectrum'">
-                    <el-form-item label="Спектр" required>
-                        <input type="file"
-                               class="pdng-t-5px"
-                               accept="text/xml"
-                               name="spectrum" ref="file"
-                               v-on:change="handleSpectrumFileUpload()">
-                    </el-form-item>
-                    <el-form-item label="Название">
-                        <el-input placeholder="Название" v-model="adding.name"></el-input>
-                    </el-form-item>
-                </template>
-
-                <template v-if="adding.point_type === 'generic'">
-                    <el-form-item label="Комментарий" required prop="comment">
-                        <el-input type="textarea"
-                                  v-model="adding.comment"
-                                  rows="5"
-                                  placeholder="Комментарий"></el-input>
-                    </el-form-item>
-                    <el-form-item label="Медиа-файлы" required>
-                        <input type="file" class="pdng-t-5px"
-                               ref="file"
-                               accept="image/*,video/*"
-                               multiple
-                               v-on:change="handleMediaFileUpload()">
-                    </el-form-item>
-                </template>
-            </template>
-            <template v-if="adding.track_type || adding.point_type">
-                <el-form-item>
-                    <el-button native-type="submit">Сохранить</el-button>
-                </el-form-item>
-            </template>
-        </el-form>
-    </el-dialog>
+    />
     <el-dialog v-model="filterDialog"
                top="0"
                :show-close="false"
@@ -721,7 +354,6 @@ const onSelectAll  = () => {
     </el-dialog>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>
-
 <style>
 .el-dialog {
     --dialog-width: 70%;
@@ -731,11 +363,6 @@ const onSelectAll  = () => {
     .el-dialog {
         --dialog-width: 100%;
     }
-}
-
-.committee-view {
-    display: flex;
-    align-items: flex-start;
 }
 
 #legend {
