@@ -24,6 +24,18 @@
                 Спектр #{{ feature.properties.spectrum_id }}
                 <br>
                 {{ spectrums[feature.properties.spectrum_id].name }}
+                <a class="txt-underline" href="#"
+                   @click="currentSpectrum = spectrums[feature.properties.spectrum_id].data;showSpectrum = true;">
+                    Трек
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
+                         style="width: 15px;height: 15px"
+                         data-v-78e17ca8="">
+                        <path fill="currentColor"
+                              d="M768 256H353.6a32 32 0 1 1 0-64H800a32 32 0 0 1 32 32v448a32 32 0 0 1-64 0V256z"></path>
+                        <path fill="currentColor"
+                              d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
+                    </svg>
+                </a>
             </template>
             <template v-if="feature.properties.track_id">
                 <div class="pdng-t-10px">
@@ -99,6 +111,11 @@
             </span>
         </div>
     </el-drawer>
+    <el-dialog v-model="showSpectrum" @open="generateChart" width="var(--chart-dialog-width)">
+        <div class="pdng-t-30px">
+            <div ref="chart" style="width: 600px;height:400px;"></div>
+        </div>
+    </el-dialog>
 </template>
 <script setup>
 import {format} from '../date'
@@ -117,6 +134,7 @@ import {Circle as CircleStyle, Fill, Style, Text, Stroke} from 'ol/style';
 import 'ol/ol.css'
 import Overlay from 'ol/Overlay';
 import Draw from 'ol/interaction/Draw';
+import {init} from 'echarts'
 
 import {ref, onMounted, watch, toRefs} from 'vue'
 import {calcColor} from "../colors";
@@ -137,23 +155,65 @@ const emit = defineEmits([
     'point-located'
 ])
 
-const attachSpectrum = (id) => {
+const attachSpectrum  = (id) => {
     emit('spectrum-attached', id)
 }
-const props          = defineProps({
+const props           = defineProps({
     colorScheme: String
 })
-const trackDrawer    = ref(false)
-const {colorScheme}  = toRefs(props)
-const filter         = ref({})
-const spectrums      = ref({})
-const users          = ref({})
-const tracks         = ref({})
-const loading        = ref(false)
-const drawingEnabled = ref(false);
-let trackPointHash   = ref({})
+const trackDrawer     = ref(false)
+const {colorScheme}   = toRefs(props)
+const filter          = ref({})
+const spectrums       = ref({})
+const users           = ref({})
+const showSpectrum    = ref(false)
+const currentSpectrum = ref();
+const tracks          = ref({})
+const loading         = ref(false)
+const drawingEnabled  = ref(false);
+const chart           = ref();
+let trackPointHash    = ref({})
 
-const loadFeatures = async (source, projection) => {
+const generateChart = () => {
+    setTimeout(() => {
+        if (!currentSpectrum.value.ResultDataList) {
+            return
+        }
+        const {
+                  MeasurementTime: BackgroundMeasurementTime,
+                  Spectrum: BackgroundSpectrum
+              } = currentSpectrum.value.ResultDataList.ResultData.BackgroundEnergySpectrum
+        const {
+                  MeasurementTime,
+                  Spectrum
+              } = currentSpectrum.value.ResultDataList.ResultData.EnergySpectrum
+
+        let myChart = init(chart.value);
+        myChart.setOption({
+            legend: {
+                data: ['sales']
+            },
+            xAxis: {
+                data: Array.from(Array(Spectrum.DataPoint.length).keys())
+            },
+            yAxis: {},
+            series: [
+                {
+                    name: 'Spectrum',
+                    type: 'bar',
+                    data: Spectrum.DataPoint
+                },
+                {
+                    name: 'BackgroundSpectrum',
+                    type: 'bar',
+                    data: BackgroundSpectrum.DataPoint
+                }
+            ]
+        });
+    }, 1)
+
+}
+const loadFeatures  = async (source, projection) => {
     let body = {
         _or: [
             {track_id: {_is_null: true}}
@@ -438,6 +498,15 @@ defineExpose({
 
 <style>
 
+.el-dialog {
+    --chart-dialog-width: 70%;
+}
+
+@media (max-width: 820px) {
+    .el-dialog {
+        --chart-dialog-width: 100%;
+    }
+}
 .track-drawer {
     font-size: 20px;
 }
