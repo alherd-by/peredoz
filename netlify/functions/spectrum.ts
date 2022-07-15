@@ -49,56 +49,55 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             }
         )
     }
+    if (!raw.location && !raw.point_id) {
+        return JSONResponse(
+            {error: 'Укажите местоположение'},
+            {
+                statusCode: 400,
+            }
+        )
+    }
     const input: any = {
-        geometry: {
-            type: "Point",
-            coordinates: raw.location
-        },
-        properties: {
-            name: raw.name
-        },
+        name: raw.name,
+        data: raw.spectrum
     }
     if (raw.point_id) {
-        input.id = raw.point_id
-    } else {
-        if (!raw.location) {
-            return JSONResponse(
-                {error: 'Укажите местоположение'},
-                {
-                    statusCode: 400,
-                }
-            )
+        input.point = {
+            id: raw.point_id,
+            geometry: {
+                type: "Point",
+                coordinates: [0, 0]
+            },
+            properties: {}
         }
-        input.spectrum = {
-            data: {
-                name: raw.spectrum.ResultDataList.ResultData.BackgroundSpectrumFile,
-                data: raw.spectrum
-            }
+    } else {
+        input.point = {
+            geometry: {
+                type: "Point",
+                coordinates: raw.location
+            },
+            properties: {}
         }
     }
     // language=GraphQL
-    const result = await mutation(`mutation ($input: point_insert_input!) {
-        point: insert_point_one(
-            object: $input,
-            on_conflict: {
-                constraint: point_pk,
-                update_columns: [spectrum_id]
+    const result = await mutation(`mutation ($point: point_insert_input!, $name: String!, $data: jsonb) {
+        insert_spectrum_one(
+            object: {
+                data: $data,
+                name: $name
+                points: {
+                    data: [$point],
+                    on_conflict: {
+                        update_columns: [spectrum_id],
+                        constraint: point_pk
+                    }
+                }
             }
         ) {
             id
-            spectrum {
-                id
-                data
-                name
-                point_id
-            }
-            geometry
-            properties
         }
     }`,
-        {
-            input
-        },
+        input,
         cookies.AUTH
     )
     return JSONResponse(result)

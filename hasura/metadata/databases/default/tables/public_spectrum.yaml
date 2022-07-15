@@ -1,10 +1,6 @@
 table:
   schema: public
   name: spectrum
-object_relationships:
-  - name: point
-    using:
-      foreign_key_constraint_on: point_id
 array_relationships:
   - name: points
     using:
@@ -26,27 +22,13 @@ insert_permissions:
         - data
         - id
         - name
-        - point_id
 select_permissions:
-  - role: anonymous
-    permission:
-      columns:
-        - created_at
-        - data
-        - id
-        - name
-        - point_id
-        - user_id
-      filter: {}
-      allow_aggregations: true
   - role: authorized
     permission:
       columns:
-        - created_at
-        - data
-        - id
         - name
-        - point_id
         - user_id
+        - id
+        - data
+        - created_at
       filter: {}
-      allow_aggregations: true

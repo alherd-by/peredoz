@@ -236,7 +236,6 @@ const readMediaFile  = (raw) => {
 }
 
 const attachSpectrum = (trackPointId) => {
-    console.log(trackPointId)
     addingDialog.value = true
     adding.category    = 'point'
     adding.point_type  = 'spectrum'
@@ -274,14 +273,13 @@ const uploadSpectrum                 = async () => {
     let body = {
         point_id: currentTrackPoint.value,
         spectrum: adding.attachment[0],
+        name: adding.name
     }
     if (currentTrackPoint.value) {
         body['point_id'] = currentTrackPoint.value;
     } else {
-        body['name']     = adding.name
         body['location'] = adding.location
     }
-
     const response = await fetch(
         '/spectrum',
         {
@@ -332,7 +330,9 @@ const handleRadiocodeTrackFileUpload = async () => {
 
 const handleSpectrumFileUpload = async () => {
     adding.attachment.length = 0;
-    adding.attachment.push(xml2js(await readFileAsText(file.value.files[0])))
+    const element            = xml2js(await readFileAsText(file.value.files[0]));
+    adding.name              = file.value.files[0].name.replace('.xml', '')
+    adding.attachment.push(element)
 }
 const handleMediaFileUpload    = async () => {
     adding.attachment.length = 0;

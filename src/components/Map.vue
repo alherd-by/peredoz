@@ -14,28 +14,30 @@
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
-                <p class="pdng-t-5px">
+                <p class="pdng-t-5px" v-if="! feature.properties.spectrum_id">
                     <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
                         Прикрепить спектр
                     </a>
                 </p>
             </template>
             <template v-if="feature.properties.spectrum_id">
-                Спектр #{{ feature.properties.spectrum_id }}
-                <br>
-                {{ spectrums[feature.properties.spectrum_id].name }}
-                <a class="txt-underline" href="#"
-                   @click="currentSpectrum = spectrums[feature.properties.spectrum_id].data;showSpectrum = true;">
-                    Трек
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
-                         style="width: 15px;height: 15px"
-                         data-v-78e17ca8="">
-                        <path fill="currentColor"
-                              d="M768 256H353.6a32 32 0 1 1 0-64H800a32 32 0 0 1 32 32v448a32 32 0 0 1-64 0V256z"></path>
-                        <path fill="currentColor"
-                              d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
-                    </svg>
-                </a>
+                <div class="pdng-t-10px">
+                    Спектр #{{ feature.properties.spectrum_id }}
+                    <br>
+                    {{ spectrums[feature.properties.spectrum_id].name }}
+                    <a class="txt-underline" href="#"
+                       @click="currentSpectrum = spectrums[feature.properties.spectrum_id].data;showSpectrum = true;">
+                        Спектр
+                        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
+                             style="width: 15px;height: 15px"
+                             data-v-78e17ca8="">
+                            <path fill="currentColor"
+                                  d="M768 256H353.6a32 32 0 1 1 0-64H800a32 32 0 0 1 32 32v448a32 32 0 0 1-64 0V256z"></path>
+                            <path fill="currentColor"
+                                  d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
+                        </svg>
+                    </a>
+                </div>
             </template>
             <template v-if="feature.properties.track_id">
                 <div class="pdng-t-10px">
@@ -311,13 +313,16 @@ let drawingLayer  = new VectorLayer({
 let featureLayer  = new VectorLayer({
     source: clusterSource,
     style(feature) {
-        let size          = feature.get('features').length;
-        const length      = size;
-        let colors, color = '#3399CC';
-        let style         = styleCache[size];
+        let size                      = feature.get('features').length;
+        const length                  = size;
+        let colors, hasSpectre, color = '#3399CC';
+
+        let features = feature.get('features');
+        hasSpectre   = features.some(i => i.getProperties().spectrum_id);
+        let style    = styleCache[size + '_' + hasSpectre];
         if (!style) {
             if (size === 1) {
-                const props = feature.get('features')[0].getProperties();
+                const props = features[0].getProperties();
                 if (props.point_id) {
                     size = size + '_' + props.point_id
                 }
@@ -326,7 +331,10 @@ let featureLayer  = new VectorLayer({
                     color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
                 }
             }
-            style            = new Style({
+            if (hasSpectre) {
+                color = '#b62bda'
+            }
+            style                               = [new Style({
                 image: new CircleStyle({
                     radius: 14,
                     stroke: new Stroke({
@@ -340,8 +348,8 @@ let featureLayer  = new VectorLayer({
                         color: '#fff',
                     }),
                 }),
-            });
-            styleCache[size] = style;
+            })];
+            styleCache[size + '_' + hasSpectre] = style;
         }
         return style;
 
@@ -462,7 +470,10 @@ onMounted(
             map.forEachFeatureAtPixel(evt.pixel, baseFeature => {
                 let f = baseFeature.getProperties();
                 if (f.features) {
-                    let t = f.features[0];
+                    if (f.features.length === 0) {
+                        return;
+                    }
+                    let t = f.features.find(i => i.getProperties().spectrum_id) || f.features[0];
                     if (!t) {
                         return
                     }
@@ -507,6 +518,7 @@ defineExpose({
         --chart-dialog-width: 100%;
     }
 }
+
 .track-drawer {
     font-size: 20px;
 }
