@@ -60,6 +60,9 @@
                         </el-radio>
                         <el-radio :label="'specifying'">Указать на карте</el-radio>
                     </el-radio-group>
+                    <span class="pdng-l-10px txt-size-11px txt-color-danger" v-show="currentLocation.error">
+                        Произошла ошибка при запросе текущей геолокации, укажите ее вручную
+                    </span>
                 </el-form-item>
                 <template v-if="adding.point_type === 'spectrum'">
                     <el-form-item label="Спектр" required>
@@ -186,6 +189,7 @@ const drawingEnabled    = ref(false)
 const geolocation = new Geolocation({
     trackingOptions: {
         enableHighAccuracy: true,
+        timeout: 30000
     },
     projection: 'EPSG:4326',
 });
@@ -358,6 +362,7 @@ const onPointLocated           = (coordinates) => {
     adding.location      = coordinates
 }
 const onReceivingLocationError = (error) => {
+    geolocation.setTracking(false);
     currentLocation.waiting = false;
     currentLocation.error   = error
     adding.location_type    = '';
