@@ -1,15 +1,16 @@
 <script setup>
-import Map from './components/Map.vue'
-import Auth from "./components/Auth.vue";
-import Adding from "./components/Adding.vue";
+import Map     from './components/Map.vue'
+import Auth    from "./components/Auth.vue";
+import Adding  from "./components/Adding.vue";
 import Filters from "./components/Filters.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
 
-import {computed, ref} from "vue";
+import {computed, ref, onMounted} from "vue";
 
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
-import {getUser} from "./user";
+import {getUser}                                     from "./user";
+import {supabase}                                    from "./supabase";
 
 const toolbarDialog = ref(false);
 
@@ -19,12 +20,32 @@ const adding             = ref();
 const map                = ref();
 const auth               = ref();
 const filtersRef         = ref();
+const userList           = ref([])
+const trackList          = ref([])
 
-const user = ref(getUser());
+const fetchTracks = async () => {
+    let {data, error} = await supabase
+        .from("track")
+        .select(`*,user!user_fk(*)`)
+    if (error) {
+        throw error
+    }
+    trackList.value = data;
+}
+
+const fetchUsers = async () => {
+    let {data, error} = await supabase
+        .from("user")
+        .select(`*`)
+    if (error) {
+        throw error
+    }
+    userList.value = data;
+}
+const user       = ref(getUser());
 
 const onAuth   = (value) => {
     user.value = value;
-    filtersRef.value.fetchTracks()
 }
 const onLogout = (value) => {
     user.value = value
@@ -41,7 +62,7 @@ const legend       = computed(() => {
         let color = calcColor(v, parseInt(currentColorScheme.value));
         let item  = {
             background: "rgb(" + color.r + "," + color.g + "," + color.b + ")",
-            innerHtml: ''
+            innerHtml : ''
         }
         if (i === 0 || i === colors_count - 1 || i === colors_count / 2 || i === colors_count / 4 || i === 3 * colors_count / 4) {
             let d          = minIntensity + diff * v;
@@ -54,6 +75,10 @@ const legend       = computed(() => {
     return items
 })
 
+onMounted(() => {
+    fetchTracks()
+    fetchUsers()
+})
 </script>
 <template>
     <div class="header-wrp fixedhrd">
@@ -195,16 +220,18 @@ const legend       = computed(() => {
             </div>
         </template>
     </div>
-    <Adding @new-track="filters.fetchTracks()"
+    <Adding @new-track="fetchTracks"
             @new-objects="map.refresh()"
             @request-point-locating="map.enableDrawing()"
             ref="adding"></Adding>
     <Map ref="map"
+         :track-list="trackList"
+         :user-list="userList"
          @point-located="adding.onPointLocated($event)"
          @spectrum-attached="adding.attachSpectrum($event)"
          :color-scheme="currentColorScheme"
     />
-    <Filters @change="map.refresh($event)" ref="filtersRef"/>
+    <Filters @change="map.refresh($event)" :track-list="trackList" ref="filtersRef"/>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
 </template>
 <style>

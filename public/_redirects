@@ -4,4 +4,4 @@
 /radiacode https://peredoz.netlify.app/.netlify/functions/radiacode 200
 /session https://peredoz.netlify.app/.netlify/functions/session 200
 /logout https://peredoz.netlify.app/.netlify/functions/logout 200
-/api/*  https://peredoz.hasura.app/api/:splat  200
+/api/*  https://nlppzcdetbvrnzmdybia.supabase.co/:splat  200

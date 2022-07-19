@@ -7,11 +7,7 @@
     "build": "tsc --noEmit && yarn run test && vite build",
     "preview": "vite preview",
     "dev-functions": "netlify functions:serve --functions netlify/functions",
-    "serve": "firebase emulators:start --only functions",
-    "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log",
     "test": "cd netlify/tests && jest"
   },
   "dependencies": {
@@ -20,9 +16,6 @@
     "@urql/core": "2.5.0",
     "aws-sdk": "2.1153.0",
     "element-plus": "2.2.9",
-    "firebase": "9.8.3",
-    "firebase-admin": "10.3.0",
-    "firebase-functions": "3.18.0",
     "graphql": "^16.5.0",
     "js-cookie": "^3.0.1",
     "node-fetch": "3.2.5",
@@ -31,14 +24,13 @@
     "vue": "3.2.37",
     "xml2js": "0.4.23",
     "xmldom": "0.6.0",
-    "echarts": "5.3.3"
+    "echarts": "5.3.3",
+    "@supabase/supabase-js" : "1.35.4"
   },
   "devDependencies": {
     "@types/jest": "27.5.1",
     "@types/uuid": "8.3.4",
     "@vitejs/plugin-vue": "2.3.3",
-    "firebase-functions-test": "0.2.0",
-    "firebase-tools": "11.1.0",
     "jest": "28.1.0",
     "netlify-cli": "10.3.1",
     "sass": "1.52.2",

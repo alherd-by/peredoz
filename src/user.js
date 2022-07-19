@@ -1,11 +1,12 @@
-import Cookies from "js-cookie";
+import {supabase} from './supabase'
 
 function getUser() {
     try {
-        return JSON.parse(Cookies.get('USER'))
+        let user = supabase.auth.user()
+        return user ? user : {email: ''}
     } catch {
         return {email: ''}
     }
-
 }
+
 export {getUser}

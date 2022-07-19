@@ -19,10 +19,10 @@
                     </span>
                     <el-radio-group v-model="filter.user_id">
                         <el-radio-button :label="''">Всеми</el-radio-button>
-                        <el-radio-button :label="JSON.stringify({user_id: {_eq: user.uid}})">
+                        <el-radio-button :label="'user_id.eq.' + user.id">
                             Мною
                         </el-radio-button>
-                        <el-radio-button :label="JSON.stringify({user_id: {_neq: user.uid}})">
+                        <el-radio-button :label="'user_id.neq.' + user.id">
                             Не мною
                         </el-radio-button>
                     </el-radio-group>
@@ -86,25 +86,30 @@
     </el-dialog>
 </template>
 <script setup>
-import {formatWithTime} from '../date'
-import {getUser} from "../user";
-import {ref, computed, onMounted, reactive} from "vue";
+import {formatWithTime}                  from '../date'
+import {getUser}                         from "../user";
+import {ref, computed, reactive, toRefs} from "vue";
+
+const props = defineProps({
+    trackList: Array
+})
 
 const filterDialog      = ref(false);
-const trackList         = ref();
+const {trackList: list} = toRefs(props);
 const trackListLoading  = ref(false)
 const trackListSorting  = ref({created_at: 'desc'})
 const trackListFilter   = ref('')
 const trackListFiltered = computed(() => {
-    if (!trackList.value) {
+    if (!list.value) {
         return []
     }
-    let tmp = trackList.value;
+    let tmp = list.value;
     if (filter.user_id) {
-        let uf   = JSON.parse(filter.user_id)
-        const ff = uf['user_id']['_neq']
-            ? (s) => s.user.id !== uf['user_id']['_neq']
-            : (s) => s.user.id === uf['user_id']['_eq']
+        let uf   = filter.user_id + ''
+        console.log(filter.user_id)
+        const ff = uf.includes('neq')
+            ? (s) => s.user.id !== uf.split('neq.')[1]
+            : (s) => s.user.id === uf.split('eq.')[1]
         tmp      = tmp.filter(ff)
     }
     if (trackListFilter.value.length >= 3) {
@@ -115,57 +120,36 @@ const trackListFiltered = computed(() => {
 const trackListTable    = ref();
 const emit              = defineEmits(['change'])
 
-
 const user = ref(getUser())
 
-const filter      = reactive({
+const filter = reactive({
     created_at: '',
-    user_id: '',
-    track_id: []
+    user_id   : '',
+    track_id  : []
 })
-const fetchTracks = async () => {
-    trackListLoading.value = true
-    try {
-        const response = await fetch(import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/tracks',
-            {
-                credentials: 'include'
-            }
-        )
-        if (!response.ok) {
-            throw 'Invalid track list http response';
-        }
-        const data = await response.json();
-        if (!data.tracks) {
-            throw 'Invalid track list format response';
-        }
-        trackList.value = data.tracks;
-    } finally {
-        trackListLoading.value = false
-    }
-}
-const saveFilter  = () => {
+
+const saveFilter = () => {
     emit('change', filter)
     filterDialog.value = false
 }
-const show        = () => {
+const show       = () => {
     filterDialog.value = true
 }
 defineExpose({
-    fetchTracks,
     show
 })
-onMounted(() => {
-    fetchTracks()
-})
 
-const onRowsSelect = (rows) => {
-    if (rows.length === trackListFiltered.value.length || rows.length === 0) {
+const onRowsSelect = (selectedRows) => {
+    if (
+        (selectedRows.length === trackListFiltered.value.length && trackListFiltered.value.length > 3)
+        || selectedRows.length === 0
+    ) {
         return
     }
-    if (rows.length > 3) {
-        trackListTable.value.toggleRowSelection(rows[0], undefined)
+    if (selectedRows.length > 3) {
+        trackListTable.value.toggleRowSelection(selectedRows[0], undefined)
     }
-    filter.track_id = rows.map((i) => i.id)
+    filter.track_id = selectedRows.map((i) => i.id)
 }
 const onSelectAll  = () => {
     trackListTable.value.clearSelection()

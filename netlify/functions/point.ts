@@ -1,15 +1,8 @@
 import {Handler, HandlerResponse} from "@netlify/functions";
 import {JSONResponse} from "../src/json_response";
-import {mutation, parseCookies} from "../src/client";
-import {initializeApp, cert} from "firebase-admin/app";
-import {getAuth} from "firebase-admin/auth";
 import AWS from 'aws-sdk';
 import {v4 as uuidv4} from 'uuid';
-
-const app = initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_CREDENTIALS))
-})
-const auth = getAuth(app);
+import {supabase, getToken} from "../src/supabase";
 
 const s3 = new AWS.S3({
     region: process.env.AWS_S3_REGION,
@@ -18,27 +11,20 @@ const s3 = new AWS.S3({
 })
 
 const handler: Handler = async (event): Promise<HandlerResponse> => {
-    const raw = JSON.parse(event.body);
-    const cookies = parseCookies(<string | undefined>event.headers.cookie)
-    if (!cookies['AUTH']) {
-        return JSONResponse(
-            {error: 'not_auth'},
-            {
-                statusCode: 401,
-            }
-        )
-    }
+    let raw;
     try {
-        await auth.verifySessionCookie(cookies.AUTH);
-    } catch (e) {
-        console.error(e)
+        raw = JSON.parse(event.body);
+    } catch {
         return JSONResponse(
-            {error: 'not_auth_error'},
+            {error: 'Невалидное тело запроса'},
             {
-                statusCode: 401,
+                statusCode: 400,
             }
         )
     }
+    const token = getToken(event.headers);
+    supabase.auth.setAuth(token)
+    const response = await supabase.auth.api.getUser(token)
     if (!raw.location) {
         return JSONResponse(
             {error: 'not_found_location'},
@@ -87,33 +73,30 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 )
             }
         }
-
-
     }
-
     const geometry = {
         type: 'Point',
         coordinates: raw.location
     }
-    // language=GraphQL
-    const result = await mutation(`mutation ($object: point_insert_input!) {
-        point: insert_point_one(object: $object) {
-            id
-            geometry
-            properties
-        }
-    }`,
-        {
-            object: {
-                properties: {
-                    comment: raw.comment,
-                    attachments
-                },
-                geometry
-            }
+    let result
+    result = await supabase.from('point').insert([{
+        properties: {
+            comment: raw.comment,
+            attachments
         },
-        cookies.AUTH
-    )
+        geometry,
+        user_id: response.user.id
+    }]).single()
+
+    if (result.error) {
+        console.error(result.error)
+        return JSONResponse(
+            {error: 'Произошла ошибка'},
+            {
+                statusCode: 500,
+            }
+        )
+    }
     return JSONResponse(result)
 }
 

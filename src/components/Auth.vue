@@ -50,39 +50,21 @@
 </template>
 
 <script setup>
-import {ElMessage} from 'element-plus';
+import {ElMessage}     from 'element-plus';
 import {reactive, ref} from "vue";
-import {initializeApp} from "firebase/app";
-import {
-    getAuth,
-    signInWithEmailAndPassword,
-    setPersistence,
-    inMemoryPersistence,
-    createUserWithEmailAndPassword
-} from "firebase/auth";
-import {getUser} from "../user";
+import {getUser}       from "../user";
+import {supabase}      from "../supabase";
 
 const emit = defineEmits(['auth', 'logout'])
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBFVs0GdKnG_3qKeTe0xnxEMybaFmu7UhY",
-    authDomain: "peredoz-by.firebaseapp.com",
-    projectId: "peredoz-by",
-    storageBucket: "peredoz-by.appspot.com",
-    messagingSenderId: "408847871523",
-    appId: "1:408847871523:web:d62f4308993d449b54cb96"
-};
 
 const ruleFormRef     = ref()
 const form            = reactive({
     username: '',
     password: '',
 })
-const user            = ref(getUser())
+const account         = ref(getUser())
 const loading         = ref(false)
 const registerFormRef = ref()
-const app             = initializeApp(firebaseConfig);
-const auth            = getAuth(app);
 
 const authModal     = ref(false);
 const registerModal = ref(false)
@@ -95,12 +77,12 @@ const openSignUp = () => {
 }
 
 const logout = async () => {
-    const response = await fetch('/logout', {
-        method: 'POST',
-        credentials: 'include'
-    })
-    const payload  = await response.json()
-    user.value     = payload.user;
+    let {error} = await supabase.auth.signOut()
+    if (error) {
+        ElMessage.error('Произошла ошибка')
+        throw error
+    }
+    account.value = null;
     emit('logout', {user: {email: ''}})
 }
 
@@ -123,30 +105,22 @@ const submitRegisterForm = async (formEl) => {
             return;
         }
         try {
-            loading.value = true;
-            await setPersistence(auth, inMemoryPersistence)
-            const credentials = await createUserWithEmailAndPassword(auth, form.username, form.password)
-            //todo не сразу добавляется custom claim нужно думать над флоу
-            const idToken     = await credentials.user.getIdToken()
-            const response    = await fetch(
-                '/session?signup=true',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: idToken
-                    })
-                }
-            )
-            const result      = await response.json();
-            user.value        = result.user;
-            ElMessage.success('Успешная регистрация')
-            authModal.value = false;
-            emit('auth', result.user)
-            form.password = '';
-            form.username = '';
+            loading.value     = true;
+            let {user, error} = await supabase.auth.signUp({
+                email   : form.username,
+                password: form.password
+            })
+            if (error) {
+                ElMessage.error('Произошла ошибка')
+                console.log(error);
+            } else {
+                account.value = user;
+                ElMessage.success('Успешная регистрация')
+                authModal.value = false;
+                emit('auth', user)
+                form.password = '';
+                form.username = '';
+            }
         } catch (error) {
             ElMessage.error('Произошла ошибка')
             throw error;
@@ -165,30 +139,21 @@ const submitForm         = async (formEl) => {
             return;
         }
         try {
-            loading.value = true
-            await setPersistence(auth, inMemoryPersistence)
-            const credentials = await signInWithEmailAndPassword(auth, form.username, form.password)
-            //todo перехват ошибок
-            const idToken     = await credentials.user.getIdToken()
-            const response    = await fetch(
-                '/session',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        token: idToken
-                    })
-                }
-            )
-            const result      = await response.json();
-            user.value        = result.user;
-            ElMessage.success('Успешная авторизация')
-            authModal.value = false;
-            emit('auth', result.user)
-            form.password = '';
-            form.username = '';
+            loading.value     = true
+            let {user, error} = await supabase.auth.signIn({
+                email   : form.username,
+                password: form.password
+            })
+            if (error) {
+                ElMessage.error('Произошла ошибка')
+                console.log(error)
+            } else {
+                ElMessage.success('Успешная авторизация')
+                authModal.value = false;
+                emit('auth', user)
+                form.password = '';
+                form.username = '';
+            }
         } catch (error) {
             loading.value = false
             ElMessage.error('Произошла ошибка')
@@ -203,8 +168,8 @@ const rules = reactive({
     username: [
         {
             required: true,
-            message: 'Введите логин',
-            trigger: 'change',
+            message : 'Введите логин',
+            trigger : 'change',
         },
     ]
 })

@@ -1,11 +1,12 @@
 <template>
-    <div id="map" style="height: 100%;width: 100%"
+    <div id="map"
+         style="height: 100%;width: 100%"
          v-loading="loading"></div>
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content" v-if="feature">
+            <p>id: {{ feature.id }}</p>
             <template v-if="feature && feature.properties && feature.properties.d">
-                <p>id: {{ feature.id }}</p>
                 <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
                 <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
@@ -14,19 +15,17 @@
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
-                <p class="pdng-t-5px" v-if="! feature.properties.spectrum_id">
+                <p class="pdng-t-5px" v-if="! feature.properties.spectrum">
                     <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
                         Прикрепить спектр
                     </a>
                 </p>
             </template>
-            <template v-if="feature.properties.spectrum_id">
+            <template v-if="feature.properties.spectrum">
                 <div class="pdng-t-10px">
-                    Спектр #{{ feature.properties.spectrum_id }}
-                    <br>
-                    {{ spectrums[feature.properties.spectrum_id].name }}
+                    {{ feature.properties.spectrum.name }}
                     <a class="txt-underline" href="#"
-                       @click="currentSpectrum = spectrums[feature.properties.spectrum_id].data;showSpectrum = true;">
+                       @click="currentSpectrum = feature.properties.spectrum.data;showSpectrum = true;">
                         Спектр
                         <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
                              style="width: 15px;height: 15px"
@@ -122,24 +121,25 @@
 <script setup>
 import {format} from '../date'
 
-import Map from "ol/Map";
-import TileLayer from "ol/layer/Tile";
-import {OSM} from "ol/source";
-import View from "ol/View";
+import Map          from "ol/Map";
+import TileLayer    from "ol/layer/Tile";
+import {OSM}        from "ol/source";
+import View         from "ol/View";
 import {fromLonLat} from "ol/proj";
 
-import VectorLayer from "ol/layer/Vector";
-import VectorSource from "ol/source/Vector";
-import ClusterSource from "ol/source/Cluster";
-import GeoJSON from "ol/format/GeoJSON"
+import VectorLayer                                        from "ol/layer/Vector";
+import VectorSource                                       from "ol/source/Vector";
+import ClusterSource                                      from "ol/source/Cluster";
+import GeoJSON                                            from "ol/format/GeoJSON"
 import {Circle as CircleStyle, Fill, Style, Text, Stroke} from 'ol/style';
 import 'ol/ol.css'
-import Overlay from 'ol/Overlay';
-import Draw from 'ol/interaction/Draw';
-import {init} from 'echarts'
+import Overlay                                            from 'ol/Overlay';
+import Draw                                               from 'ol/interaction/Draw';
+import {init}                                             from 'echarts'
 
-import {ref, onMounted, watch, toRefs} from 'vue'
-import {calcColor} from "../colors";
+import {ref, onMounted, watch, toRefs, computed} from 'vue'
+import {calcColor}                               from "../colors";
+import {supabase}                                from "../supabase";
 
 const devices = [
     "",
@@ -157,20 +157,35 @@ const emit = defineEmits([
     'point-located'
 ])
 
-const attachSpectrum  = (id) => {
+const attachSpectrum                     = (id) => {
     emit('spectrum-attached', id)
 }
-const props           = defineProps({
-    colorScheme: String
+const props                              = defineProps({
+    colorScheme: String,
+    trackList  : Array,
+    userList   : Array
 })
-const trackDrawer     = ref(false)
-const {colorScheme}   = toRefs(props)
-const filter          = ref({})
-const spectrums       = ref({})
-const users           = ref({})
+const trackDrawer                        = ref(false)
+const {colorScheme, trackList, userList} = toRefs(props)
+const filter                             = ref({})
+const spectrums                          = ref({})
+
 const showSpectrum    = ref(false)
 const currentSpectrum = ref();
-const tracks          = ref({})
+const users           = computed(() => {
+    let tmp = {};
+    for (let i of userList.value) {
+        tmp[i.id] = i
+    }
+    return tmp
+})
+const tracks          = computed(() => {
+    let tmp = {};
+    for (let i of trackList.value) {
+        tmp[i.id] = i
+    }
+    return tmp
+})
 const loading         = ref(false)
 const drawingEnabled  = ref(false);
 const chart           = ref();
@@ -183,7 +198,7 @@ const generateChart = () => {
         }
         const {
                   MeasurementTime: BackgroundMeasurementTime,
-                  Spectrum: BackgroundSpectrum
+                  Spectrum       : BackgroundSpectrum
               } = currentSpectrum.value.ResultDataList.ResultData.BackgroundEnergySpectrum
         const {
                   MeasurementTime,
@@ -195,10 +210,10 @@ const generateChart = () => {
             legend: {
                 data: ['sales']
             },
-            xAxis: {
+            xAxis : {
                 data: Array.from(Array(Spectrum.DataPoint.length).keys())
             },
-            yAxis: {},
+            yAxis : {},
             series: [
                 {
                     name: 'Spectrum',
@@ -216,64 +231,31 @@ const generateChart = () => {
 
 }
 const loadFeatures  = async (source, projection) => {
-    let body = {
-        _or: [
-            {track_id: {_is_null: true}}
-        ]
-    }
-    if (Array.isArray(filter.value.track_id)) {
-        body['_or'].push({track_id: {_in: filter.value.track_id}})
-    }
-    if (filter.value.user_id) {
-        body['_or'].push(JSON.parse(filter.value.user_id))
-    }
     try {
-        loading.value  = true
-        const response = await fetch(
-            import.meta.env.VITE_GRAPHQL_API_URL + '/api/rest/points',
+        loading.value = true
+        let params    = ['track_id.is.null']
+        let query     = supabase.from("features").select(`*`)
+        if (Array.isArray(filter.value.track_id) && filter.value.track_id.length > 0) {
+            params.push(`track_id.in.(${filter.value.track_id.join(',')})`)
+        }
+        if (filter.value.user_id) {
+            params.push(filter.value.user_id)
+        }
+        let {data, error} = await query.or(params.join(','))
+        if (error) {
+            throw error
+        }
+        const temp = (new GeoJSON()).readFeatures(
             {
-                method: 'POST',
-                credentials: 'include',
-                body: JSON.stringify({
-                    filter: body
-                })
-            }
+                type    : 'FeatureCollection',
+                features: data
+            },
+            {featureProjection: projection}
         )
-        if (!response.ok) {
-            throw 'Invalid http response for fetching track'
-        }
-        const payload = await response.json()
-        if (payload.features) {
-            trackPointHash.value = {}
-            const temp           = (new GeoJSON()).readFeatures(
-                {
-                    type: 'FeatureCollection',
-                    features: payload.features
-                },
-                {featureProjection: projection}
-            )
-            source.addFeatures(temp)
-        }
-
-        if (payload.spectrums) {
-            for (let s of payload.spectrums) {
-                spectrums.value[s.id] = s;
-            }
-        }
-        if (payload.users) {
-            for (let s of payload.users) {
-                users.value[s.id] = s;
-            }
-        }
-        if (payload.tracks) {
-            for (let t of payload.tracks) {
-                tracks.value[t.id] = t;
-            }
-        }
+        source.addFeatures(temp)
     } finally {
         loading.value = false
     }
-
 }
 
 let featuresSource = new VectorSource({
@@ -284,14 +266,14 @@ let featuresSource = new VectorSource({
 })
 
 let clusterSource = new ClusterSource({
-    source: featuresSource,
+    source  : featuresSource,
     distance: 13
 })
 
 let styleCache = {};
 
 const view = new View({
-    zoom: 7.3,
+    zoom  : 7.3,
     center: fromLonLat([27.7834, 53.7098]),
 })
 
@@ -299,7 +281,7 @@ let placesLayer   = new VectorLayer(
     {
         source: new VectorSource(
             {
-                url: '/places.json',
+                url   : '/places.json',
                 format: new GeoJSON()
             }
         ),
@@ -318,8 +300,8 @@ let featureLayer  = new VectorLayer({
         let colors, hasSpectre, color = '#3399CC';
 
         let features = feature.get('features');
-        hasSpectre   = features.some(i => i.getProperties().spectrum_id);
-        let style    = styleCache[size + '_' + hasSpectre];
+        hasSpectre   = features.some(i => i.getProperties().spectrum);
+        let style    = styleCache[size + '_' + hasSpectre ? 'true' : 'false'];
         if (!style) {
             if (size === 1) {
                 const props = features[0].getProperties();
@@ -340,9 +322,9 @@ let featureLayer  = new VectorLayer({
                     stroke: new Stroke({
                         color: '#fff',
                     }),
-                    fill: new Fill({color}),
+                    fill  : new Fill({color}),
                 }),
-                text: new Text({
+                text : new Text({
                     text: length === 1 ? '' : length.toString(),
                     fill: new Fill({
                         color: '#fff',
@@ -352,37 +334,6 @@ let featureLayer  = new VectorLayer({
             styleCache[size + '_' + hasSpectre] = style;
         }
         return style;
-
-
-        // let size;
-        // const length = feature.get('features').length;
-        // const props  = feature.getProperties();
-        // size         = props['d'] + '_' + colorScheme.value
-        // const colors = calcColor(props['d'], colorScheme.value)
-        //
-        // let style = styleCache[size];
-        // if (style) {
-        //     return style
-        // }
-        //
-        // style = new Style({
-        //     image: new Circle({
-        //         radius: 10,
-        //         fill: new Fill({
-        //             color: `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`,
-        //         }),
-        //     }),
-        //     text: new Text({
-        //         text: length.toString(),
-        //         fill: new Fill({
-        //             color: '#fff',
-        //         }),
-        //     }),
-        // });
-        //
-        // styleCache[size] = style;
-        //
-        // return style;
     }
 })
 watch(
@@ -412,8 +363,8 @@ const refresh = (input) => {
 const feature = ref();
 let map;
 const draw    = new Draw({
-    type: 'Point',
-    source: drawingSource,
+    type           : 'Point',
+    source         : drawingSource,
     finishCondition: function () {
         return true;
     }
@@ -440,22 +391,22 @@ onMounted(
             return false;
         };
         const overlay                            = new Overlay({
-            element: container,
-            autoPan: true,
+            element         : container,
+            autoPan         : true,
             autoPanAnimation: {
                 duration: 250,
             },
         });
 
         map = new Map({
-            layers: [
+            layers  : [
                 new TileLayer({
                     source: new OSM(),
                 }),
                 drawingLayer,
                 placesLayer
             ],
-            target: 'map',
+            target  : 'map',
             overlays: [overlay],
             view
         });
@@ -473,17 +424,17 @@ onMounted(
                     if (f.features.length === 0) {
                         return;
                     }
-                    let t = f.features.find(i => i.getProperties().spectrum_id) || f.features[0];
+                    let t = (f.features.find(i => i.getProperties().spectrum)) || f.features[0];
                     if (!t) {
                         return
                     }
                     feature.value = {
-                        id: t.getId(),
+                        id        : t.getId(),
                         properties: t.getProperties()
                     };
                 } else {
                     feature.value = {
-                        id: baseFeature.getId(),
+                        id        : baseFeature.getId(),
                         properties: baseFeature.getProperties()
                     };
                 }

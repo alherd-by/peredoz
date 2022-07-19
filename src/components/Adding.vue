@@ -36,6 +36,7 @@
                         <input type="file"
                                class="pdng-t-5px"
                                name="spectrum"
+                               accept=".rctrk"
                                v-on:change="handleRadiocodeTrackFileUpload"
                                ref="file">
                     </el-form-item>
@@ -76,7 +77,6 @@
                         <el-input placeholder="Название" v-model="adding.name"></el-input>
                     </el-form-item>
                 </template>
-
                 <template v-if="adding.point_type === 'generic'">
                     <el-form-item label="Комментарий" required prop="comment">
                         <el-input type="textarea"
@@ -103,11 +103,15 @@
 </template>
 
 <script setup>
-import {ElMessage} from "element-plus";
+import {ElMessage}            from "element-plus";
 import {reactive, ref, watch} from "vue";
-import {xml2js} from "../xml2js";
-import Geolocation from "ol/Geolocation";
+import {xml2js}               from "../xml2js";
+import Geolocation            from "ol/Geolocation";
+import radiocode              from '../radiacode'
+import {supabase}             from "../supabase";
+import {getUser}              from "../user";
 
+const user  = ref(getUser())
 const emits = defineEmits(
     ['new-track', 'new-objects', 'request-point-locating']
 )
@@ -169,15 +173,15 @@ const save  = async () => {
 }
 
 const initialAdding     = {
-    category: '',
-    track_type: '',
-    point_type: '',
+    category     : '',
+    track_type   : '',
+    point_type   : '',
     location_type: '',
-    name: '',
-    atomfast_url: '',
-    comment: '',
-    location: null,
-    attachment: []
+    name         : '',
+    atomfast_url : '',
+    comment      : '',
+    location     : null,
+    attachment   : []
 }
 let adding              = reactive({...initialAdding});
 const addingDialog      = ref(false)
@@ -189,9 +193,9 @@ const drawingEnabled    = ref(false)
 const geolocation = new Geolocation({
     trackingOptions: {
         enableHighAccuracy: true,
-        timeout: 30000
+        timeout           : 30000
     },
-    projection: 'EPSG:4326',
+    projection     : 'EPSG:4326',
 });
 
 const requestCurrentLocation = () => {
@@ -211,8 +215,11 @@ geolocation.on('error', function (error) {
 
 const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
-        method: 'POST',
-        body: JSON.stringify({url: adding.atomfast_url, name: adding.name})
+        method : 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + supabase.auth.session().access_token
+        },
+        body   : JSON.stringify({url: adding.atomfast_url, name: adding.name})
     })
 
     return await response.json()
@@ -248,60 +255,59 @@ const attachSpectrum = (trackPointId) => {
 }
 
 const uploadRadiocode                = async () => {
-    const response = await fetch(
-        '/radiacode',
-        {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify({
-                name: adding.name,
-                track: adding.attachment[0],
-            })
-        }
-    )
-    let payload;
-    try {
-        payload = await response.json()
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e;
+    let response;
+    response = await supabase
+        .from('track')
+        .insert([
+            {name: adding.name, user_id: user.value.id}
+        ]).single()
+    if (response.error) {
+        throw error
     }
-    if (payload.error) {
-        ElMessage.error(payload.error)
-        return
+    const points = radiocode.parse(adding.attachment[0]).points.map(i => {
+        i.track_id = response.data.id;
+        i.user_id  = user.value.id
+        return i;
+    });
+    response     = await supabase
+        .from('point')
+        .insert(points)
+    if (response.error) {
+        throw response.error
     }
     addingDialog.value = false;
     ElMessage.success({'message': 'Добавлено'})
 }
 const uploadSpectrum                 = async () => {
-    let body = {
-        point_id: currentTrackPoint.value,
-        spectrum: adding.attachment[0],
-        name: adding.name
-    }
-    if (currentTrackPoint.value) {
-        body['point_id'] = currentTrackPoint.value;
-    } else {
-        body['location'] = adding.location
-    }
-    const response = await fetch(
-        '/spectrum',
-        {
-            method: 'POST',
-            credentials: 'include',
-            body: JSON.stringify(body)
+    let response;
+    if (!currentTrackPoint.value) {
+        response = await supabase
+            .from('point')
+            .insert([
+                {
+                    geometry: {
+                        type       : 'Point',
+                        coordinates: adding.location
+                    },
+                    user_id : user.value.id
+                }
+            ]).single()
+        if (response.error) {
+            throw response.error
         }
-    )
-    let payload;
-    try {
-        payload = await response.json()
-    } catch (e) {
-        ElMessage.error('Произошла ошибка')
-        throw e;
+        currentTrackPoint.value = response.data.id
     }
-    if (payload.error) {
-        ElMessage.error(payload.error)
-        return
+    response = await supabase
+        .from('point')
+        .update({
+            spectrum: {
+                name: adding.name,
+                data: adding.attachment[0],
+            },
+        })
+        .match({id: currentTrackPoint.value, user_id: user.value.id})
+    if (response.error) {
+        throw response.error;
     }
     addingDialog.value = false;
     ElMessage.success({'message': 'Добавлено'})
@@ -311,7 +317,10 @@ const addGenericPoint                = async () => {
         '/point',
         {
             method: 'POST',
-            body: JSON.stringify(adding)
+            headers: {
+                'Authorization': 'Bearer ' + supabase.auth.session().access_token
+            },
+            body  : JSON.stringify(adding)
         }
     )
     const payload  = await response.json()
@@ -346,7 +355,7 @@ const handleMediaFileUpload    = async () => {
 }
 
 const currentLocation = reactive({
-    error: null,
+    error  : null,
     waiting: false,
 });
 

@@ -27,3 +27,7 @@ var
 .netlify
 .graphqlconfig
 schema.graphql
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp

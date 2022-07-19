@@ -1,15 +1,9 @@
 import {Handler, HandlerResponse} from "@netlify/functions";
 import fetch from 'node-fetch'
-import {insertTrack, Track} from "../src/tracks";
 import {JSONResponse} from "../src/json_response";
-import {initializeApp, cert} from "firebase-admin/app";
-import {getAuth} from "firebase-admin/auth";
-import {parseCookies} from "../src/client";
+import {supabase, getToken} from '../src/supabase'
 
-const app = initializeApp({
-    credential: cert(JSON.parse(process.env.FIREBASE_CREDENTIALS))
-})
-const auth = getAuth(app);
+const errorAuth = 'Ошибка авторизации';
 
 const handler: Handler = async (event): Promise<HandlerResponse> => {
     let input: any;
@@ -49,34 +43,23 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             }
         )
     }
+    const token = getToken(event.headers);
+    supabase.auth.setAuth(token)
+    const response = await supabase.auth.api.getUser(token)
+    if (response.error) {
+        return JSONResponse(
+            {error: errorAuth},
+            {
+                statusCode: 401,
+            }
+        )
+    }
     const trackNumber = parseInt(chunks[1])
     if (isNaN(trackNumber)) {
         return JSONResponse(
             {error: 'invalid_url'},
             {
                 statusCode: 400,
-            }
-        )
-    }
-
-    const cookies = parseCookies(<string | undefined>event.headers.cookie)
-    if (!cookies['AUTH']) {
-        return JSONResponse(
-            {error: 'not_auth'},
-            {
-                statusCode: 401,
-            }
-        )
-    }
-    let decoded;
-    try {
-        await auth.verifySessionCookie(cookies['AUTH']);
-    } catch (e) {
-        console.error(e)
-        return JSONResponse(
-            {error: 'not_auth_error'},
-            {
-                statusCode: 401,
             }
         )
     }
@@ -95,37 +78,62 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         }
     }
 
-    let result: { data?: object, error?: string, points?: any };
+    let result: any;
     try {
-        let object: Track = {
+        let object = {
             name: name,
-            points: {
-                data: points.map((item: any) => ({
-                    properties: item,
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [item.lng, item.lat]
-                    }
-                }))
+            atomfast_id: trackNumber,
+            user_id: response.user.id
+        }
+        result = await supabase.from('track').insert([object]).single()
+        if (result.error) {
+            if (result.error.message === 'duplicate key value violates unique constraint "track_atomfast_id_uindex"') {
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({'error': 'Такой трек уже был загружен с atomfast'}),
+                    headers: {
+                        'Content-Type': 'application/json;charset=UTF-8',
+                    },
+                }
             }
+            console.error(result.error)
+            return JSONResponse(
+                {error: 'Произошла ошибка'},
+                {
+                    statusCode: 500,
+                }
+            )
         }
-        if (trackNumber) {
-            object.atomfast_id = trackNumber;
+        points = points.map((item: any) => ({
+            properties: item,
+            geometry: {
+                type: 'Point',
+                coordinates: [item.lng, item.lat]
+            },
+            user_id: response.user.id,
+            track_id: result.data.id
+        }))
+        result = await supabase.from('point').insert(points)
+        if (result.error) {
+            console.error(result.error)
+            return JSONResponse(
+                {error: 'Произошла ошибка'},
+                {
+                    statusCode: 500,
+                }
+            )
         }
-        result = await insertTrack(object, cookies['AUTH'])
-        result['points'] = trackNumber;
+        return JSONResponse(result)
     } catch (e) {
-        console.error(e);
-        result = {error: 'Произошла ошибка'}
+        console.error(e)
+        return JSONResponse(
+            {error: 'Произошла ошибка'},
+            {
+                statusCode: 500,
+            }
+        )
     }
-    console.log(result)
-    return {
-        statusCode: 200,
-        body: JSON.stringify(result),
-        headers: {
-            'Content-Type': 'application/json;charset=UTF-8',
-        },
-    }
+
 }
 
 
