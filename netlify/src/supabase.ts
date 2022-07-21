@@ -11,7 +11,7 @@ const getToken = (headers: any) => {
     return chunks.pop()
 }
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL
+const supabaseUrl = process.env.SUPABASE_URL
 const supabase = createClient(
     supabaseUrl,
     process.env.VITE_SUPABASE_KEY
