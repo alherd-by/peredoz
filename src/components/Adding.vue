@@ -117,6 +117,7 @@ const emits = defineEmits(
 )
 const save  = async () => {
     try {
+        console.log(user.value)
         if (adding.point_type === 'generic') {
             if (adding.attachment.length === 0) {
                 ElMessage.error('Прикрепите пожалуйста минимум один файл');
