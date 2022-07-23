@@ -247,10 +247,11 @@ const loadFeatures = async (source, projection) => {
         if (hasTracks) {
             params.push(`track_id.in.(${filter.value.track_id.join(',')})`)
         }
+        query = query.or(params.join(','))
         if (filter.value.user_id) {
-            params.push(filter.value.user_id)
+            query = query.filter(...filter.value.user_id.split('.'))
         }
-        let {data, error} = await query.or(params.join(','))
+        let {data, error} = await query
         if (error) {
             throw error
         }
