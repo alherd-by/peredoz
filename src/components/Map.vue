@@ -267,7 +267,7 @@ const loadFeatures = async (source, projection) => {
             return
         }
         view.setCenter(fromLonLat(data[0].geometry.coordinates))
-        view.setZoom(12)
+        view.setZoom(10)
     } finally {
         loading.value = false
     }
@@ -282,7 +282,7 @@ let featuresSource = new VectorSource({
 
 let clusterSource = new ClusterSource({
     source  : featuresSource,
-    distance: 13
+    distance: 5
 })
 
 let styleCache = {};
@@ -308,42 +308,41 @@ let featureLayer  = new VectorLayer({
     style(feature) {
         let size                      = feature.get('features').length;
         const length                  = size;
-        let colors, hasSpectre, color = '#3399CC';
+        let colors, hasSpectre, color = '#7c7676';
 
         let features = feature.get('features');
         hasSpectre   = features.some(i => i.getProperties().spectrum);
         let style    = styleCache[size + '_' + hasSpectre ? 'true' : 'false'];
-        if (!style) {
-            if (size === 1) {
-                const props = features[0].getProperties();
-                if (props.point_id) {
-                    size = size + '_' + props.point_id
-                }
-                if (props['d']) {
-                    colors = calcColor(props['d'], parseInt(colorScheme.value))
-                    color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
-                }
-            }
-            if (hasSpectre) {
-                color = '#b62bda'
-            }
-            style                               = [new Style({
-                image: new CircleStyle({
-                    radius: 14,
-                    stroke: new Stroke({
-                        color: '#fff',
-                    }),
-                    fill  : new Fill({color}),
-                }),
-                text : new Text({
-                    text: length === 1 ? '' : length.toString(),
-                    fill: new Fill({
-                        color: '#fff',
-                    }),
-                }),
-            })];
-            styleCache[size + '_' + hasSpectre] = style;
+        if (style) {
+            return style
         }
+        let maxDoserate = features.reduce((previousValue, currentValue) => {
+            let d = currentValue.getProperties().d
+            return d > previousValue ? d : previousValue
+        }, null)
+        if (maxDoserate) {
+            colors = calcColor(maxDoserate, parseInt(colorScheme.value))
+            color  = `rgba(${colors.r},${colors.g}, ${colors.b},0.7)`;
+        }
+        if (hasSpectre) {
+            color = '#b62bda'
+        }
+        style                               = [new Style({
+            image: new CircleStyle({
+                radius: 14,
+                stroke: new Stroke({
+                    color: '#fff',
+                }),
+                fill  : new Fill({color}),
+            }),
+            text : new Text({
+                text: length === 1 ? '' : length.toString(),
+                fill: new Fill({
+                    color: '#fff',
+                }),
+            }),
+        })];
+        styleCache[size + '_' + hasSpectre] = style;
         return style;
     }
 })
