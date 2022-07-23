@@ -230,12 +230,21 @@ const generateChart = () => {
     }, 1)
 
 }
-const loadFeatures  = async (source, projection) => {
+const view          = new View({
+    zoom  : 7.3,
+    center: fromLonLat([27.7834, 53.7098]),
+})
+
+const loadFeatures = async (source, projection) => {
     try {
         loading.value = true
         let params    = ['track_id.is.null']
-        let query     = supabase.from("features").select(`*`)
-        if (Array.isArray(filter.value.track_id) && filter.value.track_id.length > 0) {
+        let query     = supabase.from("features").select(`*`).order('track_id', {
+            ascending : true,
+            nullsFirst: false
+        })
+        let hasTracks = Array.isArray(filter.value.track_id) && filter.value.track_id.length > 0;
+        if (hasTracks) {
             params.push(`track_id.in.(${filter.value.track_id.join(',')})`)
         }
         if (filter.value.user_id) {
@@ -253,6 +262,11 @@ const loadFeatures  = async (source, projection) => {
             {featureProjection: projection}
         )
         source.addFeatures(temp)
+        if (!hasTracks || data.length === 0 || !data[0].geometry) {
+            return
+        }
+        view.setCenter(fromLonLat(data[0].geometry.coordinates))
+        view.setZoom(12)
     } finally {
         loading.value = false
     }
@@ -272,10 +286,6 @@ let clusterSource = new ClusterSource({
 
 let styleCache = {};
 
-const view = new View({
-    zoom  : 7.3,
-    center: fromLonLat([27.7834, 53.7098]),
-})
 
 let placesLayer   = new VectorLayer(
     {
