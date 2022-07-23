@@ -22,7 +22,9 @@ https://github.com/openlayers/ol-mapbox-style#readme
 https://openlayers.org/en/latest/examples/bing-maps.html
 https://openlayers.org/en/latest/examples/?q=mapbox
 https://cloud.maptiler.com/maps/hybrid/
-
-##
-https://openlayers.org/en/latest/examples/static-image.html
 https://www.bingmapsportal.com
+
+## Static image
+https://openlayers.org/en/latest/examples/static-image.html
+https://gist.github.com/Siedlerchr/d920a132e30adcd84c509597cf421549
+
