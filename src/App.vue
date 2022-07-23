@@ -43,11 +43,11 @@ const fetchUsers = async () => {
     userList.value = data;
 }
 const user       = ref(getUser());
-
-const onAuth   = (value) => {
+const isNewcomer = ref(!user.value.email);
+const onAuth     = (value) => {
     user.value = value;
 }
-const onLogout = (value) => {
+const onLogout   = (value) => {
     user.value = value
 }
 
@@ -233,15 +233,22 @@ onMounted(() => {
     />
     <Filters @change="map.refresh($event)" :track-list="trackList" ref="filtersRef"/>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
+    <el-dialog v-model="isNewcomer"
+               width="var(--dialog-newcomer-width)"
+               center>
+        Приветственный текст для неавторизованных пользователей
+    </el-dialog>
 </template>
 <style>
 .el-dialog {
     --dialog-width: 70%;
+    --dialog--newcomer-width: 70%;
 }
 
 @media (max-width: 820px) {
     .el-dialog {
         --dialog-width: 100%;
+        --dialog-newcomer-width: 100%;
     }
 }
 
