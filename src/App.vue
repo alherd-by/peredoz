@@ -12,11 +12,8 @@ import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser}                                     from "./user";
 import {supabase}                                    from "./supabase";
 
-const toolbarDialog = ref(false);
-
-supabase.auth.onAuthStateChange((event, session) => {
-    console.log(event, session)
-})
+const toolbarDialog      = ref(false);
+const user               = ref(getUser());
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
 const adding             = ref();
@@ -25,6 +22,13 @@ const auth               = ref();
 const filtersRef         = ref();
 const userList           = ref([])
 const trackList          = ref([])
+
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && !user.value.email) {
+        user.value = session.user
+    }
+    console.log(event, session)
+})
 
 const fetchTracks = async () => {
     let {data, error} = await supabase
@@ -45,7 +49,6 @@ const fetchUsers = async () => {
     }
     userList.value = data;
 }
-const user       = ref(getUser());
 const isNewcomer = ref(!user.value.email);
 const onAuth     = (value) => {
     user.value = value;
