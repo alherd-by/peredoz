@@ -14,6 +14,9 @@ import {supabase}                                    from "./supabase";
 
 const toolbarDialog = ref(false);
 
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log(event, session)
+})
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
 const adding             = ref();
@@ -234,6 +237,7 @@ onMounted(() => {
     <Filters @change="map.refresh($event)" :track-list="trackList" ref="filtersRef"/>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
     <el-dialog v-model="isNewcomer"
+               title="Добро пожаловать!"
                width="var(--dialog-newcomer-width)"
                center>
         Приветственный текст для неавторизованных пользователей
