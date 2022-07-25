@@ -49,7 +49,8 @@ const fetchUsers = async () => {
     }
     userList.value = data;
 }
-const isNewcomer = ref(!user.value.email);
+let params       = (new URL(document.location)).searchParams;
+const isNewcomer = ref(!user.value.email && params.get("confirmation") === true);
 const onAuth     = (value) => {
     user.value = value;
 }
