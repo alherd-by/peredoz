@@ -11,6 +11,7 @@ import {computed, ref, onMounted} from "vue";
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser}                                     from "./user";
 import {supabase}                                    from "./supabase";
+import {ElMessage}                                   from "element-plus";
 
 const toolbarDialog      = ref(false);
 const user               = ref(getUser());
@@ -25,6 +26,7 @@ const trackList          = ref([])
 
 supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && !user.value.email) {
+        ElMessage.success('Успешно подтверждена почта!')
         user.value = session.user
     }
     console.log(event, session)

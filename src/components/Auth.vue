@@ -235,7 +235,7 @@ const rules = reactive({
 const rulesRegister = reactive({
     username        : [
         {required: true, message: 'Логин обязательно', trigger: 'blur'},
-        {min: 5, message: 'минимум 5 символов', trigger: 'blur'},
+        {min: 3, message: 'минимум 3 символов', trigger: 'blur'},
     ],
     password        : [{validator: validatePass, trigger: 'blur'}],
     password_confirm: [{validator: validatePass2, trigger: 'blur'}],
