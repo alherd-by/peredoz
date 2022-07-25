@@ -142,9 +142,8 @@ const submitRegisterForm = async (formEl) => {
                 console.log(error);
             } else {
                 account.value = user;
-                ElMessage.success('Успешная регистрация')
+                ElMessage.success('Успешная регистрация, на почту придет письмо со ссылкой подтверждением')
                 registerModal.value = false;
-                emit('auth', user)
                 formEl.resetFields()
                 form.password         = '';
                 form.password_confirm = '';
