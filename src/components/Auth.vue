@@ -97,7 +97,7 @@ const openSignUp = () => {
 
 const logout = async () => {
     let {error} = await supabase.auth.signOut()
-    if (error) {
+    if (error && error.message !== 'Invalid user') {
         ElMessage.error('Произошла ошибка')
         throw error
     }
