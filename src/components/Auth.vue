@@ -1,5 +1,9 @@
 <template>
-    <el-dialog v-model="authModal" width="300px" @opened="focusElement('signin-login')" center>
+    <el-dialog title="Авторизация"
+               v-model="authModal"
+               width="300px"
+               @opened="focusElement('signin-login')"
+               center>
         <el-form :model="form"
                  ref="ruleFormRef"
                  :rules="rules"
@@ -7,13 +11,13 @@
                  v-loading="loading"
                  label-width="150px"
                  label-position="top">
-            <el-form-item label="Имя пользователя" prop="username">
+            <el-form-item label="Имя пользователя" prop="username" required>
                 <el-input :tabindex="0" v-model="form.username"
                           id="signin-login"
                           ref="login"
                           autofocus="autofocus"/>
             </el-form-item>
-            <el-form-item label="Пароль">
+            <el-form-item label="Пароль" prop="password" required>
                 <el-input v-model="form.password" type="password"/>
             </el-form-item>
             <el-form-item>
@@ -25,23 +29,35 @@
             </el-form-item>
         </el-form>
     </el-dialog>
-    <el-dialog v-model="registerModal" width="300px" @opened="focusElement('signup-login')" center>
+    <el-dialog
+        title="Регистрация"
+        v-model="registerModal"
+        width="300px"
+        @opened="focusElement('signup-login')"
+        center>
         <el-form :model="form"
                  ref="registerFormRef"
-                 :rules="rules"
+                 :rules="rulesRegister"
                  v-loading="loading"
                  @submit.prevent
                  label-width="150px"
                  label-position="top">
-            <el-form-item label="Имя пользователя" prop="username">
+            <el-form-item label="Имя пользователя" prop="username" required>
                 <el-input v-model="form.username" id="signup-login"/>
             </el-form-item>
-            <el-form-item label="Пароль">
+            <el-form-item label="Email" prop="email" required>
+                <el-input v-model="form.email" name="email"/>
+            </el-form-item>
+            <el-form-item label="Пароль" prop="password" required>
                 <el-input v-model="form.password" type="password"/>
+            </el-form-item>
+            <el-form-item label="Повтор пароля" prop="password_confirm" required>
+                <el-input v-model="form.password_confirm" type="password"/>
             </el-form-item>
             <el-form-item>
                 <el-button type="success"
-                           @click="submitRegisterForm(registerFormRef)" :autofocus="true">
+                           native-type="submit"
+                           @click="submitRegisterForm(registerFormRef)">
                     Зарегистрироваться
                 </el-button>
             </el-form-item>
@@ -58,13 +74,16 @@ import {supabase}      from "../supabase";
 const emit = defineEmits(['auth', 'logout'])
 
 const ruleFormRef     = ref()
+const registerFormRef = ref()
 const form            = reactive({
-    username: '',
-    password: '',
+    username        : '',
+    password        : '',
+    email           : '',
+    password_confirm: ''
 })
 const account         = ref(getUser())
 const loading         = ref(false)
-const registerFormRef = ref()
+
 
 const authModal     = ref(false);
 const registerModal = ref(false)
@@ -107,19 +126,30 @@ const submitRegisterForm = async (formEl) => {
         try {
             loading.value     = true;
             let {user, error} = await supabase.auth.signUp({
-                email   : form.username,
+                email   : form.email,
                 password: form.password
+            }, {
+                data: {
+                    username: form.username
+                }
             })
             if (error) {
-                ElMessage.error('Произошла ошибка')
+                let message = 'Произошла ошибка'
+                if (error.message === 'User already registered') {
+                    message = 'Пользователь с таким email уже существует'
+                }
+                ElMessage.error(message)
                 console.log(error);
             } else {
                 account.value = user;
                 ElMessage.success('Успешная регистрация')
-                authModal.value = false;
+                registerModal.value = false;
                 emit('auth', user)
-                form.password = '';
-                form.username = '';
+                formEl.resetFields()
+                form.password         = '';
+                form.password_confirm = '';
+                form.email            = '';
+                form.username         = '';
             }
         } catch (error) {
             ElMessage.error('Произошла ошибка')
@@ -163,6 +193,32 @@ const submitForm         = async (formEl) => {
         }
     })
 }
+const validatePass       = (rule, value, callback) => {
+    if (value === '') {
+        callback(new Error('Пожалуйста, введите пароль'))
+        return;
+    }
+    if (value.length < 8) {
+        callback(new Error('Пароль должен быть не менее 8 символов'))
+        return;
+    }
+    if (form.password_confirm !== '') {
+        if (!registerFormRef.value) {
+            return
+        }
+        registerFormRef.value.validateField('password_confirm', () => null)
+    }
+    callback()
+}
+const validatePass2      = (rule, value, callback) => {
+    if (value === '') {
+        callback(new Error('Пожалуйста, введите заново пароль'))
+    } else if (value !== form.password) {
+        callback(new Error("Пароли не совпадают"))
+    } else {
+        callback()
+    }
+}
 
 const rules = reactive({
     username: [
@@ -171,7 +227,19 @@ const rules = reactive({
             message : 'Введите логин',
             trigger : 'change',
         },
-    ]
+    ],
+    password: [
+        {required: true, message: 'Пароль обязательно', trigger: 'blur'},
+    ],
+})
+
+const rulesRegister = reactive({
+    username        : [
+        {required: true, message: 'Логин обязательно', trigger: 'blur'},
+        {min: 5, message: 'минимум 5 символов', trigger: 'blur'},
+    ],
+    password        : [{validator: validatePass, trigger: 'blur'}],
+    password_confirm: [{validator: validatePass2, trigger: 'blur'}],
 })
 </script>
 
