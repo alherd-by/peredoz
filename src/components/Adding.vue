@@ -48,8 +48,8 @@
             <template v-if="adding.category === 'point'">
                 <el-form-item label="Тип">
                     <el-radio-group v-model="adding.point_type" size="large" :disabled="!!currentTrackPoint">
-                        <el-radio :label="'spectrum'">Спектр</el-radio>
-                        <el-radio :label="'generic'">Комментарий/файл</el-radio>
+                        <el-radio :label="'spectrum'" v-show="false">Спектр</el-radio>
+                        <el-radio :label="'generic'">Медиа-файлы/Cпектр</el-radio>
                     </el-radio-group>
                 </el-form-item>
                 <el-form-item label="Локация" v-if="adding.point_type && !currentTrackPoint">
@@ -250,7 +250,7 @@ const readMediaFile  = (raw) => {
 const attachSpectrum = (trackPointId) => {
     addingDialog.value = true
     adding.category    = 'point'
-    adding.point_type  = 'spectrum'
+    adding.point_type  = 'generic'
 
     currentTrackPoint.value = trackPointId
 }
