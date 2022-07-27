@@ -23,13 +23,21 @@ const auth               = ref();
 const filtersRef         = ref();
 const userList           = ref([])
 const trackList          = ref([])
+const params             = (new URL(document.location)).searchParams;
+const isNewcomer         = ref(!user.value.email && params.get("confirmation") === true);
+const onAuth             = (value) => {
+    user.value = value;
+}
+const onLogout           = (value) => {
+    user.value = value
+}
 
 supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_IN' && !user.value.email) {
         ElMessage.success('Успешно подтверждена почта!')
         user.value = session.user
     }
-    console.log(event, session)
+    console.log(event, session, params.get("confirmation"))
 })
 
 const fetchTracks = async () => {
@@ -51,14 +59,7 @@ const fetchUsers = async () => {
     }
     userList.value = data;
 }
-let params       = (new URL(document.location)).searchParams;
-const isNewcomer = ref(!user.value.email && params.get("confirmation") === true);
-const onAuth     = (value) => {
-    user.value = value;
-}
-const onLogout   = (value) => {
-    user.value = value
-}
+
 
 const maxIntensity = 4.7033;
 const minIntensity = 0.0386;

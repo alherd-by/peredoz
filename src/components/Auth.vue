@@ -129,8 +129,8 @@ const submitRegisterForm = async (formEl) => {
                 email   : form.email,
                 password: form.password
             }, {
-                redirectTo: 'https://peredoz.netlify.app/?confirmation',
-                data: {
+                redirectTo: location.protocol + '//' + location.host + '/?confirmation',
+                data      : {
                     username: form.username
                 }
             })
