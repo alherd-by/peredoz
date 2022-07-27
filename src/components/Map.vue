@@ -54,11 +54,15 @@
                 </div>
             </template>
             <template v-if="feature.properties.attachments && feature.properties.attachments.length > 0">
-                <ul class="pdng-t-5px pdng-l-10px pdng-b-10px">
-                    <li v-for="(attachment, index) of feature.properties.attachments">
-                        <a :href="attachment.url">Файл {{ index + 1 }}</a>
-                    </li>
-                </ul>
+                <el-row>
+                    <el-image style="width: 200px; height: 200px"
+                              :z-index="100"
+                              :preview-teleported="true"
+                              :src="feature.properties.attachments[0].url"
+                              :preview-src-list="feature.properties.attachments.map(i => i.url)"
+                              :fit="'scale-down'"/>
+                    Файлов - {{ feature.properties.attachments.length }}
+                </el-row>
             </template>
             <template v-if="feature.properties.district">
                 <span>Населенный пункт: <b>{{ feature.properties.name }}</b></span>
