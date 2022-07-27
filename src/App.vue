@@ -33,11 +33,11 @@ const onLogout           = (value) => {
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && !user.value.email) {
+    if (event === 'SIGNED_IN' && !user.value.email && params.get("confirmation") !== null) {
         ElMessage.success('Успешно подтверждена почта!')
         user.value = session.user
     }
-    console.log(event, session, params.get("confirmation"))
+    console.log(event, session)
 })
 
 const fetchTracks = async () => {
