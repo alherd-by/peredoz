@@ -40,7 +40,7 @@
             </template>
             <template v-if="feature.properties.track_id">
                 <div class="pdng-t-10px">
-                    <a class="txt-underline" href="#" @click="trackDrawer = true">
+                    <a class="txt-underline" @click="trackDrawer = true">
                         Трек
                         <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
                              style="width: 15px;height: 15px"
@@ -52,17 +52,6 @@
                         </svg>
                     </a>
                 </div>
-            </template>
-            <template v-if="feature.properties.attachments && feature.properties.attachments.length > 0">
-                <el-row>
-                    <el-image style="width: 200px; height: 200px"
-                              :z-index="100"
-                              :preview-teleported="true"
-                              :src="feature.properties.attachments[0].url"
-                              :preview-src-list="feature.properties.attachments.map(i => i.url)"
-                              :fit="'scale-down'"/>
-                    Файлов - {{ feature.properties.attachments.length }}
-                </el-row>
             </template>
             <template v-if="feature.properties.district">
                 <span>Населенный пункт: <b>{{ feature.properties.name }}</b></span>
@@ -76,10 +65,6 @@
                 <span class="pdng-t-5px pdng-b-5px">
                     <b>Комментарий</b>: <br>{{ feature.properties.comment }}
                 </span>
-            </template>
-            <template v-if="trackPointHash[feature.id]">
-                <br>
-                <span v-for="(spectrum) in trackPointHash[feature.id]">{{ spectrum.name }}</span>
             </template>
             <template v-if="feature.properties.user_id">
                 <p class="pdng-t-5px">
@@ -116,7 +101,57 @@
             </span>
         </div>
     </el-drawer>
-    <el-dialog v-model="showSpectrum" @open="generateChart" width="var(--chart-dialog-width)">
+    <el-dialog v-model="showAttachment"
+               top="2vh"
+               @closed="stopMediaPlayback"
+               :title="'ID: ' + (feature && feature.id ? feature.id : '')"
+               width="var(--attachment-dialog-width)">
+        <div>
+            <el-carousel :arrow="feature.properties.attachments && feature.properties.attachments.length > 0 ? 'always' : 'never'"
+                         :trigger="'click'"
+                         @change="stopMediaPlayback"
+                         :autoplay="false">
+                <el-carousel-item v-for="(item, index) of feature.properties.attachments" :key="item.url">
+                    <div class="pdng-10px carousel-item">
+                        <el-image v-if="item.mime.substring(0, 5) === 'image'"
+                                  :preview-teleported="true"
+                                  class="carouse-image"
+                                  :src="item.url"
+                                  :preview-src-list="[item.url]"
+                                  :fit="'scale-down'"/>
+                        <video v-else-if="item.mime.substring(0, 5) === 'video'"
+                               :src="item.url"
+                               :ref="el => { divs[index] = el }"
+                               controls></video>
+                        <a :href="item.url" v-else>{{ item.url }}</a>
+                    </div>
+
+                </el-carousel-item>
+            </el-carousel>
+            <template v-if="feature.properties.comment">
+                <div class="pdng-t-15px pdng-b-5px">
+                    <b>Комментарий</b>: {{ feature.properties.comment }}
+                </div>
+            </template>
+            <template v-if="feature && feature.properties && feature.properties.d">
+                <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
+                <br>
+                <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
+                <br>
+                <span>Device: <b>  <span v-html="devices[feature.properties.dv]"></span> </b></span>
+                <br>
+                <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
+                <br>
+                <p class="pdng-t-5px" v-if="! feature.properties.spectrum">
+                    <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
+                        Прикрепить спектр
+                    </a>
+                </p>
+            </template>
+        </div>
+    </el-dialog>
+    <el-dialog v-model="showSpectrum"
+               @open="generateChart" width="var(--chart-dialog-width)">
         <div class="pdng-t-30px">
             <div ref="chart" style="width: 600px;height:400px;"></div>
         </div>
@@ -141,9 +176,9 @@ import Overlay                                            from 'ol/Overlay';
 import Draw                                               from 'ol/interaction/Draw';
 import {init}                                             from 'echarts'
 
-import {ref, onMounted, watch, toRefs, computed} from 'vue'
-import {calcColor}                               from "../colors";
-import {supabase}                                from "../supabase";
+import {ref, onMounted, watch, toRefs, computed, onBeforeUpdate} from 'vue'
+import {calcColor}                                               from "../colors";
+import {supabase}                                                from "../supabase";
 
 const devices = [
     "",
@@ -174,7 +209,23 @@ const {colorScheme, trackList, userList} = toRefs(props)
 const filter                             = ref({})
 const spectrums                          = ref({})
 
+const divs = ref([])
+
+const stopMediaPlayback = () => {
+    divs.value.forEach((elem) => {
+        if (!elem) {
+            return
+        }
+        elem.pause()
+    })
+}
+
+onBeforeUpdate(() => {
+    divs.value = []
+})
+
 const showSpectrum    = ref(false)
+const showAttachment  = ref(false)
 const currentSpectrum = ref();
 const users           = computed(() => {
     let tmp = {};
@@ -193,7 +244,6 @@ const tracks          = computed(() => {
 const loading         = ref(false)
 const drawingEnabled  = ref(false);
 const chart           = ref();
-let trackPointHash    = ref({})
 
 const generateChart = () => {
     setTimeout(() => {
@@ -452,8 +502,11 @@ onMounted(
                         properties: baseFeature.getProperties()
                     };
                 }
-
-                overlay.setPosition(coordinate);
+                if (feature.value.properties.attachments && feature.value.properties.attachments.length > 0) {
+                    showAttachment.value = true
+                } else {
+                    overlay.setPosition(coordinate);
+                }
             })
         });
     }
@@ -474,13 +527,48 @@ defineExpose({
 
 <style>
 
+video {
+    width: 100%;
+    height: auto;
+}
+
 .el-dialog {
     --chart-dialog-width: 70%;
+    --attachment-dialog-width: 55%;
+}
+
+.el-carousel__container {
+    height: 450px;
+}
+
+.carousel-item {
+    width: 600px;
+    height: 400px;
+    margin: auto;
+}
+
+.el-carousel__arrow {
+    top: 90%
 }
 
 @media (max-width: 820px) {
     .el-dialog {
         --chart-dialog-width: 100%;
+        --attachment-dialog-width: 100%;
+    }
+
+    .el-carousel__container {
+        height: 330px;
+    }
+
+    .carouse-image {
+        height: 280px;
+    }
+
+    .carousel-item {
+        width: 300px;
+        height: 280px;
+        margin: auto;
     }
 }
 
@@ -512,6 +600,7 @@ defineExpose({
     bottom: 12px;
     left: -50px;
     min-width: 280px;
+    z-index: 4;
 }
 
 .ol-popup:after, .ol-popup:before {
@@ -558,5 +647,28 @@ defineExpose({
 .ol-zoom.ol-unselectable.ol-control {
     margin-top: 10px;
 }
+
+
+.demonstration {
+    color: var(--el-text-color-secondary);
+}
+
+.el-carousel__item h3 {
+    color: #475669;
+    opacity: 0.75;
+    line-height: 150px;
+    margin: 0;
+    text-align: center;
+}
+
+
+.el-carousel__item:nth-child(2n) {
+    background-color: #99a9bf;
+}
+
+.el-carousel__item:nth-child(2n + 1) {
+    background-color: #d3dce6;
+}
+
 
 </style>
