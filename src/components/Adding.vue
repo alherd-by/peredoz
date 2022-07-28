@@ -328,6 +328,7 @@ const addGenericPoint                = async () => {
     if (!response.ok) {
         let tmp = await response.text()
         try {
+            console.log(tmp)
             payload = JSON.parse(tmp)
             ElMessage.error(payload.error || 'Произошла ошибка при загрузке')
             return
