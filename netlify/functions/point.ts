@@ -25,9 +25,18 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
     const token = getToken(event.headers);
     supabase.auth.setAuth(token)
     const response = await supabase.auth.api.getUser(token)
+    if (response.error) {
+        console.error(response.error)
+        return JSONResponse(
+            {error: 'Произошла ошибка авторизации'},
+            {
+                statusCode: 401,
+            }
+        )
+    }
     if (!raw.location) {
         return JSONResponse(
-            {error: 'not_found_location'},
+            {error: 'Нет координат'},
             {
                 statusCode: 400,
             }
