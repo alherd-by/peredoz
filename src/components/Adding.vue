@@ -324,18 +324,20 @@ const addGenericPoint                = async () => {
             body
         }
     )
-    let payload    = await response.json()
+    let payload;
     if (!response.ok) {
-        ElMessage.error(payload.error || 'Произошла ошибка при загрузке')
-        return
+        let tmp = await response.text()
+        try {
+            payload = JSON.parse(tmp)
+            ElMessage.error(payload.error || 'Произошла ошибка при загрузке')
+            return
+        } catch (e) {
+            throw new Error(tmp)
+        }
     }
-    if (!payload.error) {
-        addingDialog.value = false;
-        ElMessage.success({'message': 'Добавлено'})
-        Object.assign(adding, initialAdding);
-        return
-    }
-    ElMessage.error({'message': payload.error})
+    addingDialog.value = false;
+    ElMessage.success({'message': 'Добавлено'})
+    Object.assign(adding, initialAdding);
 }
 const handleRadiocodeTrackFileUpload = async () => {
     adding.attachment.length = 0;
