@@ -75,7 +75,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             } catch (e) {
                 console.log(e);
                 return JSONResponse(
-                    {error: 'Произошла ошибка при загрузке файла'},
+                    {error: 'Произошла ошибка при загрузке файла в хранилище'},
                     {
                         statusCode: 500,
                     }
@@ -100,7 +100,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
     if (result.error) {
         console.error(result.error)
         return JSONResponse(
-            {error: 'Произошла ошибка'},
+            {error: 'Произошла ошибка при добавлении данных'},
             {
                 statusCode: 500,
             }

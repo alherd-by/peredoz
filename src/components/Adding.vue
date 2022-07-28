@@ -165,7 +165,7 @@ const save  = async () => {
             emits('new-track')
         }
     } catch (e) {
-        ElMessage.error('Произошла ошибка')
+        ElMessage.error('Произошла неожиданная ошибка')
         throw e
     } finally {
         emits('new-objects');
@@ -326,7 +326,7 @@ const addGenericPoint                = async () => {
     )
     const payload  = await response.json()
     if (!response.ok) {
-        ElMessage.error(payload.error || 'Произошла ошибка')
+        ElMessage.error(payload.error || 'Произошла ошибка при загрузке')
         return
     }
     if (!payload.error) {
