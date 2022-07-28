@@ -5,7 +5,7 @@
     <div id="popup" class="ol-popup">
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content" v-if="feature">
-            <p>id: {{ feature.id }}</p>
+            <p v-if="feature.id">id: {{ feature.id }}</p>
             <template v-if="feature && feature.properties && feature.properties.d">
                 <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
@@ -207,7 +207,6 @@ const props                              = defineProps({
 const trackDrawer                        = ref(false)
 const {colorScheme, trackList, userList} = toRefs(props)
 const filter                             = ref({})
-const spectrums                          = ref({})
 
 const divs = ref([])
 
@@ -350,6 +349,15 @@ let placesLayer   = new VectorLayer(
                 format: new GeoJSON()
             }
         ),
+        style : new Style({
+            image: new CircleStyle({
+                radius: 14,
+                stroke: new Stroke({
+                    color: '#fff',
+                }),
+                fill  : new Fill({color: '#7dbdca'}),
+            })
+        })
     }
 )
 let drawingSource = new VectorSource()
@@ -467,8 +475,7 @@ onMounted(
                 new TileLayer({
                     source: new OSM(),
                 }),
-                drawingLayer,
-                placesLayer
+                drawingLayer
             ],
             target  : 'map',
             overlays: [overlay],
@@ -517,9 +524,18 @@ const enableDrawing = () => {
     map.addInteraction(draw);
 }
 
+const displayPlaces = (isVisible) => {
+    if (isVisible) {
+        map.addLayer(placesLayer)
+    } else {
+        map.removeLayer(placesLayer)
+    }
+}
+
 defineExpose({
     enableDrawing,
-    refresh
+    refresh,
+    displayPlaces
 })
 
 

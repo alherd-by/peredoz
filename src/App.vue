@@ -6,7 +6,7 @@ import Filters from "./components/Filters.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
 
-import {computed, ref, onMounted} from "vue";
+import {computed, ref, onMounted, watch} from "vue";
 
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser}                                     from "./user";
@@ -17,6 +17,7 @@ const toolbarDialog      = ref(false);
 const user               = ref(getUser());
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
+const showLocalities     = ref(false);
 const adding             = ref();
 const map                = ref();
 const auth               = ref();
@@ -84,6 +85,9 @@ const legend       = computed(() => {
     return items
 })
 
+watch(showLocalities, (value) => {
+    map.value.displayPlaces(value)
+})
 onMounted(() => {
     fetchTracks()
     fetchUsers()
@@ -116,7 +120,7 @@ onMounted(() => {
                     </el-button>
                     <el-popover
                         placement="bottom-end"
-                        :width="200"
+                        :width="400"
                         trigger="click"
                         content="this is content, this is content, this is content"
                     >
@@ -134,6 +138,10 @@ onMounted(() => {
                                 </el-radio>
                             </el-radio-group>
                             <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
+                            <el-checkbox v-model="showLocalities"
+                                         style="white-space: normal">
+                                Показывать загрязненные населенные пункты
+                            </el-checkbox>
                         </template>
                     </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
@@ -186,7 +194,7 @@ onMounted(() => {
             <div class="pdng-t-15px">
                 <el-popover
                     placement="left-end"
-                    :width="200"
+                    :width="280"
                     trigger="click"
                     content="this is content, this is content, this is content"
                 >
@@ -204,6 +212,10 @@ onMounted(() => {
                             </el-radio>
                         </el-radio-group>
                         <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
+                        <el-checkbox v-model="showLocalities"
+                                     style="white-space: normal">
+                            Показывать загрязненные населенные пункты
+                        </el-checkbox>
                     </template>
                 </el-popover>
             </div>
