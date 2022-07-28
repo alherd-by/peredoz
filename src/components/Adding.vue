@@ -317,14 +317,22 @@ const addGenericPoint                = async () => {
     const response = await fetch(
         '/point',
         {
-            method: 'POST',
+            method : 'POST',
             headers: {
                 'Authorization': 'Bearer ' + supabase.auth.session().access_token
             },
-            body  : JSON.stringify(adding)
+            body   : JSON.stringify(adding)
         }
     )
-    const payload  = await response.json()
+    let payload;
+    try {
+        payload = await response.json()
+    } catch (e) {
+        throw new Error(
+            await response.clone().text()
+        )
+    }
+
     if (!response.ok) {
         ElMessage.error(payload.error || 'Произошла ошибка при загрузке')
         return
