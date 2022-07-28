@@ -4,7 +4,7 @@ import Auth    from "./components/Auth.vue";
 import Adding  from "./components/Adding.vue";
 import Filters from "./components/Filters.vue";
 
-import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
+import {UserFilled, Filter, Plus, Setting, QuestionFilled, Expand} from '@element-plus/icons-vue'
 
 import {computed, ref, onMounted} from "vue";
 
@@ -163,87 +163,90 @@ onMounted(() => {
         <div class="pdng-t-15px">
             <el-popover
                 placement="bottom-end"
-                :width="200"
+                :width="170"
                 trigger="click"
+                class="buttons-collection"
                 content=""
             >
                 <template #reference>
-                    <el-button :icon="Setting" @click="toolbarDialog = true" circle size="large"></el-button>
+                    <el-button :icon="Expand" @click="toolbarDialog = true" circle size="large"></el-button>
                 </template>
                 <template #default>
-                    <div class="pdng-t-15px">
-                        <el-button :icon="Filter"
-                                   round
-                                   @click="filtersRef.show()"
-                                   size="large">Показать
-                        </el-button>
-                    </div>
-                    <div class="pdng-t-15px">
-                        <el-popover
-                            placement="bottom-end"
-                            :width="280"
-                            trigger="click"
-                            content="this is content, this is content, this is content"
-                        >
-                            <template #reference>
-                                <el-button :icon="Setting"
-                                           @click="toolbarDialog = true"
-                                           round size="large">
-                                    Настройки
-                                </el-button>
-                            </template>
-                            <template #default>
-                                <h3>Схемы</h3>
-                                <el-radio-group v-model="currentColorScheme">
-                                    <el-radio :label="key"
-                                              v-for="(track, key) in colorSchemes">
-                                        {{ track.name }}
-                                        <div class="bgr_gradient"
-                                             :style="{'background': track.color}"></div>
-                                    </el-radio>
-                                </el-radio-group>
-                                <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
-                            </template>
-                        </el-popover>
-                    </div>
-                    <template v-if="! user.email">
+                    <div class="buttons-collection">
                         <div class="pdng-t-15px">
-                            <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
-                                Авторизация
-                            </el-button>
-                        </div>
-                        <div class="pdng-t-15px">
-                            <el-button :icon="UserFilled" @click="auth.openSignUp()" round>
-                                Регистрация
-                            </el-button>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <div class="pdng-t-15px">
-                            <el-button :icon="Plus"
+                            <el-button :icon="Filter"
                                        round
-                                       @click="adding.open()"
-                                       size="large">Добавить
+                                       @click="filtersRef.show()"
+                                       size="large">Показать
                             </el-button>
                         </div>
                         <div class="pdng-t-15px">
                             <el-popover
                                 placement="bottom-end"
-                                :width="300"
+                                :width="280"
                                 trigger="click"
+                                content="this is content, this is content, this is content"
                             >
                                 <template #reference>
-                                    <el-button :icon="UserFilled" round size="large">Пользователь</el-button>
+                                    <el-button :icon="Setting"
+                                               @click="toolbarDialog = true"
+                                               round size="large">
+                                        Настройки
+                                    </el-button>
                                 </template>
                                 <template #default>
-                                    <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
-                                    <el-button @click="auth.logout()">
-                                        Выход
-                                    </el-button>
+                                    <h3>Схемы</h3>
+                                    <el-radio-group v-model="currentColorScheme">
+                                        <el-radio :label="key"
+                                                  v-for="(track, key) in colorSchemes">
+                                            {{ track.name }}
+                                            <div class="bgr_gradient"
+                                                 :style="{'background': track.color}"></div>
+                                        </el-radio>
+                                    </el-radio-group>
+                                    <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
                                 </template>
                             </el-popover>
                         </div>
-                    </template>
+                        <template v-if="! user.email">
+                            <div class="pdng-t-15px">
+                                <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
+                                    Авторизация
+                                </el-button>
+                            </div>
+                            <div class="pdng-t-15px">
+                                <el-button :icon="UserFilled" @click="auth.openSignUp()" round>
+                                    Регистрация
+                                </el-button>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="pdng-t-15px">
+                                <el-button :icon="Plus"
+                                           round
+                                           @click="adding.open()"
+                                           size="large">Добавить
+                                </el-button>
+                            </div>
+                            <div class="pdng-t-15px">
+                                <el-popover
+                                    placement="bottom-end"
+                                    :width="300"
+                                    trigger="click"
+                                >
+                                    <template #reference>
+                                        <el-button :icon="UserFilled" round size="large">Пользователь</el-button>
+                                    </template>
+                                    <template #default>
+                                        <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
+                                        <el-button @click="auth.logout()">
+                                            Выход
+                                        </el-button>
+                                    </template>
+                                </el-popover>
+                            </div>
+                        </template>
+                    </div>
                 </template>
             </el-popover>
         </div>
@@ -285,6 +288,10 @@ onMounted(() => {
         --dialog-width: 100%;
         --dialog-newcomer-width: 100%;
     }
+}
+
+.buttons-collection button {
+    width: 140px;
 }
 
 #legend {
