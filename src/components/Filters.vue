@@ -106,7 +106,6 @@ const trackListFiltered = computed(() => {
     let tmp = list.value;
     if (filter.user_id) {
         let uf   = filter.user_id + ''
-        console.log(filter.user_id)
         const ff = uf.includes('neq')
             ? (s) => s.user.id !== uf.split('neq.')[1]
             : (s) => s.user.id === uf.split('eq.')[1]

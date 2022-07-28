@@ -120,7 +120,6 @@ const submitRegisterForm = async (formEl) => {
     }
     await formEl.validate(async (valid, fields) => {
         if (!valid) {
-            console.log('error submit!', fields)
             return;
         }
         try {
@@ -165,7 +164,6 @@ const submitForm         = async (formEl) => {
     }
     await formEl.validate(async (valid, fields) => {
         if (!valid) {
-            console.log('error submit!', fields)
             return;
         }
         try {
@@ -176,7 +174,6 @@ const submitForm         = async (formEl) => {
             })
             if (error) {
                 ElMessage.error('Произошла ошибка')
-                console.log(error)
             } else {
                 ElMessage.success('Успешная авторизация')
                 authModal.value = false;

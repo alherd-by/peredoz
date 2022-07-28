@@ -37,7 +37,6 @@ supabase.auth.onAuthStateChange((event, session) => {
         ElMessage.success('Успешно подтверждена почта!')
         user.value = session.user
     }
-    console.log(event, session)
 })
 
 const fetchTracks = async () => {

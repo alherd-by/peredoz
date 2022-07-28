@@ -109,8 +109,9 @@ function xml2json(xml) {
             if (!xml.attributes.length && !xml.firstChild) o = null;
         } else if (xml.nodeType == 9) { // document.node
             o = toObj(xml.documentElement);
-        } else
+        } else {
             console.log("unhandled node type: " + xml.nodeType);
+        }
         return o;
     }
     if (xml.nodeType == 9) { // document node
