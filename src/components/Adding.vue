@@ -351,6 +351,11 @@ const handleSpectrumFileUpload = async () => {
     adding.attachment.push(element)
 }
 const handleMediaFileUpload    = async () => {
+    if (Array.from(file.value.files).reduce((a, i) => a + i.size, 0) > (130 * 1024 * 1024)) {
+        ElMessage.error('Общий размер файлов не должен превышать 130 МБ')
+        file.value.value = null
+        return
+    }
     adding.attachment.length = 0;
     for (let elem of file.value.files) {
         adding.attachment.push(await readMediaFile(elem))
