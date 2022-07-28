@@ -421,6 +421,7 @@ watch(
 const refresh = (input) => {
     if (input) {
         filter.value = input
+        displayPlaces(input.show_localities)
     }
     const refreshSource = new VectorSource({
         loader: function (extent, resolution, projection) {
@@ -534,8 +535,7 @@ const displayPlaces = (isVisible) => {
 
 defineExpose({
     enableDrawing,
-    refresh,
-    displayPlaces
+    refresh
 })
 
 

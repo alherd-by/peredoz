@@ -6,7 +6,7 @@ import Filters from "./components/Filters.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled} from '@element-plus/icons-vue'
 
-import {computed, ref, onMounted, watch} from "vue";
+import {computed, ref, onMounted} from "vue";
 
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser}                                     from "./user";
@@ -17,7 +17,6 @@ const toolbarDialog      = ref(false);
 const user               = ref(getUser());
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
-const showLocalities     = ref(false);
 const adding             = ref();
 const map                = ref();
 const auth               = ref();
@@ -25,7 +24,7 @@ const filtersRef         = ref();
 const userList           = ref([])
 const trackList          = ref([])
 const params             = (new URL(document.location)).searchParams;
-const isNewcomer         = ref(!user.value.email && params.get("confirmation") === true);
+const isNewcomer         = ref(!user.value.email && params.get("confirmation") === null);
 const onAuth             = (value) => {
     user.value = value;
 }
@@ -85,9 +84,6 @@ const legend       = computed(() => {
     return items
 })
 
-watch(showLocalities, (value) => {
-    map.value.displayPlaces(value)
-})
 onMounted(() => {
     fetchTracks()
     fetchUsers()
@@ -103,6 +99,31 @@ onMounted(() => {
                      class="zoom-0_75 mil-zoom-0_5">
             </a>
             <div class="header-links flex-grow-all pdng-l-20px">
+                <el-button :icon="Filter" @click="filtersRef.show()">
+                    Показать
+                </el-button>
+                <el-popover
+                    placement="bottom-end"
+                    :width="400"
+                    trigger="click"
+                    content="this is content, this is content, this is content"
+                >
+                    <template #reference>
+                        <el-button :icon="Setting" @click="toolbarDialog = true">Настройки</el-button>
+                    </template>
+                    <template #default>
+                        <h3>Схемы</h3>
+                        <el-radio-group v-model="currentColorScheme">
+                            <el-radio :label="key"
+                                      v-for="(track, key) in colorSchemes"
+                                      style="width: 600px; float: left">
+                                {{ track.name }}
+                                <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                            </el-radio>
+                        </el-radio-group>
+                        <el-checkbox v-model="showLegend">Отображать легенду</el-checkbox>
+                    </template>
+                </el-popover>
                 <template v-if="! user.email">
                     <el-button :icon="UserFilled" @click="auth.openSignIn()">
                         Авторизация
@@ -112,43 +133,17 @@ onMounted(() => {
                     </el-button>
                 </template>
                 <template v-else>
-                    <el-button :icon="Filter" @click="filtersRef.show()" v-show="user.email">
-                        Показать
-                    </el-button>
                     <el-button :icon="Plus" @click="adding.open()" v-show="user.email">
                         Добавить
                     </el-button>
-                    <el-popover
-                        placement="bottom-end"
-                        :width="400"
-                        trigger="click"
-                        content="this is content, this is content, this is content"
-                    >
-                        <template #reference>
-                            <el-button :icon="Setting" @click="toolbarDialog = true">Настройки</el-button>
-                        </template>
-                        <template #default>
-                            <h3>Схемы</h3>
-                            <el-radio-group v-model="currentColorScheme">
-                                <el-radio :label="key"
-                                          v-for="(track, key) in colorSchemes"
-                                          style="width: 600px; float: left">
-                                    {{ track.name }}
-                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                                </el-radio>
-                            </el-radio-group>
-                            <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
-                            <el-checkbox v-model="showLocalities"
-                                         style="white-space: normal">
-                                Показывать загрязненные населенные пункты
-                            </el-checkbox>
-                        </template>
-                    </el-popover>
                     <span style="padding-left: 10px">{{ user.email }}</span>
                     <el-button @click="auth.logout()" class="mrgn-l-10px">
                         Выход
                     </el-button>
                 </template>
+                <el-button :icon="QuestionFilled" @click="isNewcomer = true">
+                    О проекте
+                </el-button>
             </div>
         </div>
     </div>
@@ -161,85 +156,97 @@ onMounted(() => {
     </div>
     <!-- mobile nav -->
     <div class="toolbar notdisplay mil-show">
-        <template v-if="! user.email">
-            <div class="pdng-t-15px">
-                <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
-                    Авторизация
-                </el-button>
-            </div>
-            <div class="pdng-t-15px">
-                <el-button :icon="UserFilled" @click="auth.openSignUp()" round>
-                    Регистрация
-                </el-button>
-            </div>
-            <div class="pdng-t-15px">
-                <el-button :icon="QuestionFilled" round>
-                    О проекте &nbsp; &nbsp;
-                </el-button>
-            </div>
-        </template>
-        <template v-else>
-            <div class="pdng-t-15px">
-                <el-button :icon="Filter"
-                           circle
-                           @click="filters.show()"
-                           size="large"></el-button>
-            </div>
-            <div class="pdng-t-15px">
-                <el-button :icon="Plus"
-                           circle
-                           @click="adding.open()"
-                           size="large"></el-button>
-            </div>
-            <div class="pdng-t-15px">
-                <el-popover
-                    placement="left-end"
-                    :width="280"
-                    trigger="click"
-                    content="this is content, this is content, this is content"
-                >
-                    <template #reference>
-                        <el-button :icon="Setting" @click="toolbarDialog = true" circle size="large"></el-button>
-                    </template>
-                    <template #default>
-                        <h3>Схемы</h3>
-                        <el-radio-group v-model="currentColorScheme">
-                            <el-radio :label="key"
-                                      v-for="(track, key) in colorSchemes">
-                                {{ track.name }}
-                                <div class="bgr_gradient"
-                                     :style="{'background': track.color}"></div>
-                            </el-radio>
-                        </el-radio-group>
-                        <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
-                        <el-checkbox v-model="showLocalities"
-                                     style="white-space: normal">
-                            Показывать загрязненные населенные пункты
-                        </el-checkbox>
-                    </template>
-                </el-popover>
-            </div>
-            <div class="pdng-t-15px">
-                <el-popover
-                    placement="left-end"
-                    :width="300"
-                    trigger="click"
-                >
-                    <template #reference>
-                        <el-button :icon="UserFilled" circle size="large"></el-button>
-                    </template>
-                    <template #default>
-                        <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
-                        <el-button @click="auth.logout()">
-                            Выход
+        <div class="pdng-t-15px">
+            <el-button :icon="QuestionFilled" circle size="large" @click="isNewcomer = true">
+            </el-button>
+        </div>
+        <div class="pdng-t-15px">
+            <el-popover
+                placement="bottom-end"
+                :width="200"
+                trigger="click"
+                content=""
+            >
+                <template #reference>
+                    <el-button :icon="Setting" @click="toolbarDialog = true" circle size="large"></el-button>
+                </template>
+                <template #default>
+                    <div class="pdng-t-15px">
+                        <el-button :icon="Filter"
+                                   round
+                                   @click="filtersRef.show()"
+                                   size="large">Показать
                         </el-button>
+                    </div>
+                    <div class="pdng-t-15px">
+                        <el-popover
+                            placement="bottom-end"
+                            :width="280"
+                            trigger="click"
+                            content="this is content, this is content, this is content"
+                        >
+                            <template #reference>
+                                <el-button :icon="Setting"
+                                           @click="toolbarDialog = true"
+                                           round size="large">
+                                    Настройки
+                                </el-button>
+                            </template>
+                            <template #default>
+                                <h3>Схемы</h3>
+                                <el-radio-group v-model="currentColorScheme">
+                                    <el-radio :label="key"
+                                              v-for="(track, key) in colorSchemes">
+                                        {{ track.name }}
+                                        <div class="bgr_gradient"
+                                             :style="{'background': track.color}"></div>
+                                    </el-radio>
+                                </el-radio-group>
+                                <el-checkbox v-model="showLegend">Показывать легенду</el-checkbox>
+                            </template>
+                        </el-popover>
+                    </div>
+                    <template v-if="! user.email">
+                        <div class="pdng-t-15px">
+                            <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
+                                Авторизация
+                            </el-button>
+                        </div>
+                        <div class="pdng-t-15px">
+                            <el-button :icon="UserFilled" @click="auth.openSignUp()" round>
+                                Регистрация
+                            </el-button>
+                        </div>
                     </template>
-                </el-popover>
-            </div>
-            <div class="pdng-t-15px">
-                <el-button :icon="QuestionFilled" circle size="large"></el-button>
-            </div>
-        </template>
+                    <template v-else>
+                        <div class="pdng-t-15px">
+                            <el-button :icon="Plus"
+                                       round
+                                       @click="adding.open()"
+                                       size="large">Добавить
+                            </el-button>
+                        </div>
+                        <div class="pdng-t-15px">
+                            <el-popover
+                                placement="bottom-end"
+                                :width="300"
+                                trigger="click"
+                            >
+                                <template #reference>
+                                    <el-button :icon="UserFilled" round size="large">Пользователь</el-button>
+                                </template>
+                                <template #default>
+                                    <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
+                                    <el-button @click="auth.logout()">
+                                        Выход
+                                    </el-button>
+                                </template>
+                            </el-popover>
+                        </div>
+                    </template>
+                </template>
+            </el-popover>
+        </div>
     </div>
     <Adding @new-track="fetchTracks"
             @new-objects="map.refresh()"
@@ -258,7 +265,13 @@ onMounted(() => {
                title="Добро пожаловать!"
                width="var(--dialog-newcomer-width)"
                center>
-        Приветственный текст для неавторизованных пользователей
+        <p>
+            Вас приветствует приложение <b>"Передоз"</b></p>
+        <p>
+            Здесь вы можете найти самую различную информацию по радиоактивному загрязнению территорий Республики Беларусь.</p>
+        <p>
+            Для того, чтобы получить возможность добавлять свои данные, вам требуется зарегистрироваться.
+        </p>
     </el-dialog>
 </template>
 <style>

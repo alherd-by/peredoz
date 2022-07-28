@@ -7,13 +7,13 @@
             <div class="flex-column pdng-b-15px" id="filter-actions">
                 <el-row class="pdng-l-5px">
                     <el-button @click="saveFilter" type="success">
-                        Применить фильтр
+                        Применить
                     </el-button>
                     <el-button @click="filterDialog = false" type="danger">
                         Отмена
                     </el-button>
                 </el-row>
-                <el-row class="pdng-t-25px mil-pdng-t-5px pdng-b-25px pdng-l-5px">
+                <el-row class="pdng-t-25px mil-pdng-t-5px pdng-b-25px pdng-l-5px" v-if="user.id">
                     <span class="pdng-t-10px pdng-r-10px">
                         <b>Объекты добавлены:</b>
                     </span>
@@ -34,6 +34,12 @@
                     <el-input v-model="trackListFilter" autofocus></el-input>
                 </el-row>
             </div>
+            <el-row>
+                <el-checkbox v-model="filter.show_localities"
+                             style="white-space: normal">
+                    Загрязненные населенные пункты
+                </el-checkbox>
+            </el-row>
             <div class="flex-column">
                 <div class="pdng-t-20px" v-loading="trackListLoading" style="overflow-x: auto">
                     <h4 class="pdng-l-5px">Выберите треки (не больше трех)</h4>
@@ -122,9 +128,10 @@ const emit              = defineEmits(['change'])
 const user = ref(getUser())
 
 const filter = reactive({
-    created_at: '',
-    user_id   : '',
-    track_id  : []
+    created_at     : '',
+    user_id        : '',
+    track_id       : [],
+    show_localities: false
 })
 
 const saveFilter = () => {
