@@ -137,14 +137,16 @@ onMounted(() => {
                     <el-button :icon="Plus" @click="adding.open()" v-show="user.email">
                         Добавить
                     </el-button>
-                    <span style="padding-left: 10px">{{ user.email }}</span>
-                    <el-button @click="auth.logout()" class="mrgn-l-10px">
-                        Выход
-                    </el-button>
                 </template>
                 <el-button :icon="QuestionFilled" @click="isNewcomer = true">
                     О проекте
                 </el-button>
+                <span class="pdng-l-50px" v-if="user.email">
+                    <span class="pdng-l-10px">{{ user.email }}</span>
+                    <el-button @click="auth.logout()" class="mrgn-l-10px">
+                        Выход
+                    </el-button>
+                </span>
             </div>
         </div>
     </div>
@@ -273,7 +275,17 @@ onMounted(() => {
         <p>
             Вас приветствует приложение <b>"Передоз"</b></p>
         <p>
-            Здесь вы можете найти самую различную информацию по радиоактивному загрязнению территорий Республики Беларусь.</p>
+            Здесь вы можете найти самую различную информацию по радиоактивному загрязнению территорий Республики Беларусь:
+
+        </p>
+        <ul class="pdng-l-15px">
+            <li>Треки собранные прибороми atomfast и radiacode (обозначены оранжевыми маркерами)</li>
+            <li>Спектры (багровые точки)</li>
+            <li>Просто точки с комментариями и видео-файлами (черные точки)</li>
+        </ul>
+        <p>
+            Для настроек отображения нажмите меню
+        </p>
         <p>
             Для того, чтобы получить возможность добавлять свои данные, вам требуется зарегистрироваться.
         </p>
