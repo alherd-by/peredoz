@@ -6,6 +6,30 @@
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content" v-if="feature">
             <p v-if="feature.id">id: {{ feature.id }}</p>
+            <template v-if="feature.properties.track">
+                <span>
+                    <b>Трек #{{ feature.properties.track.id }}</b>
+                </span>
+                <br>
+                <span>
+                <b>Название</b>: {{ feature.properties.track.name }}
+                </span>
+                <br>
+                <span v-if="feature.properties.track.user">
+                    <b>От пользователя</b>: {{
+                        feature.properties.track.user.displayName ? feature.properties.track.user.displayName : feature.properties.track.user.email
+                    }}
+                </span>
+                <br>
+                <span>
+                <b>Дата</b>:
+                <span :title="feature.properties.track.created_at">
+                    {{ format(feature.properties.track.created_at) }}
+                </span>
+                <br>
+                <a @click="loadTrack(feature.properties.track.id)">Показать все точки</a>
+            </span>
+            </template>
             <template v-if="feature && feature.properties && feature.properties.d">
                 <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
@@ -166,15 +190,15 @@ import {OSM}        from "ol/source";
 import View         from "ol/View";
 import {fromLonLat} from "ol/proj";
 
-import VectorLayer                                        from "ol/layer/Vector";
-import VectorSource                                       from "ol/source/Vector";
-import ClusterSource                                      from "ol/source/Cluster";
-import GeoJSON                                            from "ol/format/GeoJSON"
-import {Circle as CircleStyle, Fill, Style, Text, Stroke} from 'ol/style';
+import VectorLayer                                              from "ol/layer/Vector";
+import VectorSource                                             from "ol/source/Vector";
+import ClusterSource                                            from "ol/source/Cluster";
+import GeoJSON                                                  from "ol/format/GeoJSON"
+import {Circle as CircleStyle, Fill, Style, Text, Stroke, Icon} from 'ol/style';
 import 'ol/ol.css'
-import Overlay                                            from 'ol/Overlay';
-import Draw                                               from 'ol/interaction/Draw';
-import {init}                                             from 'echarts'
+import Overlay                                                  from 'ol/Overlay';
+import Draw                                                     from 'ol/interaction/Draw';
+import {init}                                                   from 'echarts'
 
 import {ref, onMounted, watch, toRefs, computed, onBeforeUpdate} from 'vue'
 import {calcColor}                                               from "../colors";
@@ -193,7 +217,8 @@ const search_modes = ["Fast", "Medium", "Slow", "-"];
 
 const emit = defineEmits([
     'spectrum-attached',
-    'point-located'
+    'point-located',
+    'track-requested'
 ])
 
 const attachSpectrum                     = (id) => {
@@ -233,17 +258,14 @@ const users           = computed(() => {
     }
     return tmp
 })
-const tracks          = computed(() => {
-    let tmp = {};
-    for (let i of trackList.value) {
-        tmp[i.id] = i
-    }
-    return tmp
-})
-const loading         = ref(false)
-const drawingEnabled  = ref(false);
-const chart           = ref();
 
+const loading        = ref(false)
+const drawingEnabled = ref(false);
+const chart          = ref();
+
+const loadTrack     = (trackId) => {
+    emit('track-requested', trackId)
+}
 const generateChart = () => {
     setTimeout(() => {
         if (!currentSpectrum.value.ResultDataList) {
@@ -320,7 +342,7 @@ const loadFeatures = async (source, projection) => {
             return
         }
         view.setCenter(fromLonLat(data[0].geometry.coordinates))
-        view.setZoom(10)
+        view.setZoom(13)
     } finally {
         loading.value = false
     }
@@ -341,7 +363,7 @@ let clusterSource = new ClusterSource({
 let styleCache = {};
 
 
-let placesLayer   = new VectorLayer(
+let placesLayer = new VectorLayer(
     {
         source: new VectorSource(
             {
@@ -360,6 +382,49 @@ let placesLayer   = new VectorLayer(
         })
     }
 )
+
+let tracksSource = new VectorSource(
+    {
+        loader: function (extent, resolution, projection) {
+            const temp = (new GeoJSON()).readFeatures(
+                {
+                    type    : 'FeatureCollection',
+                    features: trackList.value.map((item) => {
+                        return {
+                            'type'      : 'Feature',
+                            'geometry'  : item.first_point,
+                            'properties': {
+                                track: item
+                            }
+                        }
+                    })
+                },
+                {featureProjection: projection}
+            )
+            this.addFeatures(temp)
+        },
+        format: new GeoJSON()
+    }
+)
+let tracksLayer  = new VectorLayer({
+        source: tracksSource,
+        style : new Style({
+            image: new Icon({
+                src  : '/imgs/marker.png',
+                scale: 0.5
+            })
+        }),
+    }
+)
+
+const tracks = computed(() => {
+    let tmp = {};
+    for (let i of trackList.value) {
+        tmp[i.id] = i
+    }
+    return tmp
+})
+
 let drawingSource = new VectorSource()
 let drawingLayer  = new VectorLayer({
         source: drawingSource,
@@ -535,7 +600,11 @@ const displayPlaces = (isVisible) => {
 
 defineExpose({
     enableDrawing,
-    refresh
+    refresh,
+    updateTracks() {
+        map.removeLayer(tracksLayer)
+        map.addLayer(tracksLayer)
+    }
 })
 
 

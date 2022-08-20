@@ -142,7 +142,14 @@ const show       = () => {
     filterDialog.value = true
 }
 defineExpose({
-    show
+    show,
+    addTrack(id) {
+        if (filter.track_id.includes(id)) {
+            return
+        }
+        filter.track_id.push(id)
+        saveFilter()
+    }
 })
 
 const onRowsSelect = (selectedRows) => {

@@ -28,3 +28,5 @@ https://www.bingmapsportal.com
 https://openlayers.org/en/latest/examples/static-image.html
 https://gist.github.com/Siedlerchr/d920a132e30adcd84c509597cf421549
 
+## KML
+https://mulloverthing.com/how-do-i-import-a-kml-file-into-openstreetmap/

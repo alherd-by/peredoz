@@ -47,6 +47,7 @@ const fetchTracks = async () => {
         throw error
     }
     trackList.value = data;
+    map.value.updateTracks();
 }
 
 const fetchUsers = async () => {
@@ -258,6 +259,7 @@ onMounted(() => {
     <Map ref="map"
          :track-list="trackList"
          :user-list="userList"
+         @track-requested="filtersRef.addTrack($event)"
          @point-located="adding.onPointLocated($event)"
          @spectrum-attached="adding.attachSpectrum($event)"
          :color-scheme="currentColorScheme"
