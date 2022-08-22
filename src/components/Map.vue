@@ -103,6 +103,7 @@
     </div>
     <el-drawer
         v-model="trackDrawer"
+        size="250px"
         :title="'Трек #' + (feature ? feature.properties.track_id : '')"
         :direction="'rtl'"
     >
