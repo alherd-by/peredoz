@@ -408,12 +408,25 @@ let tracksSource = new VectorSource(
 )
 let tracksLayer  = new VectorLayer({
         source: tracksSource,
-        style : new Style({
-            image: new Icon({
-                src  : '/imgs/marker.png',
-                scale: 0.5
+        style(feature) {
+            return new Style({
+                image: new Icon({
+                    src  : '/imgs/marker.png',
+                    scale: 0.5
+                }),
+                text : new Text({
+                    text          : feature.getProperties().track.name,
+                    font          : '14px sans-serif',
+                    backgroundFill: new Fill({
+                        color: '#ffffff',
+                    }),
+                    offsetY       : 45,
+                    fill          : new Fill({
+                        color: '#000000',
+                    }),
+                })
             })
-        }),
+        },
     }
 )
 
