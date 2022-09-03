@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: cURL request
-        run: "curl -X GET -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5scHB6Y2RldGJ2cm56bWR5YmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTgxMjc0NTgsImV4cCI6MTk3MzcwMzQ1OH0.gEglk_ua07blazFsZy5tAsr9VAX5VPQ3CRWR2yhcVes' https://peredoz.netlify.app/api/rest/v1/features?select=*&order=track_id.asc.nullslast&or=(track_id.is.null)"
+        run: "curl -X GET -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5scHB6Y2RldGJ2cm56bWR5YmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTgxMjc0NTgsImV4cCI6MTk3MzcwMzQ1OH0.gEglk_ua07blazFsZy5tAsr9VAX5VPQ3CRWR2yhcVes' https://peredoz.netlify.app/api/rest/v1/track?select=*"
