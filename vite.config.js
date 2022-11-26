@@ -17,7 +17,7 @@ export default defineConfig({
                 target: 'http://localhost:9999/.netlify/functions'
             },
             '/api'      : {
-                target      : 'http://localhost:54321',
+                target      : process.env.REAL_SUPABASE_URL || 'http://localhost:54321',
                 changeOrigin: true,
                 rewrite     : (path) => path.replace(/^\/api/, '')
             },

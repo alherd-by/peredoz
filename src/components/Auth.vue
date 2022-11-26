@@ -23,12 +23,12 @@
             <el-form-item>
                 <el-button type="success"
                            native-type="submit"
-                           @click="submitForm(ruleFormRef)">
+                           @click="submitForm(ruleFormRef, signInAction)">
                     Авторизация
                 </el-button>
             </el-form-item>
             <el-form-item>
-                <a @click="authModal = false;restorePasswordModal = true">Забыл пароль</a>
+                <a @click="authModal = false;restorePasswordModal = true">Восстановление пароля</a>
             </el-form-item>
         </el-form>
     </el-dialog>
@@ -60,7 +60,7 @@
             <el-form-item>
                 <el-button type="success"
                            native-type="submit"
-                           @click="submitRegisterForm(registerFormRef)">
+                           @click="submitForm(registerFormRef, registerAction)">
                     Зарегистрироваться
                 </el-button>
             </el-form-item>
@@ -87,8 +87,36 @@
             <el-form-item>
                 <el-button type="success"
                            native-type="submit"
-                           @click="submitRestorePasswordForm(ruleFormRef)">
+                           @click="submitForm(ruleFormRef, restorePasswordAction)">
                     Отправить
+                </el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
+    <el-dialog
+        title="Новый пароль"
+        v-model="newPasswordModal"
+        width="300px"
+        @opened="focusElement('newpwd-login')"
+        center>
+        <el-form :model="form"
+                 ref="newPasswordFormRef"
+                 :rules="rulesNewPassword"
+                 v-loading="loading"
+                 @submit.prevent
+                 label-width="150px"
+                 label-position="top">
+            <el-form-item label="Пароль" prop="password" required>
+                <el-input v-model="form.password" type="password" id="newpwd-login"/>
+            </el-form-item>
+            <el-form-item label="Повтор пароля" prop="password_confirm" required>
+                <el-input v-model="form.password_confirm" type="password"/>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="success"
+                           native-type="submit"
+                           @click="submitForm(registerFormRef, newPasswordAction)">
+                    Зарегистрироваться
                 </el-button>
             </el-form-item>
         </el-form>
@@ -101,29 +129,34 @@ import {reactive, ref} from "vue";
 import {getUser}       from "../user";
 import {supabase}      from "../supabase";
 
-const emit = defineEmits(['auth', 'logout'])
+const emit = defineEmits(['auth', 'logout', 'new-password'])
 
-const ruleFormRef     = ref()
-const registerFormRef = ref()
-const form            = reactive({
+const ruleFormRef        = ref()
+const newPasswordFormRef = ref()
+const registerFormRef    = ref()
+const form               = reactive({
     username        : '',
     password        : '',
     email           : '',
     password_confirm: ''
 })
-const account         = ref(getUser())
-const loading         = ref(false)
+const account            = ref(getUser())
+const loading            = ref(false)
 
 
 const authModal            = ref(false);
 const registerModal        = ref(false)
 const restorePasswordModal = ref(false)
+const newPasswordModal     = ref(false)
 
-const openSignIn = () => {
+const openSignIn      = () => {
     authModal.value = true;
 }
-const openSignUp = () => {
+const openSignUp      = () => {
     registerModal.value = true;
+}
+const openNewPassword = () => {
+    newPasswordModal.value = true;
 }
 
 const logout = async () => {
@@ -139,57 +172,93 @@ const logout = async () => {
 defineExpose({
     openSignIn,
     openSignUp,
-    logout
+    logout,
+    openNewPassword
 })
 
-const focusElement              = (id) => {
+const focusElement = (id) => {
     document.getElementById(id).focus()
 }
-const submitRegisterForm        = async (formEl) => {
-    if (!formEl) {
-        return
-    }
-    await formEl.validate(async (valid, fields) => {
-        if (!valid) {
-            return;
-        }
-        try {
-            loading.value     = true;
-            let {user, error} = await supabase.auth.signUp({
-                email   : form.email,
-                password: form.password
-            }, {
-                redirectTo: location.protocol + '//' + location.host + '/?confirmation',
-                data      : {
-                    username: form.username
-                }
-            })
-            if (error) {
-                let message = 'Произошла ошибка'
-                if (error.message === 'User already registered') {
-                    message = 'Пользователь с таким email уже существует'
-                }
-                ElMessage.error(message)
-                console.log(error);
-            } else {
-                account.value = user;
-                ElMessage.success('Успешная регистрация, на почту придет письмо со ссылкой подтверждением. Возможно потребуется проверить папку со спамом')
-                registerModal.value = false;
-                formEl.resetFields()
-                form.password         = '';
-                form.password_confirm = '';
-                form.email            = '';
-                form.username         = '';
-            }
-        } catch (error) {
-            ElMessage.error('Произошла ошибка')
-            throw error;
-        } finally {
-            loading.value = false;
+
+const registerAction        = async (formEl) => {
+    loading.value     = true;
+    let {user, error} = await supabase.auth.signUp({
+        email   : form.email,
+        password: form.password
+    }, {
+        redirectTo: location.protocol + '//' + location.host + '/?confirmation',
+        data      : {
+            username: form.username
         }
     })
+    if (error) {
+        let message = 'Произошла ошибка'
+        if (error.message === 'User already registered') {
+            message = 'Пользователь с таким email уже существует'
+        }
+        ElMessage.error(message)
+        console.log(error);
+    } else {
+        account.value = user;
+        ElMessage.success(
+            'Успешная регистрация, на почту придет письмо со ссылкой подтверждением. Возможно потребуется проверить папку со спамом'
+        )
+        registerModal.value = false;
+        formEl.resetFields()
+        form.password         = '';
+        form.password_confirm = '';
+        form.email            = '';
+        form.username         = '';
+    }
 }
-const submitRestorePasswordForm = async (formEl) => {
+const signInAction          = async () => {
+    loading.value     = true
+    let {user, error} = await supabase.auth.signIn({
+        email   : form.username,
+        password: form.password
+    })
+    if (error) {
+        ElMessage.error('Произошла ошибка')
+    } else {
+        ElMessage.success('Успешная авторизация')
+        authModal.value = false;
+        emit('auth', user)
+        form.password = '';
+        form.username = '';
+    }
+}
+const restorePasswordAction = async () => {
+    loading.value = true
+    let {error}   = await supabase.auth.api.resetPasswordForEmail(
+        form.username,
+        {
+            redirectTo: location.protocol + '//' + location.host + '/?resetpwd'
+        }
+    )
+    if (error) {
+        ElMessage.error('Произошла ошибка')
+    } else {
+        ElMessage.success('Было отправлено письмо для восстановления пароля')
+        restorePasswordModal.value = false;
+        form.password              = '';
+        form.username              = '';
+    }
+}
+const newPasswordAction     = async () => {
+    loading.value = true
+    const {error} = await supabase.auth.update({password: form.password})
+    if (error) {
+        ElMessage.error('Произошла ошибка')
+        console.error(error)
+    } else {
+        ElMessage.success('Было отправлено письмо для восстановления пароля')
+        newPasswordModal.value = false;
+        form.password          = '';
+        form.password_confirm  = '';
+    }
+}
+
+const submitForm = async (formEl, action) => {
     if (!formEl) {
         return
     }
@@ -198,58 +267,17 @@ const submitRestorePasswordForm = async (formEl) => {
             return;
         }
         try {
-            loading.value     = true
-            let {error} = await supabase.auth.api.resetPasswordForEmail(form.username)
-            if (error) {
-                ElMessage.error('Произошла ошибка')
-            } else {
-                ElMessage.success('Было отправлено письмо для восстановления пароля')
-                restorePasswordModal.value = false;
-                form.password = '';
-                form.username = '';
-            }
+            await action(formEl)
         } catch (error) {
-            loading.value = false
             ElMessage.error('Произошла ошибка')
             throw error;
         } finally {
-            loading.value = false
+            loading.value = false;
         }
     })
 }
-const submitForm                = async (formEl) => {
-    if (!formEl) {
-        return
-    }
-    await formEl.validate(async (valid, fields) => {
-        if (!valid) {
-            return;
-        }
-        try {
-            loading.value     = true
-            let {user, error} = await supabase.auth.signIn({
-                email   : form.username,
-                password: form.password
-            })
-            if (error) {
-                ElMessage.error('Произошла ошибка')
-            } else {
-                ElMessage.success('Успешная авторизация')
-                authModal.value = false;
-                emit('auth', user)
-                form.password = '';
-                form.username = '';
-            }
-        } catch (error) {
-            loading.value = false
-            ElMessage.error('Произошла ошибка')
-            throw error;
-        } finally {
-            loading.value = false
-        }
-    })
-}
-const validatePass              = (rule, value, callback) => {
+
+const validatePass  = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('Пожалуйста, введите пароль'))
         return;
@@ -266,7 +294,7 @@ const validatePass              = (rule, value, callback) => {
     }
     callback()
 }
-const validatePass2             = (rule, value, callback) => {
+const validatePass2 = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('Пожалуйста, введите заново пароль'))
     } else if (value !== form.password) {
@@ -294,6 +322,11 @@ const rulesRegister = reactive({
         {required: true, message: 'Логин обязательно', trigger: 'blur'},
         {min: 3, message: 'минимум 3 символов', trigger: 'blur'},
     ],
+    password        : [{validator: validatePass, trigger: 'blur'}],
+    password_confirm: [{validator: validatePass2, trigger: 'blur'}],
+})
+
+const rulesNewPassword = reactive({
     password        : [{validator: validatePass, trigger: 'blur'}],
     password_confirm: [{validator: validatePass2, trigger: 'blur'}],
 })
