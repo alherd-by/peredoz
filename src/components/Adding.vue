@@ -217,7 +217,7 @@ const addAtomfastTrack = async () => {
     const response = await fetch('/atomfast', {
         method : 'POST',
         headers: {
-            'Authorization': 'Bearer ' + supabase.auth.session().access_token
+            'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token
         },
         body   : JSON.stringify({url: adding.atomfast_url, name: adding.name})
     })
@@ -319,7 +319,7 @@ const addGenericPoint                = async () => {
         {
             method : 'POST',
             headers: {
-                'Authorization': 'Bearer ' + supabase.auth.session().access_token
+                'Authorization': 'Bearer ' + (await supabase.auth.getSession()).data.session.access_token
             },
             body
         }

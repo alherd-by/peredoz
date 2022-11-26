@@ -1,6 +1,6 @@
 import {createClient} from "@supabase/supabase-js";
 
-const getToken = (headers: any) => {
+const getToken = (headers: any) : string => {
     if (!headers.authorization) {
         return '';
     }
@@ -12,9 +12,22 @@ const getToken = (headers: any) => {
 }
 
 const supabaseUrl = process.env.SUPABASE_URL
-const supabase = createClient(
-    supabaseUrl,
-    process.env.VITE_SUPABASE_KEY
-)
+const supabaseCreate = (accessToken: string) => {
+    return createClient(
+        supabaseUrl,
+        process.env.VITE_SUPABASE_KEY,
+        {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            },
+            global: {
+                headers: accessToken ? {
+                    Authorization: `Bearer ${accessToken}`,
+                } : null,
+            },
+        }
+    )
+}
 
-export {supabase, getToken}
+export {supabaseCreate, getToken}

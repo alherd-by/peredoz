@@ -229,7 +229,7 @@ const signInAction          = async () => {
 }
 const restorePasswordAction = async () => {
     loading.value = true
-    let {error}   = await supabase.auth.api.resetPasswordForEmail(
+    let {error}   = await supabase.auth.resetPasswordForEmail(
         form.username,
         {
             redirectTo: location.protocol + '//' + location.host + '/?resetpwd'
@@ -246,7 +246,7 @@ const restorePasswordAction = async () => {
 }
 const newPasswordAction     = async () => {
     loading.value = true
-    const {error} = await supabase.auth.update({password: form.password})
+    const {error} = await supabase.auth.updateUser({password: form.password})
     if (error) {
         ElMessage.error('Произошла ошибка')
         console.error(error)

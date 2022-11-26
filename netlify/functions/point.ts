@@ -2,7 +2,7 @@ import {Handler, HandlerResponse} from "@netlify/functions";
 import {JSONResponse} from "../src/json_response";
 import AWS from 'aws-sdk';
 import {v4 as uuidv4} from 'uuid';
-import {supabase, getToken} from "../src/supabase";
+import {supabaseCreate, getToken} from "../src/supabase";
 
 const s3 = new AWS.S3({
     region: process.env.AWS_S3_REGION,
@@ -22,9 +22,10 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             }
         )
     }
+
     const token = getToken(event.headers);
-    supabase.auth.setAuth(token)
-    const response = await supabase.auth.api.getUser(token)
+    const supabase = await supabaseCreate(token);
+    const response = await supabase.auth.getUser(token)
     if (response.error) {
         console.error(response.error)
         return JSONResponse(
@@ -94,7 +95,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             attachments
         },
         geometry,
-        user_id: response.user.id
+        user_id: response.data.user.id
     }]).single()
 
     if (result.error) {

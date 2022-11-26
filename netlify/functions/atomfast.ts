@@ -1,7 +1,7 @@
 import {Handler, HandlerResponse} from "@netlify/functions";
 import fetch from 'node-fetch'
 import {JSONResponse} from "../src/json_response";
-import {supabase, getToken} from '../src/supabase'
+import {supabaseCreate, getToken} from '../src/supabase'
 
 const errorAuth = 'Ошибка авторизации';
 
@@ -43,9 +43,10 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             }
         )
     }
+
     const token = getToken(event.headers);
-    supabase.auth.setAuth(token)
-    const response = await supabase.auth.api.getUser(token)
+    const supabase = await supabaseCreate(token);
+    const response = await supabase.auth.getUser(token)
     if (response.error) {
         return JSONResponse(
             {error: errorAuth},
@@ -83,7 +84,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         let object = {
             name: name,
             atomfast_id: trackNumber,
-            user_id: response.user.id
+            user_id: response.data.user.id
         }
         result = await supabase.from('track').insert([object]).single()
         if (result.error) {
@@ -110,7 +111,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 type: 'Point',
                 coordinates: [item.lng, item.lat]
             },
-            user_id: response.user.id,
+            user_id: response.data.user.id,
             track_id: result.data.id
         }))
         result = await supabase.from('point').insert(points)
