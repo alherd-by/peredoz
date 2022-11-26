@@ -24,7 +24,8 @@ const filtersRef         = ref();
 const userList           = ref([])
 const trackList          = ref([])
 const params             = (new URL(document.location)).searchParams;
-const isNewcomer         = ref(!user.value.email && params.get("confirmation") === null);
+const isNewPassword      = ref(params.get("resetpwd") === null);
+const isNewcomer         = ref(!user.value.email && params.get("confirmation") === null && !isNewPassword);
 const onAuth             = (value) => {
     user.value = value;
 }
