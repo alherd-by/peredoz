@@ -264,6 +264,7 @@ const submitForm = async (formEl, action) => {
     }
     await formEl.validate(async (valid) => {
         if (!valid) {
+            console.log('Not valid')
             return;
         }
         try {
