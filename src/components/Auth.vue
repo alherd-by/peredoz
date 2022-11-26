@@ -27,6 +27,9 @@
                     Авторизация
                 </el-button>
             </el-form-item>
+            <el-form-item>
+                <a @click="authModal = false;restorePasswordModal = true">Забыл пароль</a>
+            </el-form-item>
         </el-form>
     </el-dialog>
     <el-dialog
@@ -63,6 +66,33 @@
             </el-form-item>
         </el-form>
     </el-dialog>
+    <el-dialog title="Восстановление пароля"
+               v-model="restorePasswordModal"
+               width="300px"
+               @opened="focusElement('restore-login')"
+               center>
+        <el-form :model="form"
+                 ref="ruleFormRef"
+                 :rules="rules"
+                 @submit.prevent
+                 v-loading="loading"
+                 label-width="150px"
+                 label-position="top">
+            <el-form-item label="Email" prop="username" required>
+                <el-input :tabindex="0" v-model="form.username"
+                          id="restore-login"
+                          ref="login"
+                          autofocus="autofocus"/>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="success"
+                           native-type="submit"
+                           @click="submitRestorePasswordForm(ruleFormRef)">
+                    Отправить
+                </el-button>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -85,8 +115,9 @@ const account         = ref(getUser())
 const loading         = ref(false)
 
 
-const authModal     = ref(false);
-const registerModal = ref(false)
+const authModal            = ref(false);
+const registerModal        = ref(false)
+const restorePasswordModal = ref(false)
 
 const openSignIn = () => {
     authModal.value = true;
@@ -111,10 +142,10 @@ defineExpose({
     logout
 })
 
-const focusElement       = (id) => {
+const focusElement              = (id) => {
     document.getElementById(id).focus()
 }
-const submitRegisterForm = async (formEl) => {
+const submitRegisterForm        = async (formEl) => {
     if (!formEl) {
         return
     }
@@ -158,7 +189,35 @@ const submitRegisterForm = async (formEl) => {
         }
     })
 }
-const submitForm         = async (formEl) => {
+const submitRestorePasswordForm = async (formEl) => {
+    if (!formEl) {
+        return
+    }
+    await formEl.validate(async (valid) => {
+        if (!valid) {
+            return;
+        }
+        try {
+            loading.value     = true
+            let {error} = await supabase.auth.api.resetPasswordForEmail(form.username)
+            if (error) {
+                ElMessage.error('Произошла ошибка')
+            } else {
+                ElMessage.success('Было отправлено письмо для восстановления пароля')
+                restorePasswordModal.value = false;
+                form.password = '';
+                form.username = '';
+            }
+        } catch (error) {
+            loading.value = false
+            ElMessage.error('Произошла ошибка')
+            throw error;
+        } finally {
+            loading.value = false
+        }
+    })
+}
+const submitForm                = async (formEl) => {
     if (!formEl) {
         return
     }
@@ -190,7 +249,7 @@ const submitForm         = async (formEl) => {
         }
     })
 }
-const validatePass       = (rule, value, callback) => {
+const validatePass              = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('Пожалуйста, введите пароль'))
         return;
@@ -207,7 +266,7 @@ const validatePass       = (rule, value, callback) => {
     }
     callback()
 }
-const validatePass2      = (rule, value, callback) => {
+const validatePass2             = (rule, value, callback) => {
     if (value === '') {
         callback(new Error('Пожалуйста, введите заново пароль'))
     } else if (value !== form.password) {
