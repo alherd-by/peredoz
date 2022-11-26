@@ -115,8 +115,8 @@
             <el-form-item>
                 <el-button type="success"
                            native-type="submit"
-                           @click="submitForm(registerFormRef, newPasswordAction)">
-                    Зарегистрироваться
+                           @click="submitForm(newPasswordFormRef, newPasswordAction)">
+                    Сохранить
                 </el-button>
             </el-form-item>
         </el-form>
