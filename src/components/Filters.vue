@@ -125,7 +125,7 @@ const trackListFiltered = computed(() => {
 const trackListTable    = ref();
 const emit              = defineEmits(['change'])
 
-const user = ref(getUser())
+const user = ref(await getUser())
 
 const filter = reactive({
     created_at     : '',

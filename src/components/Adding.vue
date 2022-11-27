@@ -111,7 +111,7 @@ import radiocode              from '../radiacode'
 import {supabase}             from "../supabase";
 import {getUser}              from "../user";
 
-const user  = ref(getUser())
+const user  = ref(await getUser())
 const emits = defineEmits(
     ['new-track', 'new-objects', 'request-point-locating']
 )

@@ -142,7 +142,7 @@ const form               = reactive({
     email           : '',
     password_confirm: ''
 })
-const account            = ref(getUser())
+const account            = ref(await getUser())
 const loading            = ref(false)
 
 const authModal            = ref(false);
