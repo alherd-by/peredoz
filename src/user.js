@@ -6,6 +6,7 @@ async function getUser() {
         if (error) {
             throw error;
         }
+        console.log(data.user)
         return data.user ? data.user : {email: ''}
     } catch(error) {
         console.error(error);

@@ -37,6 +37,7 @@ supabase.auth.onAuthStateChange((event, session) => {
     console.log(event)
     if (event === 'SIGNED_IN' && !user.value.email && params.get("confirmation") !== null) {
         ElMessage.success('Успешно подтверждена почта!')
+        console.log(session.user)
         user.value = session.user
     }
     if (event === 'PASSWORD_RECOVERY') {
