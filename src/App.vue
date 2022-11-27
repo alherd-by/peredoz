@@ -15,6 +15,7 @@ import {ElMessage}                                   from "element-plus";
 
 const toolbarDialog      = ref(false);
 const user               = ref(getUser());
+console.log(user.value)
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
 const adding             = ref();
