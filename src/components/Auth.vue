@@ -148,7 +148,7 @@ const loading            = ref(false)
 const authModal            = ref(false);
 const registerModal        = ref(false)
 const restorePasswordModal = ref(false)
-const newPasswordModal     = ref(true)
+const newPasswordModal     = ref(false)
 
 const openSignIn      = () => {
     authModal.value = true;
@@ -247,12 +247,13 @@ const restorePasswordAction = async () => {
 }
 const newPasswordAction     = async () => {
     loading.value = true
-    const {error} = await supabase.auth.updateUser({password: form.password})
+    const {data, error} = await supabase.auth.updateUser({password: form.password})
     if (error) {
         ElMessage.error('Произошла ошибка')
         console.error(error)
     } else {
-        ElMessage.success('Было отправлено письмо для восстановления пароля')
+        emit('auth', data.user)
+        ElMessage.success('Успешная смена пароля')
         newPasswordModal.value = false;
         form.password          = '';
         form.password_confirm  = '';
