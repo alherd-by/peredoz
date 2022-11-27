@@ -5,7 +5,7 @@
                @opened="focusElement('signin-login')"
                center>
         <el-form :model="form"
-                 ref="ruleFormRef"
+                 ref="signInFormRef"
                  :rules="rules"
                  @submit.prevent
                  v-loading="loading"
@@ -23,7 +23,7 @@
             <el-form-item>
                 <el-button type="success"
                            native-type="submit"
-                           @click="submitForm(ruleFormRef, signInAction)">
+                           @click="submitForm(signInFormRef, signInAction)">
                     Авторизация
                 </el-button>
             </el-form-item>
@@ -132,8 +132,10 @@ import {supabase}      from "../supabase";
 const emit = defineEmits(['auth', 'logout', 'new-password'])
 
 const ruleFormRef        = ref()
+const signInFormRef      = ref()
 const newPasswordFormRef = ref()
 const registerFormRef    = ref()
+
 const form               = reactive({
     username        : '',
     password        : '',
@@ -143,11 +145,10 @@ const form               = reactive({
 const account            = ref(getUser())
 const loading            = ref(false)
 
-
 const authModal            = ref(false);
 const registerModal        = ref(false)
 const restorePasswordModal = ref(false)
-const newPasswordModal     = ref(false)
+const newPasswordModal     = ref(true)
 
 const openSignIn      = () => {
     authModal.value = true;
@@ -288,10 +289,14 @@ const validatePass  = (rule, value, callback) => {
         return;
     }
     if (form.password_confirm !== '') {
-        if (!registerFormRef.value) {
+        if (!registerFormRef.value && !newPasswordFormRef.value) {
             return
         }
-        registerFormRef.value.validateField('password_confirm', () => null)
+        if (!registerFormRef.value) {
+            newPasswordFormRef.value.validateField('password_confirm', () => null)
+        } else {
+            registerFormRef.value.validateField('password_confirm', () => null)
+        }
     }
     callback()
 }
