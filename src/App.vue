@@ -151,7 +151,9 @@ onMounted(async () => {
                     О проекте
                 </el-button>
                 <span class="pdng-l-50px" v-if="user.email">
-                    <span class="pdng-l-10px">{{ user.email }}</span>
+                    <span class="pdng-l-10px">
+                        {{user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email}}
+                    </span>
                     <el-button @click="auth.logout()" class="mrgn-l-10px">
                         Выход
                     </el-button>
@@ -250,7 +252,10 @@ onMounted(async () => {
                                         <el-button :icon="UserFilled" round size="large">Пользователь</el-button>
                                     </template>
                                     <template #default>
-                                        <p style="color:black">Ваш аккаунт: {{ user.email }}</p>
+                                        <p style="color:black">
+                                            Ваш аккаунт:
+                                            {{user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email}}
+                                        </p>
                                         <el-button @click="auth.logout()">
                                             Выход
                                         </el-button>
