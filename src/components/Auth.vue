@@ -135,13 +135,13 @@ const signInFormRef      = ref()
 const newPasswordFormRef = ref()
 const registerFormRef    = ref()
 
-const form               = reactive({
+const form    = reactive({
     username        : '',
     password        : '',
     email           : '',
     password_confirm: ''
 })
-const loading            = ref(false)
+const loading = ref(false)
 
 const authModal            = ref(false);
 const registerModal        = ref(false)
@@ -247,7 +247,7 @@ const restorePasswordAction = async () => {
     }
 }
 const newPasswordAction     = async () => {
-    loading.value = true
+    loading.value       = true
     const {data, error} = await supabase.auth.updateUser({password: form.password})
     if (error) {
         ElMessage.error('Произошла ошибка')
@@ -256,8 +256,9 @@ const newPasswordAction     = async () => {
         emit('auth', data.user)
         ElMessage.success('Успешная смена пароля')
         newPasswordModal.value = false;
-        form.password          = '';
-        form.password_confirm  = '';
+        window.history.pushState('object', document.title, location.href.split("?")[0]);
+        form.password         = '';
+        form.password_confirm = '';
     }
 }
 
