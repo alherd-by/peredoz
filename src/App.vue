@@ -13,9 +13,9 @@ import {getUser}                                     from "./user";
 import {supabase}                                    from "./supabase";
 import {ElMessage}                                   from "element-plus";
 
+
 const toolbarDialog      = ref(false);
-const user               = ref(await getUser());
-console.log(user.value)
+const user               = ref({email: ''});
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
 const adding             = ref();
@@ -27,15 +27,15 @@ const trackList          = ref([])
 const params             = (new URL(document.location)).searchParams;
 const isNewPassword      = ref(params.get("resetpwd") === null);
 const isNewcomer         = ref(!user.value.email && params.get("confirmation") === null && !isNewPassword);
-const onAuth             = (value) => {
-    user.value = value;
+const onAuth             = (v) => {
+    user.value = v;
 }
 const onLogout           = (value) => {
     user.value = value
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-    console.log(event)
+    console.log(user.value)
     if (event === 'SIGNED_IN' && !user.value.email && params.get("confirmation") !== null) {
         ElMessage.success('Успешно подтверждена почта!')
         console.log(session.user)
@@ -92,9 +92,11 @@ const legend       = computed(() => {
     return items
 })
 
-onMounted(() => {
-    fetchTracks()
-    fetchUsers()
+onMounted(async () => {
+    user.value = await getUser();
+    console.log(user.value)
+    await fetchTracks()
+    await fetchUsers()
 })
 </script>
 <template>

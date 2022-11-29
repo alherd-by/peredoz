@@ -94,7 +94,7 @@
 <script setup>
 import {formatWithTime}                  from '../date'
 import {getUser}                         from "../user";
-import {ref, computed, reactive, toRefs} from "vue";
+import {ref, computed, reactive, toRefs, onMounted} from "vue";
 
 const props = defineProps({
     trackList: Array
@@ -125,7 +125,7 @@ const trackListFiltered = computed(() => {
 const trackListTable    = ref();
 const emit              = defineEmits(['change'])
 
-const user = ref(await getUser())
+const user = ref({email: ''})
 
 const filter = reactive({
     created_at     : '',
@@ -167,4 +167,7 @@ const onRowsSelect = (selectedRows) => {
 const onSelectAll  = () => {
     trackListTable.value.clearSelection()
 }
+onMounted(async () => {
+    user.value = await getUser()
+})
 </script>

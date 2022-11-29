@@ -2,15 +2,18 @@ import {supabase} from './supabase'
 
 async function getUser() {
     try {
-        let {data, error} = await supabase.auth.getUser()
+        let session = await supabase.auth.getSession()
+        if (session.data.session === null) {
+            return {email: ''}
+        }
+        let {data, error} = await supabase.auth.getUser();
         if (error) {
             throw error;
         }
-        console.log(data.user)
         return data.user ? data.user : {email: ''}
-    } catch(error) {
+    } catch (error) {
         console.error(error);
-        return {email: ''}
+        return {email: '', error: true}
     }
 }
 

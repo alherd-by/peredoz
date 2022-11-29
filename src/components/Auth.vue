@@ -126,7 +126,6 @@
 <script setup>
 import {ElMessage}     from 'element-plus';
 import {reactive, ref} from "vue";
-import {getUser}       from "../user";
 import {supabase}      from "../supabase";
 
 const emit = defineEmits(['auth', 'logout', 'new-password'])
@@ -142,7 +141,6 @@ const form               = reactive({
     email           : '',
     password_confirm: ''
 })
-const account            = ref(await getUser())
 const loading            = ref(false)
 
 const authModal            = ref(false);
@@ -166,7 +164,6 @@ const logout = async () => {
         ElMessage.error('Произошла ошибка')
         throw error
     }
-    account.value = null;
     emit('logout', {user: {email: ''}})
 }
 
@@ -200,7 +197,6 @@ const registerAction        = async (formEl) => {
         ElMessage.error(message)
         console.log(error);
     } else {
-        account.value = user;
         ElMessage.success(
             'Успешная регистрация, на почту придет письмо со ссылкой подтверждением. Возможно потребуется проверить папку со спамом'
         )
@@ -214,12 +210,17 @@ const registerAction        = async (formEl) => {
 }
 const signInAction          = async () => {
     loading.value     = true
-    let {user, error} = await supabase.auth.signIn({
+    let {user, error} = await supabase.auth.signInWithPassword({
         email   : form.username,
         password: form.password
     })
     if (error) {
-        ElMessage.error('Произошла ошибка')
+        console.log(error)
+        let text = 'Произошла ошибка';
+        if (error.message === 'Invalid login credentials') {
+            text = 'Неправильный логин или пароль'
+        }
+        ElMessage.error(text)
     } else {
         ElMessage.success('Успешная авторизация')
         authModal.value = false;

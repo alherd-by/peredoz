@@ -103,15 +103,15 @@
 </template>
 
 <script setup>
-import {ElMessage}            from "element-plus";
-import {reactive, ref, watch} from "vue";
-import {xml2js}               from "../xml2js";
+import {ElMessage}                       from "element-plus";
+import {onMounted, reactive, ref, watch} from "vue";
+import {xml2js}                          from "../xml2js";
 import Geolocation            from "ol/Geolocation";
 import radiocode              from '../radiacode'
 import {supabase}             from "../supabase";
 import {getUser}              from "../user";
 
-const user  = ref(await getUser())
+const user               = ref({email: ''});
 const emits = defineEmits(
     ['new-track', 'new-objects', 'request-point-locating']
 )
@@ -403,6 +403,9 @@ defineExpose(
     }
 )
 
+onMounted(async () => {
+    user.value = await getUser()
+})
 watch(() => adding.location_type,
     () => {
         if (adding.location_type !== 'specifying') {
