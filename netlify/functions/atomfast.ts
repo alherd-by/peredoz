@@ -85,7 +85,11 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         let object = {
             name: name,
             atomfast_id: trackNumber,
-            user_id: response.data.user.id
+            user_id: response.data.user.id,
+            first_point: {
+                type: 'Point',
+                coordinates: [points[0].lng, points[1].lat]
+            },
         }
         result = await supabase.from('track').insert([object]).select().single()
         if (result.error) {
@@ -106,8 +110,6 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 }
             )
         }
-        console.log(result)
-        console.log(process.env.APP_ENV)
         points = points.map((item: any) => ({
             properties: item,
             geometry: {
