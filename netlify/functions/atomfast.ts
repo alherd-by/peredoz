@@ -99,7 +99,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             }
             console.error(result.error)
             return JSONResponse(
-                {error: 'Произошла ошибка'},
+                {error: 'Произошла ошибка', data: result.error},
                 {
                     statusCode: 500,
                 }
