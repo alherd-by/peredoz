@@ -2,6 +2,7 @@ import {Handler, HandlerResponse} from "@netlify/functions";
 import fetch from 'node-fetch'
 import {JSONResponse} from "../src/json_response";
 import {supabaseCreate, getToken} from '../src/supabase'
+import {errorHandler} from "@sentry/node/types/handlers";
 
 const errorAuth = 'Ошибка авторизации';
 
@@ -69,7 +70,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         const response = await fetch('http://www.atomfast.net/maps/markers/' + trackNumber);
         points = await response.json()
     } catch (e) {
-        console.error(e)
+        errorHandler(e)
         return {
             statusCode: 500,
             body: JSON.stringify({'error': 'Произошла ошибка при загрузке трека с atomfast'}),
@@ -97,7 +98,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                     },
                 }
             }
-            console.error(result.error)
+            errorHandler(result.error)
             return JSONResponse(
                 {error: 'Произошла ошибка', data: result.error},
                 {
@@ -116,7 +117,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         }))
         result = await supabase.from('point').insert(points)
         if (result.error) {
-            console.error(result.error)
+            errorHandler(result.error)
             return JSONResponse(
                 {error: 'Произошла ошибка', data: result.error},
                 {
@@ -126,7 +127,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
         }
         return JSONResponse(result)
     } catch (e) {
-        console.error(e)
+        errorHandler(e)
         return JSONResponse(
             {error: 'Произошла ошибка'},
             {
