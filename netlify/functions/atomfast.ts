@@ -87,7 +87,7 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
             atomfast_id: trackNumber,
             user_id: response.data.user.id
         }
-        result = await supabase.from('track').insert([object]).single()
+        result = await supabase.from('track').insert([object]).select().single()
         if (result.error) {
             if (result.error.message === 'duplicate key value violates unique constraint "track_atomfast_id_uindex"') {
                 return {
@@ -106,6 +106,8 @@ const handler: Handler = async (event): Promise<HandlerResponse> => {
                 }
             )
         }
+        console.log(result)
+        console.log(process.env.APP_ENV)
         points = points.map((item: any) => ({
             properties: item,
             geometry: {

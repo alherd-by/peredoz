@@ -3,11 +3,10 @@ import "@sentry/tracing";
 
 
 let errorHandler = (error: any) => {
-    console.log(process.env.NODE_ENV)
     console.error(error)
 }
 
-if (process.env.NODE_ENV && ['prod', 'production'].includes(process.env.NODE_ENV)) {
+if (process.env.APP_ENV && ['prod', 'production'].includes(process.env.APP_ENV)) {
     Sentry.init({
         dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
         tracesSampleRate: 1.0,
