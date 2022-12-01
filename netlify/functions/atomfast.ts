@@ -2,7 +2,7 @@ import {Handler, HandlerResponse} from "@netlify/functions";
 import fetch from 'node-fetch'
 import {JSONResponse} from "../src/json_response";
 import {supabaseCreate, getToken} from '../src/supabase'
-import {errorHandler} from "@sentry/node/types/handlers";
+import {errorHandler} from "../src/error_handler";
 
 const errorAuth = 'Ошибка авторизации';
 
