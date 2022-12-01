@@ -448,7 +448,6 @@ let featureLayer  = new VectorLayer({
     source: clusterSource,
     style(feature) {
         let size                      = feature.get('features').length;
-        const length                  = size;
         let colors, hasSpectre, color = '#7c7676';
 
         let features = feature.get('features');
@@ -477,7 +476,6 @@ let featureLayer  = new VectorLayer({
                 fill  : new Fill({color}),
             }),
             text : new Text({
-                text: length === 1 ? '' : length.toString(),
                 fill: new Fill({
                     color: '#fff',
                 }),
