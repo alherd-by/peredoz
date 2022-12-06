@@ -413,7 +413,7 @@ let tracksLayer  = new VectorLayer({
             return new Style({
                 image: new Icon({
                     src  : '/imgs/marker.png',
-                    scale: 0.5
+                    scale: 0.33
                 }),
                 text : new Text({
                     text          : '',
