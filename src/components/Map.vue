@@ -469,9 +469,9 @@ let featureLayer  = new VectorLayer({
         }
         style                               = [new Style({
             image: new CircleStyle({
-                radius: 14,
+                radius: 10,
                 stroke: new Stroke({
-                    color: '#fff',
+                    color: 'rgb(255,255,255, 1)',
                 }),
                 fill  : new Fill({color}),
             }),
