@@ -416,7 +416,7 @@ let tracksLayer  = new VectorLayer({
                     scale: 0.5
                 }),
                 text : new Text({
-                    text          : feature.getProperties().track.name,
+                    text          : '',
                     font          : '14px sans-serif',
                     backgroundFill: new Fill({
                         color: '#ffffff',
