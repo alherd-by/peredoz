@@ -163,7 +163,7 @@ onMounted(async () => {
     </div>
     <div id="legend" v-show="showLegend">
         <ul id="legend-list">
-            <li v-for="item of legend" v-html="item.innerHtml ? item.innerHtml : '&nbsp;'"
+            <li class="legend-list-item" v-for="item of legend" v-html="item.innerHtml ? item.innerHtml : '&nbsp;'"
                 :style="{background: item.background}">
             </li>
         </ul>
@@ -311,13 +311,6 @@ onMounted(async () => {
     --dialog--newcomer-width: 70%;
 }
 
-@media (max-width: 820px) {
-    .el-dialog {
-        --dialog-width: 100%;
-        --dialog-newcomer-width: 100%;
-    }
-}
-
 .buttons-collection button {
     width: 140px;
 }
@@ -327,6 +320,7 @@ onMounted(async () => {
     left: 0;
     top: 25px;
     z-index: 3;
+    padding-left: 10px;
 }
 
 #legend ul {
@@ -336,9 +330,19 @@ onMounted(async () => {
 @media (min-width: 820px) {
     #legend {
         top: 150px;
-        padding-left: 10px;
     }
 }
+
+@media (max-width: 820px) {
+    .el-dialog {
+        --dialog-width: 100%;
+        --dialog-newcomer-width: 100%;
+    }
+    .legend-list-item {
+        font-size: 0.8rem;
+    }
+}
+
 
 .toolbar {
     position: absolute;
