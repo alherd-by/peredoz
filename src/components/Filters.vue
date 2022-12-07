@@ -144,10 +144,7 @@ const show       = () => {
 defineExpose({
     show,
     addTrack(id) {
-        if (filter.track_id.includes(id)) {
-            return
-        }
-        filter.track_id.push(id)
+        filter.track_id = [id]
         saveFilter()
     }
 })
@@ -159,7 +156,7 @@ const onRowsSelect = (selectedRows) => {
     ) {
         return
     }
-    if (selectedRows.length > 3) {
+    if (selectedRows.length > 1) {
         trackListTable.value.toggleRowSelection(selectedRows[0], undefined)
     }
     filter.track_id = selectedRows.map((i) => i.id)
