@@ -26,7 +26,7 @@
                 <span>
                 <b>Дата</b>:
                 <span :title="feature.properties.track.created_at">
-                    {{ format(feature.properties.track.created_at) }}
+                    {{ formatWithTime(feature.properties.track.created_at) }}
                 </span>
                 <br>
                 <a @click="loadTrack(feature.properties.track.id)">Показать все точки</a>
@@ -38,6 +38,8 @@
                 <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
                 <br>
                 <span>Device: <b>  <span v-html="devices[feature.properties.dv]"></span> </b></span>
+                <br>
+                <span>Добавлено: <b>  {{formatWithTime(feature.properties.created_at)}} </b></span>
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
@@ -162,6 +164,11 @@
                     <b>Комментарий</b>: {{ feature.properties.comment }}
                 </div>
             </template>
+            <template v-if="feature.properties.created_at">
+                <div class="pdng-t-15px pdng-b-5px">
+                    <b>Добавлено</b>: {{ formatWithTime(feature.properties.created_at) }}
+                </div>
+            </template>
             <template v-if="feature && feature.properties && feature.properties.d">
                 <span>МЭД: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
@@ -187,7 +194,7 @@
     </el-dialog>
 </template>
 <script setup>
-import {format} from '../date'
+import {format, formatWithTime} from '../date'
 
 import Map          from "ol/Map";
 import TileLayer    from "ol/layer/Tile";
@@ -704,7 +711,7 @@ video {
     border: 1px solid #cccccc;
     bottom: 12px;
     left: -50px;
-    min-width: 280px;
+    min-width: 290px;
     z-index: 4;
 }
 
