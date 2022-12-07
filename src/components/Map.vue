@@ -203,6 +203,8 @@ import {Circle as CircleStyle, Fill, Style, Text, Stroke, Icon} from 'ol/style';
 import 'ol/ol.css'
 import Overlay                                                  from 'ol/Overlay';
 import Draw                                                     from 'ol/interaction/Draw';
+import {defaults}                                               from 'ol/control'
+import {defaults as defaultsInteractions}                                   from 'ol/interaction'
 import {init}                                                   from 'echarts'
 
 import {ref, onMounted, watch, toRefs, computed, onBeforeUpdate} from 'vue'
@@ -553,14 +555,16 @@ onMounted(
         });
 
         map = new Map({
-            layers  : [
+            controls    : defaults({rotate: false}),
+            interactions: defaultsInteractions({altShiftDragRotate: false, pinchRotate: false}),
+            layers      : [
                 new TileLayer({
                     source: new OSM(),
                 }),
                 drawingLayer
             ],
-            target  : 'map',
-            overlays: [overlay],
+            target      : 'map',
+            overlays    : [overlay],
             view
         });
         map.addLayer(featureLayer)
