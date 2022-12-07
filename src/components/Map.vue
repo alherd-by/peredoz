@@ -33,7 +33,7 @@
             </span>
             </template>
             <template v-if="feature && feature.properties && feature.properties.d">
-                <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
+                <span>МЭД: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
                 <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
                 <br>
@@ -163,7 +163,7 @@
                 </div>
             </template>
             <template v-if="feature && feature.properties && feature.properties.d">
-                <span>Doserate: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
+                <span>МЭД: {{ feature.properties.d.toFixed(2) }}uSv/h</span>
                 <br>
                 <span>GPS accuracy: <b>±{{ feature.properties.r }} m</b></span>
                 <br>
