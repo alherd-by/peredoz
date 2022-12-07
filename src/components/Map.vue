@@ -17,7 +17,9 @@
                 <br>
                 <span v-if="feature.properties.track.user">
                     <b>От пользователя</b>: {{
-                        feature.properties.track.user.displayName ? feature.properties.track.user.displayName : feature.properties.track.user.email
+                        feature.properties.track.user.display_name
+                            ? feature.properties.track.user.display_name
+                            : feature.properties.track.user.email
                     }}
                 </span>
                 <br>
@@ -114,7 +116,9 @@
             <br>
             <span v-if="tracks[feature.properties.track_id].user">
                 <b>От пользователя</b>: {{
-                    tracks[feature.properties.track_id].user.displayName ? tracks[feature.properties.track_id].user.displayName : tracks[feature.properties.track_id].user.email
+                    tracks[feature.properties.track_id].user.displayName
+                        ? tracks[feature.properties.track_id].user.display_name
+                        : tracks[feature.properties.track_id].user.email
                 }}
             </span>
             <br>
