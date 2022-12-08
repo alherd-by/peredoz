@@ -264,6 +264,7 @@ const uploadRadiocode                = async () => {
     if (response.error) {
         throw response.error
     }
+    console.log(response)
     const points = radiocode.parse(adding.attachment[0]).points.map(i => {
         i.track_id = response.data.id;
         i.user_id  = user.value.id
