@@ -260,7 +260,7 @@ const uploadRadiocode                = async () => {
         .from('track')
         .insert([
             {name: adding.name, user_id: user.value.id}
-        ]).single()
+        ]).select().single()
     if (response.error) {
         throw response.error
     }
