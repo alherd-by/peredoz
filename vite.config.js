@@ -8,9 +8,6 @@ import ElementPlus           from 'unplugin-element-plus/vite'
 // https://github.com/element-plus/element-plus-vite-starter
 // https://vitejs.dev/config/
 export default defineConfig({
-    build: {
-        sourcemap: true
-    },
     server : {
         proxy: {
             '^/atomfast': {
