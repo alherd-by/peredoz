@@ -45,7 +45,7 @@
                 <br>
                 <p class="pdng-t-5px" v-if="! feature.properties.spectrum">
                     <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
-                        Прикрепить спектр
+                        Прикрепить файл/спектр
                     </a>
                 </p>
             </template>
@@ -180,7 +180,7 @@
                 <br>
                 <p class="pdng-t-5px" v-if="! feature.properties.spectrum">
                     <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
-                        Прикрепить спектр
+                        Прикрепить файл/спектр
                     </a>
                 </p>
             </template>
