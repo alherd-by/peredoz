@@ -292,7 +292,7 @@ const uploadSpectrum                 = async () => {
                     },
                     user_id : user.value.id
                 }
-            ]).single()
+            ]).select().single()
         if (response.error) {
             throw response.error
         }
