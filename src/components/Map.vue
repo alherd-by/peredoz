@@ -118,7 +118,7 @@
             <br>
             <span v-if="tracks[feature.properties.track_id].user">
                 <b>От пользователя</b>: {{
-                    tracks[feature.properties.track_id].user.displayName
+                    tracks[feature.properties.track_id].user.display_name
                         ? tracks[feature.properties.track_id].user.display_name
                         : tracks[feature.properties.track_id].user.email
                 }}
@@ -127,7 +127,7 @@
             <span>
                 <b>Дата</b>:
                 <span :title="tracks[feature.properties.track_id].created_at">
-                    {{ format(tracks[feature.properties.track_id].created_at) }}
+                    {{ formatWithTime(tracks[feature.properties.track_id].created_at) }}
                 </span>
             </span>
         </div>
