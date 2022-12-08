@@ -6,6 +6,11 @@
         <a href="#" id="popup-closer" class="ol-popup-closer"></a>
         <div id="popup-content" v-if="feature">
             <p v-if="feature.id">id: {{ feature.id }}</p>
+            <template v-if="feature.properties.current_location">
+                <span>
+                    <b>Это ваше текущее местоположение</b>
+                </span>
+            </template>
             <template v-if="feature.properties.track">
                 <span>
                     <b>Трек #{{ feature.properties.track.id }}</b>
@@ -39,7 +44,7 @@
                 <br>
                 <span>Device: <b>  <span v-html="devices[feature.properties.dv]"></span> </b></span>
                 <br>
-                <span>Добавлено: <b>  {{formatWithTime(feature.properties.created_at)}} </b></span>
+                <span>Добавлено: <b>  {{ formatWithTime(feature.properties.created_at) }} </b></span>
                 <br>
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
@@ -211,12 +216,15 @@ import 'ol/ol.css'
 import Overlay                                                  from 'ol/Overlay';
 import Draw                                                     from 'ol/interaction/Draw';
 import {defaults}                                               from 'ol/control'
-import {defaults as defaultsInteractions}                                   from 'ol/interaction'
+import {defaults as defaultsInteractions}                       from 'ol/interaction'
 import {init}                                                   from 'echarts'
 
 import {ref, onMounted, watch, toRefs, computed, onBeforeUpdate} from 'vue'
 import {calcColor}                                               from "../colors";
 import {supabase}                                                from "../supabase";
+import Geolocation                                               from "ol/Geolocation";
+import {Feature}                                                 from "ol";
+import {Point}                                                   from "ol/geom";
 
 const devices = [
     "",
@@ -256,6 +264,47 @@ const stopMediaPlayback = () => {
         }
         elem.pause()
     })
+}
+const geolocation       = new Geolocation({
+    trackingOptions: {
+        enableHighAccuracy: true,
+        timeout           : 30000
+    },
+});
+geolocation.on('change', function () {
+    onReceivingLocation(geolocation.getPosition())
+});
+geolocation.on('error', function (error) {
+    onReceivingLocationError(error)
+});
+
+const onReceivingLocation      = (coordinates) => {
+    console.log(coordinates)
+    const positionFeature = new Feature();
+    positionFeature.setProperties({
+        current_location: true
+    })
+    positionFeature.setGeometry(coordinates ? new Point(fromLonLat(coordinates)) : null)
+    console.log(positionFeature)
+    map.addLayer(
+        new VectorLayer(
+            {
+                source: new VectorSource({
+                    format  : new GeoJSON(),
+                    features: [positionFeature]
+                }),
+                style : new Style({
+                    image: new Icon({
+                        src  : '/imgs/flag.png',
+                        scale: 0.33
+                    }),
+                })
+            }
+        )
+    )
+}
+const onReceivingLocationError = () => {
+    geolocation.setTracking(false);
 }
 
 onBeforeUpdate(() => {
@@ -428,7 +477,7 @@ let tracksClusterSource = new ClusterSource({
     source  : tracksSource,
     distance: 45
 })
-let tracksLayer  = new VectorLayer({
+let tracksLayer         = new VectorLayer({
         source: tracksClusterSource,
         style(feature) {
             let length = feature.get('features').length
@@ -618,6 +667,8 @@ onMounted(
                 }
             })
         });
+
+        geolocation.setTracking(true);
     }
 );
 
