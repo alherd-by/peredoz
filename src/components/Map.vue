@@ -403,7 +403,10 @@ let tracksSource = new VectorSource(
             const temp = (new GeoJSON()).readFeatures(
                 {
                     type    : 'FeatureCollection',
-                    features: trackList.value.map((item) => {
+                    features: trackList.value.filter(t => t.first_point !== null).map((item) => {
+                        if (item.first_point === null) {
+                            console.log(item)
+                        }
                         return {
                             'type'      : 'Feature',
                             'geometry'  : item.first_point,
@@ -420,21 +423,27 @@ let tracksSource = new VectorSource(
         format: new GeoJSON()
     }
 )
+
+let tracksClusterSource = new ClusterSource({
+    source  : tracksSource,
+    distance: 45
+})
 let tracksLayer  = new VectorLayer({
-        source: tracksSource,
+        source: tracksClusterSource,
         style(feature) {
+            let length = feature.get('features').length
             return new Style({
                 image: new Icon({
                     src  : '/imgs/marker.png',
                     scale: 0.33
                 }),
                 text : new Text({
-                    text          : '',
+                    text          : (length > 1 ? length : '') + '',
                     font          : '14px sans-serif',
                     backgroundFill: new Fill({
                         color: '#ffffff',
                     }),
-                    offsetY       : 45,
+                    offsetY       : 30,
                     fill          : new Fill({
                         color: '#000000',
                     }),

@@ -195,7 +195,7 @@ const registerAction        = async (formEl) => {
             message = 'Пользователь с таким email уже существует'
         }
         ElMessage.error(message)
-        console.log(error);
+        console.error(error);
     } else {
         ElMessage.success(
             'Успешная регистрация, на почту придет письмо со ссылкой подтверждением. Возможно потребуется проверить папку со спамом'
@@ -215,7 +215,7 @@ const signInAction          = async () => {
         password: form.password
     })
     if (error) {
-        console.log(error)
+        console.error(error)
         let text = 'Произошла ошибка';
         if (error.message === 'Invalid login credentials') {
             text = 'Неправильный логин или пароль'
@@ -268,7 +268,6 @@ const submitForm = async (formEl, action) => {
     }
     await formEl.validate(async (valid) => {
         if (!valid) {
-            console.log('Not valid')
             return;
         }
         try {

@@ -35,10 +35,8 @@ const onLogout           = (value) => {
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
-    console.log(user.value)
     if (event === 'SIGNED_IN' && !user.value.email && params.get("confirmation") !== null) {
         ElMessage.success('Успешно подтверждена почта!')
-        console.log(session.user)
         user.value = session.user
     }
     if (event === 'PASSWORD_RECOVERY') {
@@ -94,7 +92,6 @@ const legend       = computed(() => {
 
 onMounted(async () => {
     user.value = await getUser();
-    console.log(user.value)
     await fetchTracks()
     await fetchUsers()
 })
