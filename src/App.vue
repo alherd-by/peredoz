@@ -131,7 +131,7 @@ onMounted(async () => {
                         <el-checkbox v-model="showLegend">Отображать легенду</el-checkbox>
                     </template>
                 </el-popover>
-                <template v-if="! user.email">
+                <template v-if="! (user && user.email)">
                     <el-button :icon="UserFilled" @click="auth.openSignIn()">
                         Авторизация
                     </el-button>
@@ -140,14 +140,14 @@ onMounted(async () => {
                     </el-button>
                 </template>
                 <template v-else>
-                    <el-button :icon="Plus" @click="adding.open()" v-show="user.email">
+                    <el-button :icon="Plus" @click="adding.open()" v-show="user && user.email">
                         Добавить
                     </el-button>
                 </template>
                 <el-button :icon="QuestionFilled" @click="isNewcomer = true">
                     О проекте
                 </el-button>
-                <span class="pdng-l-50px" v-if="user.email">
+                <span class="pdng-l-50px" v-if="user && user.email">
                     <span class="pdng-l-10px">
                         {{user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email}}
                     </span>
@@ -219,7 +219,7 @@ onMounted(async () => {
                                 </template>
                             </el-popover>
                         </div>
-                        <template v-if="! user.email">
+                        <template v-if="!(user && user.email)">
                             <div class="pdng-t-15px">
                                 <el-button :icon="UserFilled" @click="auth.openSignIn()" round>
                                     Авторизация
