@@ -278,31 +278,35 @@ geolocation.on('error', function (error) {
     onReceivingLocationError(error)
 });
 
-const onReceivingLocation      = (coordinates) => {
+let currentPositionLayer;
+
+const onReceivingLocation = (coordinates) => {
     console.log(coordinates)
     const positionFeature = new Feature();
     positionFeature.setProperties({
         current_location: true
     })
     positionFeature.setGeometry(coordinates ? new Point(fromLonLat(coordinates)) : null)
-    console.log(positionFeature)
-    map.addLayer(
-        new VectorLayer(
-            {
-                source: new VectorSource({
-                    format  : new GeoJSON(),
-                    features: [positionFeature]
+    if (!currentPositionLayer) {
+        map.removeLayer(currentPositionLayer);
+    }
+    currentPositionLayer = new VectorLayer(
+        {
+            source: new VectorSource({
+                format  : new GeoJSON(),
+                features: [positionFeature]
+            }),
+            style : new Style({
+                image: new Icon({
+                    src  : '/imgs/flag.png',
+                    scale: 0.33
                 }),
-                style : new Style({
-                    image: new Icon({
-                        src  : '/imgs/flag.png',
-                        scale: 0.33
-                    }),
-                })
-            }
-        )
+            })
+        }
     )
+    map.addLayer(currentPositionLayer)
 }
+
 const onReceivingLocationError = () => {
     geolocation.setTracking(false);
 }
