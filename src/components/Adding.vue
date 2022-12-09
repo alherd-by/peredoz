@@ -106,12 +106,12 @@
 import {ElMessage}                       from "element-plus";
 import {onMounted, reactive, ref, watch} from "vue";
 import {xml2js}                          from "../xml2js";
-import Geolocation            from "ol/Geolocation";
-import radiocode              from '../radiacode'
-import {supabase}             from "../supabase";
-import {getUser}              from "../user";
+import Geolocation                       from "ol/Geolocation";
+import radiocode                         from '../radiacode'
+import {supabase}                        from "../supabase";
+import {getUser}                         from "../user";
 
-const user               = ref({email: ''});
+const user  = ref({email: ''});
 const emits = defineEmits(
     ['new-track', 'new-objects', 'request-point-locating']
 )
@@ -255,22 +255,28 @@ const attachSpectrum = (trackPointId) => {
 }
 
 const uploadRadiocode                = async () => {
+    let points = radiocode.parse(adding.attachment[0]).points;
+
     let response;
     response = await supabase
         .from('track')
         .insert([
-            {name: adding.name, user_id: user.value.id}
+            {
+                name       : adding.name,
+                user_id    : user.value.id,
+                first_point: points[0].geometry
+            }
         ]).select().single()
     if (response.error) {
         throw response.error
     }
     console.log(response)
-    const points = radiocode.parse(adding.attachment[0]).points.map(i => {
+    points   = points.map(i => {
         i.track_id = response.data.id;
         i.user_id  = user.value.id
         return i;
-    });
-    response     = await supabase
+    })
+    response = await supabase
         .from('point')
         .insert(points)
     if (response.error) {
