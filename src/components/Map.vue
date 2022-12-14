@@ -203,7 +203,7 @@ import {format, formatWithTime} from '../date'
 
 import Map          from "ol/Map";
 import TileLayer    from "ol/layer/Tile";
-import {OSM}        from "ol/source";
+import {OSM, XYZ}   from "ol/source";
 import View         from "ol/View";
 import {fromLonLat} from "ol/proj";
 
@@ -385,7 +385,7 @@ const loadFeatures = async (source, projection) => {
             ascending : true,
             nullsFirst: false
         })
-        let hasTracks =  filter.value.track !== null && filter.value.track !== undefined;
+        let hasTracks = filter.value.track !== null && filter.value.track !== undefined;
         if (hasTracks) {
             params.push(`track_id.in.(${filter.value.track.id})`)
         }
@@ -630,7 +630,19 @@ onMounted(
                 new TileLayer({
                     source: new OSM(),
                 }),
-                drawingLayer
+                drawingLayer,
+                new TileLayer({
+                    title  : 'Overlay',
+                    opacity: 0.3,
+                    extent : [2022771.327754, 4730408.157658, 7587212.494449, 11837330.292500],
+                    source : new XYZ({
+                        attributions: '',
+                        minZoom     : 2,
+                        maxZoom     : 8,
+                        url         : './layer/{z}/{x}/{-y}.png',
+                        tileSize    : [256, 256]
+                    })
+                })
             ],
             target      : 'map',
             overlays    : [overlay],
