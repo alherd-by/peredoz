@@ -385,7 +385,7 @@ const loadFeatures = async (source, projection) => {
             ascending : true,
             nullsFirst: false
         })
-        let hasTracks = filter.value.track !== null;
+        let hasTracks =  filter.value.track !== null && filter.value.track !== undefined;
         if (hasTracks) {
             params.push(`track_id.in.(${filter.value.track.id})`)
         }

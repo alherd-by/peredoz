@@ -49,7 +49,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 const fetchTracks = async () => {
     let {data, error} = await supabase
-        .from("track")
+        .from("tracks")
         .select(`*,user!user_fk(*)`)
     if (error) {
         throw error
@@ -69,6 +69,10 @@ const fetchUsers = async () => {
 }
 
 const onChange = (event) => {
+    if (event.track && event.track.min_doserate && event.track.max_doserate) {
+        minIntensity.value = event.track.min_doserate;
+        maxIntensity.value = event.track.max_doserate;
+    }
     map.value.refresh(event)
 }
 
