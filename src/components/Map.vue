@@ -385,9 +385,9 @@ const loadFeatures = async (source, projection) => {
             ascending : true,
             nullsFirst: false
         })
-        let hasTracks = Array.isArray(filter.value.track) && filter.value.track.length > 0;
+        let hasTracks = filter.value.track !== null;
         if (hasTracks) {
-            params.push(`track_id.in.(${filter.value.track.map(i => i.id).join(',')})`)
+            params.push(`track_id.in.(${filter.value.track.id})`)
         }
         query = query.or(params.join(','))
         if (filter.value.user_id) {
