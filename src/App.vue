@@ -20,6 +20,8 @@ const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
 const adding             = ref();
 const map                = ref();
+const maxIntensity       = ref(4.7033);
+const minIntensity       = ref(0.0386);
 const auth               = ref();
 const filtersRef         = ref();
 const userList           = ref([])
@@ -65,12 +67,13 @@ const fetchUsers = async () => {
     userList.value = data;
 }
 
+const onChange = (event) => {
+    map.value.refresh(event)
+}
 
-const maxIntensity = 4.7033;
-const minIntensity = 0.0386;
-const legend       = computed(() => {
+const legend = computed(() => {
     let colors_count = currentColorScheme.value === SCHEME_RED_BLUE_16 ? 16 : 32;
-    let diff         = maxIntensity - minIntensity;
+    let diff         = maxIntensity.value - minIntensity.value;
     const items      = [];
     for (let i = 0; i < colors_count; i++) {
         let v     = 1 - i / (colors_count - 1);
@@ -80,7 +83,7 @@ const legend       = computed(() => {
             innerHtml : ''
         }
         if (i === 0 || i === colors_count - 1 || i === colors_count / 2 || i === colors_count / 4 || i === 3 * colors_count / 4) {
-            let d          = minIntensity + diff * v;
+            let d          = minIntensity.value + diff * v;
             item.innerHtml = d.toFixed(2);
         } else if (i === 1) {
             item.innerHtml = "uSv/h";
@@ -149,7 +152,7 @@ onMounted(async () => {
                 </el-button>
                 <span class="pdng-l-50px" v-if="user && user.email">
                     <span class="pdng-l-10px">
-                        {{user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email}}
+                        {{ user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email }}
                     </span>
                     <el-button @click="auth.logout()" class="mrgn-l-10px">
                         Выход
@@ -251,7 +254,7 @@ onMounted(async () => {
                                     <template #default>
                                         <p style="color:black">
                                             Ваш аккаунт:
-                                            {{user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email}}
+                                            {{ user.user_metadata && user.user_metadata.username ? user.user_metadata.username : user.email }}
                                         </p>
                                         <el-button @click="auth.logout()">
                                             Выход
@@ -277,7 +280,9 @@ onMounted(async () => {
          @spectrum-attached="adding.attachSpectrum($event)"
          :color-scheme="currentColorScheme"
     />
-    <Filters @change="map.refresh($event)" :track-list="trackList" ref="filtersRef"/>
+    <Filters @change="onChange($event)"
+             :track-list="trackList"
+             ref="filtersRef"/>
     <Auth ref="auth" @auth="onAuth" @logout="onLogout"/>
     <el-dialog v-model="isNewcomer"
                title="Добро пожаловать!"
@@ -335,6 +340,7 @@ onMounted(async () => {
         --dialog-width: 100%;
         --dialog-newcomer-width: 100%;
     }
+
     .legend-list-item {
         font-size: 0.8rem;
     }
