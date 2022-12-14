@@ -34,7 +34,7 @@
                     {{ formatWithTime(feature.properties.track.created_at) }}
                 </span>
                 <br>
-                <a @click="loadTrack(feature.properties.track.id)">Показать все точки</a>
+                <a @click="loadTrack(feature.properties.track)">Показать все точки</a>
             </span>
             </template>
             <template v-if="feature && feature.properties && feature.properties.d">
@@ -330,8 +330,8 @@ const loading        = ref(false)
 const drawingEnabled = ref(false);
 const chart          = ref();
 
-const loadTrack     = (trackId) => {
-    emit('track-requested', trackId)
+const loadTrack     = (track) => {
+    emit('track-requested', track)
 }
 const generateChart = () => {
     setTimeout(() => {
@@ -385,9 +385,9 @@ const loadFeatures = async (source, projection) => {
             ascending : true,
             nullsFirst: false
         })
-        let hasTracks = Array.isArray(filter.value.track_id) && filter.value.track_id.length > 0;
+        let hasTracks = Array.isArray(filter.value.track) && filter.value.track.length > 0;
         if (hasTracks) {
-            params.push(`track_id.in.(${filter.value.track_id.join(',')})`)
+            params.push(`track_id.in.(${filter.value.track.map(i => i.id).join(',')})`)
         }
         query = query.or(params.join(','))
         if (filter.value.user_id) {

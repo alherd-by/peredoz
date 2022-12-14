@@ -130,7 +130,7 @@ const user = ref({email: ''})
 const filter = reactive({
     created_at     : '',
     user_id        : '',
-    track_id       : [],
+    track          : [],
     show_localities: false
 })
 
@@ -143,8 +143,8 @@ const show       = () => {
 }
 defineExpose({
     show,
-    addTrack(id) {
-        filter.track_id = [id]
+    addTrack(track) {
+        filter.track = [track];
         saveFilter()
     }
 })
@@ -159,7 +159,7 @@ const onRowsSelect = (selectedRows) => {
     if (selectedRows.length > 1) {
         trackListTable.value.toggleRowSelection(selectedRows[0], undefined)
     }
-    filter.track_id = selectedRows.map((i) => i.id)
+    filter.track = selectedRows
 }
 const onSelectAll  = () => {
     trackListTable.value.clearSelection()
