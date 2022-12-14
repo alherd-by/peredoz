@@ -493,10 +493,7 @@ let tracksLayer         = new VectorLayer({
                 text : new Text({
                     text          : (length > 1 ? length : '') + '',
                     font          : '14px sans-serif',
-                    backgroundFill: new Fill({
-                        color: '#ffffff',
-                    }),
-                    offsetY       : 30,
+                    offsetY       : -8,
                     fill          : new Fill({
                         color: '#000000',
                     }),
