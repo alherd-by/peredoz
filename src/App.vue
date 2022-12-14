@@ -3,6 +3,7 @@ import Map     from './components/Map.vue'
 import Auth    from "./components/Auth.vue";
 import Adding  from "./components/Adding.vue";
 import Filters from "./components/Filters.vue";
+import About   from "./components/About.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled, Expand} from '@element-plus/icons-vue'
 
@@ -288,23 +289,7 @@ onMounted(async () => {
                title="Добро пожаловать!"
                width="var(--dialog-newcomer-width)"
                center>
-        <p>
-            Вас приветствует приложение <b>"Передоз"</b></p>
-        <p>
-            Здесь вы можете найти самую различную информацию по радиоактивному загрязнению территорий Республики Беларусь:
-
-        </p>
-        <ul class="pdng-l-15px">
-            <li>Треки собранные прибороми atomfast и radiacode (обозначены оранжевыми маркерами)</li>
-            <li>Спектры (багровые точки)</li>
-            <li>Просто точки с комментариями и видео-файлами (черные точки)</li>
-        </ul>
-        <p>
-            Для настроек отображения нажмите меню
-        </p>
-        <p>
-            Для того, чтобы получить возможность добавлять свои данные, вам требуется зарегистрироваться.
-        </p>
+        <about></about>
     </el-dialog>
 </template>
 <style>
