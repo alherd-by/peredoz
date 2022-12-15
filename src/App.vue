@@ -7,7 +7,7 @@ import About   from "./components/About.vue";
 
 import {UserFilled, Filter, Plus, Setting, QuestionFilled, Expand} from '@element-plus/icons-vue'
 
-import {computed, ref, onMounted} from "vue";
+import {computed, ref, onMounted, watch} from "vue";
 
 import {calcColor, colorSchemes, SCHEME_RED_BLUE_16} from "./colors";
 import {getUser}                                     from "./user";
@@ -19,6 +19,7 @@ const toolbarDialog      = ref(false);
 const user               = ref({email: ''});
 const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
 const showLegend         = ref(true);
+const showPollutionMap   = ref(false);
 const adding             = ref();
 const map                = ref();
 const maxIntensity       = ref(4.7033);
@@ -75,6 +76,14 @@ const onChange = (event) => {
     }
     map.value.refresh(event)
 }
+
+watch(showPollutionMap, (val) => {
+    if (val) {
+        map.value.addPollutionLayer()
+    } else {
+        map.value.removePollutionLayer()
+    }
+})
 
 const legend = computed(() => {
     let colors_count = currentColorScheme.value === SCHEME_RED_BLUE_16 ? 16 : 32;
@@ -137,6 +146,7 @@ onMounted(async () => {
                             </el-radio>
                         </el-radio-group>
                         <el-checkbox v-model="showLegend">Отображать легенду</el-checkbox>
+                        <el-checkbox v-model="showPollutionMap">Отображать карту загрязнений</el-checkbox>
                     </template>
                 </el-popover>
                 <template v-if="! (user && user.email)">

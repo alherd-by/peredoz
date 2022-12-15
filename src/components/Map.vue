@@ -491,10 +491,10 @@ let tracksLayer         = new VectorLayer({
                     scale: 0.33
                 }),
                 text : new Text({
-                    text          : (length > 1 ? length : '') + '',
-                    font          : '14px sans-serif',
-                    offsetY       : -8,
-                    fill          : new Fill({
+                    text   : (length > 1 ? length : '') + '',
+                    font   : '14px sans-serif',
+                    offsetY: -8,
+                    fill   : new Fill({
                         color: '#000000',
                     }),
                 })
@@ -516,6 +516,17 @@ let drawingLayer  = new VectorLayer({
         source: drawingSource,
     }
 )
+let pollutionLayer = new TileLayer({
+    opacity: 0.3,
+    extent : [2022771.327754, 4730408.157658, 7587212.494449, 11837330.292500],
+    source : new XYZ({
+        attributions: '',
+        minZoom     : 2,
+        maxZoom     : 8,
+        url         : './layer/{z}/{x}/{-y}.png',
+        tileSize    : [256, 256]
+    })
+})
 let featureLayer  = new VectorLayer({
     source: clusterSource,
     style(feature) {
@@ -628,18 +639,6 @@ onMounted(
                     source: new OSM(),
                 }),
                 drawingLayer,
-                new TileLayer({
-                    title  : 'Overlay',
-                    opacity: 0.3,
-                    extent : [2022771.327754, 4730408.157658, 7587212.494449, 11837330.292500],
-                    source : new XYZ({
-                        attributions: '',
-                        minZoom     : 2,
-                        maxZoom     : 8,
-                        url         : './layer/{z}/{x}/{-y}.png',
-                        tileSize    : [256, 256]
-                    })
-                })
             ],
             target      : 'map',
             overlays    : [overlay],
@@ -690,6 +689,13 @@ const enableDrawing = () => {
     map.addInteraction(draw);
 }
 
+const addPollutionLayer = () => {
+    map.addLayer(pollutionLayer)
+}
+const removePollutionLayer = () => {
+    map.removeLayer(pollutionLayer)
+}
+
 const displayPlaces = (isVisible) => {
     if (isVisible) {
         map.addLayer(placesLayer)
@@ -701,6 +707,8 @@ const displayPlaces = (isVisible) => {
 defineExpose({
     enableDrawing,
     refresh,
+    addPollutionLayer,
+    removePollutionLayer,
     updateTracks() {
         map.removeLayer(tracksLayer)
         map.addLayer(tracksLayer)
