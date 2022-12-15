@@ -15,26 +15,27 @@ import {supabase}                                    from "./supabase";
 import {ElMessage}                                   from "element-plus";
 
 
-const toolbarDialog      = ref(false);
-const user               = ref({email: ''});
-const currentColorScheme = ref(SCHEME_RED_BLUE_16 + '');
-const showLegend         = ref(true);
-const showPollutionMap   = ref(false);
-const adding             = ref();
-const map                = ref();
-const maxIntensity       = ref(4.7033);
-const minIntensity       = ref(0.0386);
-const auth               = ref();
-const filtersRef         = ref();
-const userList           = ref([])
-const trackList          = ref([])
-const params             = (new URL(document.location)).searchParams;
-const isNewPassword      = ref(params.get("resetpwd") === null);
-const isNewcomer         = ref(!user.value.email && params.get("confirmation") === null && !isNewPassword);
-const onAuth             = (v) => {
+const toolbarDialog         = ref(false);
+const user                  = ref({email: ''});
+const currentColorScheme    = ref(SCHEME_RED_BLUE_16 + '');
+const showLegend            = ref(true);
+const showPollutionMap      = ref(false);
+const adding                = ref();
+const map                   = ref();
+const pollutionLayerOpacity = ref(0.3)
+const maxIntensity          = ref(4.7033);
+const minIntensity          = ref(0.0386);
+const auth                  = ref();
+const filtersRef            = ref();
+const userList              = ref([])
+const trackList             = ref([])
+const params                = (new URL(document.location)).searchParams;
+const isNewPassword         = ref(params.get("resetpwd") === null);
+const isNewcomer            = ref(!user.value.email && params.get("confirmation") === null && !isNewPassword);
+const onAuth                = (v) => {
     user.value = v;
 }
-const onLogout           = (value) => {
+const onLogout              = (value) => {
     user.value = value
 }
 
@@ -77,6 +78,12 @@ const onChange = (event) => {
     map.value.refresh(event)
 }
 
+watch(
+    pollutionLayerOpacity,
+    (val) => {
+        map.value.setPollutionLayerOpacity(val)
+    }
+)
 watch(showPollutionMap, (val) => {
     if (val) {
         map.value.addPollutionLayer()
@@ -137,16 +144,27 @@ onMounted(async () => {
                     </template>
                     <template #default>
                         <h3>Схемы</h3>
-                        <el-radio-group v-model="currentColorScheme">
-                            <el-radio :label="key"
-                                      v-for="(track, key) in colorSchemes"
-                                      style="width: 600px; float: left">
-                                {{ track.name }}
-                                <div class="bgr_gradient" :style="{'background': track.color}"></div>
-                            </el-radio>
-                        </el-radio-group>
-                        <el-checkbox v-model="showLegend">Отображать легенду</el-checkbox>
-                        <el-checkbox v-model="showPollutionMap">Отображать карту загрязнений</el-checkbox>
+                        <div class="pdng-l-5px">
+                            <el-radio-group v-model="currentColorScheme">
+                                <el-radio :label="key"
+                                          v-for="(track, key) in colorSchemes"
+                                          style="width: 600px; float: left">
+                                    {{ track.name }}
+                                    <div class="bgr_gradient" :style="{'background': track.color}"></div>
+                                </el-radio>
+                            </el-radio-group>
+                            <el-checkbox v-model="showLegend">Отображать легенду</el-checkbox>
+                            <el-checkbox v-model="showPollutionMap">Отображать карту загрязнений</el-checkbox>
+                        </div>
+                        <div class="pdng-l-5px">
+                            Прозрачность карты загрязнений
+                        </div>
+                        <div class="pdng-l-10px">
+
+                            <div class="pdng-l-5px">
+                                <el-slider v-model="pollutionLayerOpacity" :max="1" :min="0.2" :step="0.05"/>
+                            </div>
+                        </div>
                     </template>
                 </el-popover>
                 <template v-if="! (user && user.email)">

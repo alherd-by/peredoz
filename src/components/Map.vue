@@ -704,11 +704,16 @@ const displayPlaces = (isVisible) => {
     }
 }
 
+const setPollutionLayerOpacity = (opacity) => {
+    pollutionLayer.setOpacity(opacity)
+}
+
 defineExpose({
     enableDrawing,
     refresh,
     addPollutionLayer,
     removePollutionLayer,
+    setPollutionLayerOpacity,
     updateTracks() {
         map.removeLayer(tracksLayer)
         map.addLayer(tracksLayer)
