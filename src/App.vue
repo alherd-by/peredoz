@@ -160,10 +160,7 @@ onMounted(async () => {
                             Прозрачность карты загрязнений
                         </div>
                         <div class="pdng-l-10px">
-
-                            <div class="pdng-l-5px">
-                                <el-slider v-model="pollutionLayerOpacity" :max="1" :min="0.2" :step="0.05"/>
-                            </div>
+                            <el-slider v-model="pollutionLayerOpacity" :max="1" :min="0.2" :step="0.05"/>
                         </div>
                     </template>
                 </el-popover>
