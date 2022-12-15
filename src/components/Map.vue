@@ -287,7 +287,7 @@ const onReceivingLocation = (coordinates) => {
         current_location: true
     })
     positionFeature.setGeometry(coordinates ? new Point(fromLonLat(coordinates)) : null)
-    if (!currentPositionLayer) {
+    if (currentPositionLayer) {
         map.removeLayer(currentPositionLayer);
     }
     currentPositionLayer = new VectorLayer(
@@ -511,8 +511,8 @@ const tracks = computed(() => {
     return tmp
 })
 
-let drawingSource = new VectorSource()
-let drawingLayer  = new VectorLayer({
+let drawingSource  = new VectorSource()
+let drawingLayer   = new VectorLayer({
         source: drawingSource,
     }
 )
@@ -527,7 +527,7 @@ let pollutionLayer = new TileLayer({
         tileSize    : [256, 256]
     })
 })
-let featureLayer  = new VectorLayer({
+let featureLayer   = new VectorLayer({
     source: clusterSource,
     style(feature) {
         let size                      = feature.get('features').length;
@@ -689,7 +689,7 @@ const enableDrawing = () => {
     map.addInteraction(draw);
 }
 
-const addPollutionLayer = () => {
+const addPollutionLayer    = () => {
     map.addLayer(pollutionLayer)
 }
 const removePollutionLayer = () => {
