@@ -29,6 +29,8 @@ declare module '@vue/runtime-core' {
     Filters: typeof import('./src/components/Filters.vue')['default']
     Loading: typeof import('element-plus/es')['ElLoadingDirective']
     Map: typeof import('./src/components/Map.vue')['default']
+    Spectrum: typeof import('./src/components/icons/spectrum.vue')['default']
+    Swipe: typeof import('./src/components/icons/swipe.vue')['default']
   }
 }
 

@@ -60,14 +60,7 @@
                     <a class="txt-underline" href="#"
                        @click="currentSpectrum = feature.properties.spectrum.data;showSpectrum = true;">
                         Спектр
-                        <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
-                             style="width: 15px;height: 15px"
-                             data-v-78e17ca8="">
-                            <path fill="currentColor"
-                                  d="M768 256H353.6a32 32 0 1 1 0-64H800a32 32 0 0 1 32 32v448a32 32 0 0 1-64 0V256z"></path>
-                            <path fill="currentColor"
-                                  d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
-                        </svg>
+                        <spectrum-icon style="width: 15px;height: 15px"></spectrum-icon>
                     </a>
                 </div>
             </template>
@@ -225,6 +218,7 @@ import {supabase}                                                from "../supaba
 import Geolocation                                               from "ol/Geolocation";
 import {Feature}                                                 from "ol";
 import {Point}                                                   from "ol/geom";
+import SpectrumIcon                                              from "./icons/spectrum.vue";
 
 const devices = [
     "",
