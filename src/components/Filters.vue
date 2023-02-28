@@ -42,7 +42,10 @@
             </el-row>
             <div class="flex-column">
                 <div class="pdng-t-20px" v-loading="trackListLoading" style="overflow-x: auto">
-                    <h4 class="pdng-l-5px">Выберите треки (не больше трех)</h4>
+                    <h4 class="pdng-l-5px">
+                        Выберите треки (не больше трех).
+                        Всего треков: <b>{{ trackListFiltered.length }}</b>
+                    </h4>
                     <el-table :data="trackListFiltered"
                               class="pdng-t-10px"
                               ref="trackListTable"
@@ -55,7 +58,7 @@
                         <el-table-column type="selection" width="20" fixed/>
                         <el-table-column label="Название" prop="name" min-width="150" sortable>
                             <template #header>
-                                Название (Всего: {{ trackListFiltered.length }})
+                                Название
                                 <div class="notdisplay mil-show hint-scroll">
                                     <swipe-icon></swipe-icon>
                                 </div>
