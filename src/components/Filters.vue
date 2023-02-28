@@ -47,7 +47,7 @@
                               class="pdng-t-10px"
                               ref="trackListTable"
                               row-key="id"
-                              :default-sort="{ prop: Object.keys(trackListSorting)[0], order: Object.values(trackListSorting)[0] + 'ending' }"
+                              :default-sort="{ prop: 'name', order: 'ascending' }"
                               highlight-current-row
                               @select-all="onSelectAll"
                               @selection-change="onRowsSelect"
