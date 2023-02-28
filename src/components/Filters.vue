@@ -43,8 +43,7 @@
             <div class="flex-column">
                 <div class="pdng-t-20px" v-loading="trackListLoading" style="overflow-x: auto">
                     <h4 class="pdng-l-5px">
-                        Выберите треки (не больше трех).
-                        Всего треков: <b>{{ trackListFiltered.length }}</b>
+                        Список треков. Всего треков: <b>{{ trackListFiltered.length }}</b>
                     </h4>
                     <el-table :data="trackListFiltered"
                               class="pdng-t-10px"
@@ -52,10 +51,15 @@
                               row-key="id"
                               :default-sort="{ prop: 'name', order: 'ascending' }"
                               highlight-current-row
-                              @select-all="onSelectAll"
-                              @selection-change="onRowsSelect"
                               table-layout="auto">
-                        <el-table-column type="selection" width="20" fixed/>
+                        <el-table-column width="20" fixed>
+                            <template #default="{row}">
+                                <el-button size="small"
+                                           :icon="Aim"
+                                           circle
+                                           @click="clickTrack(row)"></el-button>
+                            </template>
+                        </el-table-column>
                         <el-table-column label="Название" prop="name" min-width="150" sortable>
                             <template #header>
                                 Название
@@ -88,6 +92,8 @@ import {formatWithTime}                             from '../date'
 import {getUser}                                    from "../user";
 import {ref, computed, reactive, toRefs, onMounted} from "vue";
 import SwipeIcon                                    from './icons/swipe.vue'
+import {ElButton}                                   from 'element-plus'
+import {Aim}                                        from '@element-plus/icons-vue'
 
 const props = defineProps({
     trackList: Array
@@ -96,7 +102,6 @@ const props = defineProps({
 const filterDialog      = ref(false);
 const {trackList: list} = toRefs(props);
 const trackListLoading  = ref(false)
-const trackListSorting  = ref({created_at: 'desc'})
 const trackListFilter   = ref('')
 const trackListFiltered = computed(() => {
     if (!list.value) {
@@ -142,20 +147,9 @@ defineExpose({
     }
 })
 
-const onRowsSelect = (selectedRows) => {
-    if (
-        (selectedRows.length === trackListFiltered.value.length && trackListFiltered.value.length > 3)
-        || selectedRows.length === 0
-    ) {
-        return
-    }
-    if (selectedRows.length > 1) {
-        trackListTable.value.toggleRowSelection(selectedRows[0], undefined)
-    }
-    filter.track = selectedRows[0]
-}
-const onSelectAll  = () => {
-    trackListTable.value.clearSelection()
+const clickTrack   = (t) => {
+    filter.track = t
+    saveFilter()
 }
 onMounted(async () => {
     user.value = await getUser()
