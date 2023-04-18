@@ -34,7 +34,10 @@
                     {{ formatWithTime(feature.properties.track.created_at) }}
                 </span>
                 <br>
-                <a @click="loadTrack(feature.properties.track)">Показать все точки</a>
+
+                <el-button @click="loadTrack(feature.properties.track)" style="margin-top: 5px">
+                    Показать все точки
+                </el-button>
             </span>
             </template>
             <template v-if="feature && feature.properties && feature.properties.d">
@@ -49,24 +52,24 @@
                 <span>Search mode: <b> {{ search_modes[feature.properties.sm] }} </b></span>
                 <br>
                 <p class="pdng-t-5px" v-if="! feature.properties.spectrum">
-                    <a class="txt-underline" href="#" @click="attachSpectrum(feature.id)">
+                    <el-button @click="attachSpectrum(feature.id)">
                         Прикрепить файл/спектр
-                    </a>
+                    </el-button>
                 </p>
             </template>
             <template v-if="feature.properties.spectrum">
                 <div class="pdng-t-10px">
                     {{ feature.properties.spectrum.name }}
-                    <a class="txt-underline" href="#"
+                    <el-button
                        @click="currentSpectrum = feature.properties.spectrum.data;showSpectrum = true;">
                         Спектр
                         <spectrum-icon style="width: 15px;height: 15px"></spectrum-icon>
-                    </a>
+                    </el-button>
                 </div>
             </template>
             <template v-if="feature.properties.track_id">
                 <div class="pdng-t-10px">
-                    <a class="txt-underline" @click="trackDrawer = true">
+                    <el-button @click="trackDrawer = true">
                         Трек
                         <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
                              style="width: 15px;height: 15px"
@@ -76,7 +79,7 @@
                             <path fill="currentColor"
                                   d="M777.344 201.344a32 32 0 0 1 45.312 45.312l-544 544a32 32 0 0 1-45.312-45.312l544-544z"></path>
                         </svg>
-                    </a>
+                    </el-button>
                 </div>
             </template>
             <template v-if="feature.properties.district">
