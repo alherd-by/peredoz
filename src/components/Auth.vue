@@ -180,7 +180,7 @@ const focusElement = (id) => {
 
 const registerAction        = async (formEl) => {
     loading.value     = true;
-    let {user, error} = await supabase.auth.signUp({
+    let {error} = await supabase.auth.signUp({
         email   : form.email,
         password: form.password
     }, {
@@ -195,7 +195,7 @@ const registerAction        = async (formEl) => {
             message = 'Пользователь с таким email уже существует'
         }
         ElMessage.error(message)
-        console.error(error);
+        throw error;
     } else {
         ElMessage.success(
             'Успешная регистрация, на почту придет письмо со ссылкой подтверждением. Возможно потребуется проверить папку со спамом'
@@ -215,12 +215,12 @@ const signInAction          = async () => {
         password: form.password
     })
     if (error) {
-        console.error(error)
         let text = 'Произошла ошибка';
         if (error.message === 'Invalid login credentials') {
             text = 'Неправильный логин или пароль'
         }
         ElMessage.error(text)
+        throw error
     } else {
         ElMessage.success('Успешная авторизация')
         authModal.value = false;
@@ -251,7 +251,7 @@ const newPasswordAction     = async () => {
     const {data, error} = await supabase.auth.updateUser({password: form.password})
     if (error) {
         ElMessage.error('Произошла ошибка')
-        console.error(error)
+        throw error
     } else {
         emit('auth', data.user)
         ElMessage.success('Успешная смена пароля')
