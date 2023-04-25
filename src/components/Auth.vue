@@ -182,11 +182,12 @@ const registerAction        = async (formEl) => {
     loading.value     = true;
     let {error} = await supabase.auth.signUp({
         email   : form.email,
-        password: form.password
-    }, {
-        redirectTo: location.protocol + '//' + location.host + '/?confirmation',
-        data      : {
-            username: form.username
+        password: form.password,
+        options: {
+            emailRedirectTo: location.protocol + '//' + location.host + '/?confirmation',
+            data      : {
+                username: form.username
+            }
         }
     })
     if (error) {
